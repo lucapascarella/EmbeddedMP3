@@ -1,0 +1,60 @@
+# How create a Git project in MPLABX and sync it with GitHub account
+# Create a project on GitHub and leave it empty with no .gitignore or README files
+# Open project in MPLABX and add .gitignore file
+# Right click on the project, Versioning, Initialize Git Repository
+# Right click on the project, Git, Add
+# Right click on the project, Git, Commit
+# Right click on the project, Git, Remote, Push
+# Now you are ready to use Git normally
+
+# Exclude folders and sub-folders
+/build
+/dist
+/nbproject/private/*
+/nbproject/*
+
+# Force include specific files
+!/nbproject/project.xml
+!/nbproject/configurations.xml
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+
+# Others
+*.d
+*.map
+*.zip
+*.bin
+*.log
+*.inx
