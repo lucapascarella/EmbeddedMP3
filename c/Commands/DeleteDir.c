@@ -61,8 +61,8 @@ int DeleteDir(int argc, char **argv2) {
                     dd = malloc(sizeof (DEL_DIR));
                     dd->prev = NULL;
                     dd->next = NULL;
-                    dd->fno.lfname = Lfname;
-                    dd->fno.lfsize = sizeof (Lfname);
+                    //dd->fno.lfname = Lfname;
+                    //dd->fno.lfsize = sizeof (Lfname);
                     path = argv2[1];
                     sm++;
                 } else {
@@ -102,8 +102,8 @@ int DeleteDir(int argc, char **argv2) {
                             dd->next = (DEL_DIR*) malloc(sizeof (DEL_DIR));
                             ((DEL_DIR*) dd->next)->prev = dd;
                             dd = dd->next;
-                            dd->fno.lfname = Lfname;
-                            dd->fno.lfsize = sizeof (Lfname);
+                            //dd->fno.lfname = Lfname;
+                            //dd->fno.lfsize = sizeof (Lfname);
                             // Dovrebbe essere ricorsivo
                             sm = SM_RMDIR_OPEN_DIR;
                         } else

@@ -216,8 +216,8 @@ int main(void) {
         FlashLight(250, 50, TRUE);
 
     // Add referement to buffer of Long File Name
-    finfo.lfname = Lfname;
-    finfo.lfsize = sizeof (Lfname);
+    //finfo.lfname = Lfname;
+    //finfo.lfsize = sizeof (Lfname);
 
     // Initialize virtual Real Time Clock Calendar
     InitRtcc();

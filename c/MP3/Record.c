@@ -90,7 +90,7 @@ int RecordTaskHandler() {
     extern int argc;
     extern char *argv[];
     extern FIL fstream, ftmp2;
-    extern TCHAR Lfname[_MAX_LFN + 1];
+    //extern TCHAR Lfname[_MAX_LFN + 1];
     BYTE index;
     DWORD nextFrame, frameLength;
     UINT written, size;
@@ -330,8 +330,8 @@ int RecordTaskHandler() {
                         case SM_REC_SUB_OPEN_DIR:
                             if ((rec.fres = f_opendir(&rec.dir, "/")) == FR_OK) {
                                 rec.smSub++;
-                                rec.fno.lfname = Lfname;
-                                rec.fno.lfsize = sizeof (Lfname);
+                                //rec.fno.lfname = Lfname;
+                                //rec.fno.lfsize = sizeof (Lfname);
                                 rec.ffind = FALSE;
                             } else {
                                 rec.smSub = SM_REC_PUT_ERROR;

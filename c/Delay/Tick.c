@@ -425,7 +425,8 @@ void TickUpdate(void) {
  ***************************************************************************/
 #elif defined(__PIC32MX__)
 
-void __attribute((interrupt(ipl2), vector(_TIMER_1_VECTOR), nomips16)) _T1Interrupt(void) {
+//void __attribute((interrupt(ipl2), vector(_TIMER_1_VECTOR), nomips16)) _T1Interrupt(void) {
+void __ISR(_TIMER_1_VECTOR, IPL2AUTO) _T1Interrupt(void) {
     // Increment internal high tick counter
     dwInternalTicks++;
 

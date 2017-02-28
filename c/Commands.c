@@ -898,12 +898,13 @@ const char *ByteToFatAttributes(BYTE att) {
 
 char *GetFileNamePointer(FILINFO * finfo) {
 
-    if (finfo->lfname == NULL)
-        return finfo->fname;
-    else if (*finfo->lfname == '\0')
-        return finfo->fname;
-    else
-        return finfo->lfname;
+//    if (finfo->lfname == NULL)
+//        return finfo->fname;
+//    else if (*finfo->lfname == '\0')
+//        return finfo->fname;
+//    else
+//        return finfo->lfname;
+    return finfo->fname;
 }
 
 BOOL put_rc(FRESULT rc) {
@@ -996,11 +997,13 @@ FRESULT scan_files(
         i = strlen(path);
         while (((res = f_readdir(&dirs, &finfo)) == FR_OK) && finfo.fname[0]) {
             if (_FS_RPATH && finfo.fname[0] == '.') continue;
-#if _USE_LFN
-            fn = *finfo.lfname ? finfo.lfname : finfo.fname;
-#else
-            fn = Finfo.fname;
-#endif
+//#if _USE_LFN
+//            fn = *finfo.lfname ? finfo.lfname : finfo.fname;
+//#else
+//            fn = Finfo.fname;
+//#endif
+            fn = finfo.fname;
+            
             if (finfo.fattrib & AM_DIR) {
                 AccDirs++;
                 path[i] = '/';
