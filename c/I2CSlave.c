@@ -14,13 +14,8 @@
 #define Fsck        50000
 #define BRG_VAL 	((GetPeripheralClock()/2/Fsck)-2)
 
-// this is the modules Slave Address
-#define SLAVE_ADDRESS 0x40
 
-//
-#define I2C_DATA_SIZE	    64
-BYTE I2CIndexWrite, I2CIndexRead, I2CData[I2C_DATA_SIZE], *I2CLength, *I2CCommand;
-I2C_OPERATION I2COperation = I2C_OP_NONE;
+I2C_SPECIAL_BUFFER i2c;
 
 ///////////////////////////////////////////////////////////////////
 //
@@ -31,10 +26,6 @@ I2C_OPERATION I2COperation = I2C_OP_NONE;
 ///////////////////////////////////////////////////////////////////
 
 void InitI2C(void) {
-
-    // Assign the length and the commands to the respective pointers
-    I2CLength = &I2CData[0];
-    I2CCommand = &I2CData[1];
 
     // Enable the I2C module with clock stretching enabled
     OpenI2C1(I2C_ON | I2C_7BIT_ADD | I2C_STR_EN, BRG_VAL);
@@ -51,6 +42,11 @@ void InitI2C(void) {
     // clear pending interrupts and enable I2C interrupts
     mI2C1SClearIntFlag();
     EnableIntSI2C1;
+
+    // Reset queue
+    i2c.txHead = i2c.txTail = 0;
+    i2c.rxHead = i2c.rxTail = 0;
+    //i2c.rxIndex = 0;
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -62,9 +58,9 @@ void InitI2C(void) {
 //
 ///////////////////////////////////////////////////////////////////
 
-void __ISR(_I2C_1_VECTOR, ipl3) _SlaveI2CHandler(void) {
+void __ISR(_I2C_1_VECTOR, IPL3AUTO) _SlaveI2CHandler(void) {
     //	mLED_1_On();
-    BYTE temp;
+    volatile BYTE temp;
     //static unsigned int dIndex;
 
     // check for MASTER and Bus events and respond accordingly
@@ -84,10 +80,11 @@ void __ISR(_I2C_1_VECTOR, ipl3) _SlaveI2CHandler(void) {
 
         // reset any state variables needed by a message sequence
         // perform a dummy read of the address
-        temp = SlaveReadI2C1();
+        //        i2c.rxIndex = 0x00;
+        //        i2c.uni.rxBuffer[i2c.rxIndex++] = SlaveReadI2C1();
 
-        // Reset address indicators
-        I2CIndexWrite = 0x00;
+        i2c.regFlag = TRUE;
+        i2c.address = SlaveReadI2C1();
 
         // release the clock to restart I2C
         I2C1CONbits.SCLREL = 1; // release the clock
@@ -100,9 +97,18 @@ void __ISR(_I2C_1_VECTOR, ipl3) _SlaveI2CHandler(void) {
         // The first byte represents the total length
         // The second byte represents the command
         // The nth byte represents the optional data of the command
-        I2CData[I2CIndexWrite++] = SlaveReadI2C1();
-        I2COperation = I2C_OP_WRITE;
-
+        //i2c.uni.rxBuffer[i2c.rxIndex++] = SlaveReadI2C1();
+        if (i2c.regFlag) {
+            i2c.regFlag = FALSE;
+            i2c.regLen = SlaveReadI2C1();
+        } else {
+            if (((i2c.rxTail + 1) & (I2C_DATA_SIZE - 1)) == i2c.rxHead) {
+                // Discard the first byte in FIFO queue
+                i2c.rxHead = (i2c.rxHead + 1) & (I2C_DATA_SIZE - 1);
+            }
+            i2c.rxBuf[i2c.rxTail] = SlaveReadI2C1();
+            i2c.rxTail = (i2c.rxTail + 1) & (I2C_DATA_SIZE - 1);
+        }
         // release the clock to restart I2C
         I2C1CONbits.SCLREL = 1; // release clock stretch bit
 
@@ -111,11 +117,26 @@ void __ISR(_I2C_1_VECTOR, ipl3) _SlaveI2CHandler(void) {
         // D/A bit = 0 --> indicates last byte was address
 
         // read of the slave device, read the address
-        temp = SlaveReadI2C1();
-        I2COperation = I2C_OP_READ;
-        I2CIndexRead = I2C_index_reset;
+        i2c.address = SlaveReadI2C1();
+        //I2COperation = I2C_OP_READ;
+        //I2CIndexRead = I2C_index_reset;
         // Send immediately the length of the previous command, if 0 the response is not ready
-        SlaveWriteI2C1(*I2CLength);
+
+        //if (i2c.uni.send.reg == 0xFD) {
+        if (i2c.regLen == 0xFD) {
+            // Get number of available bytes
+            temp = ((i2c.txHead > i2c.txTail) ? I2C_DATA_SIZE : 0) + i2c.txTail - i2c.txHead;
+        } else {
+            if (i2c.txHead != i2c.txTail) {
+                // If buffer is not empty take the first byte in it
+                temp = i2c.txBuf[i2c.txHead];
+                i2c.txHead = (i2c.txHead + 1) & (I2C_DATA_SIZE - 1);
+            } else {
+                // Buffer empty, the user asks more bytes than the availables
+                temp = 0;
+            }
+        }
+        SlaveWriteI2C1(temp);
 
     } else if ((I2C1STATbits.R_W == 1) && (I2C1STATbits.D_A == 1)) {
         // R/W bit = 1 --> indicates data transfer is output from slave
@@ -123,16 +144,20 @@ void __ISR(_I2C_1_VECTOR, ipl3) _SlaveI2CHandler(void) {
 
         // output the data until the MASTER terminates the
         // transfer with a NACK, continuing reads return 0
-
-        //if (I2CIndex >= sizeof (I2CData))
-        //    I2CIndex = 0;
-        SlaveWriteI2C1(I2CData[I2CIndexRead++]);
+        temp = 0;
+        //if (i2c.uni.send.reg == 0xFF) {
+        if (i2c.regLen == 0xFF) {
+            if (i2c.txHead != i2c.txTail) {
+                // If buffer is not empty take the first byte in it
+                temp = i2c.txBuf[i2c.txHead];
+                i2c.txHead = (i2c.txHead + 1) & (I2C_DATA_SIZE - 1);
+            }
+        }
+        SlaveWriteI2C1(temp);
     }
 
     // finally clear the slave interrupt flag
     mI2C1SClearIntFlag();
-
-    //handlerFlag = TRUE;
 }
 
 // Example of commnad with Bus Pirate v4
@@ -145,140 +170,90 @@ void __ISR(_I2C_1_VECTOR, ipl3) _SlaveI2CHandler(void) {
 // S Address Length Byte1 Byte 2 P
 // [0x41 r rr]
 
-void I2CHandler(void) {
+//void I2CHandler(void) {
+//    Nop();
+//}
 
-#define MAX_TOKEN 32
-    int index, vol, length;
-    char *argv[MAX_TOKEN];
-    ;
+WORD I2CWrite(CHAR8 *buffer, WORD count) {
 
-    if (I2COperation == I2C_OP_WRITE) {
-        // Check if a Write operation is been asked
-        if (*I2CLength == I2CIndexWrite || I2C1STATbits.P) {
-            // The command can be start if the expected total length is reached or if the stop bit is been sent
-            length = *I2CLength;
-            *I2CLength = I2C_operation_in_progress;
-            index = I2C_index_reset;
-            switch (*I2CCommand) {
-                case 'g':
-                case 'G':
-                    // Get current volume levels
-                    // Example: [0x40 0x02 "g"]
-                    // Response1: [0x41 r
-                    // Response2: rr]
-                    I2CData[index++] = VLSI_GetLeft();
-                    I2CData[index] = VLSI_GetRight();
-                    *I2CLength = index;
-                    break;
+    int i;
 
-                case 'u':
-                case 'U':
-                    // Up volume
-                    // Example: [0x40 0x02 "u"]
-                    vol = min(VLSI_GetLeft(), VLSI_GetRight());
-                    if (vol-- > 0)
-                        VLSI_SetVolume(vol, vol);
-                    // If user asks to receive the response, will send 1 byte with indication of operation completed successful
-                    I2CData[index] = 0x01;
-                    *I2CLength = 0x01;
-                    break;
-
-                case 'd':
-                case 'D':
-                    // Down volume
-                    vol = min(VLSI_GetLeft(), VLSI_GetRight());
-                    if (vol++ < 255)
-                        VLSI_SetVolume(vol, vol);
-                    // If user asks to receive the response, will send 1 byte with indication of operation completed successful
-                    I2CData[index] = 0x01;
-                    *I2CLength = 0x01;
-                    break;
-
-                case 'v':
-                case 'V':
-                    // volume insert
-                    // Example: [0x40 0x04 "v" 0x0A 0x0A]
-                    VLSI_SetVolume(I2CData[index + 1], I2CData[index + 2]);
-                    // If user asks to receive the response, will send 1 byte with indication of operation completed successful
-                    I2CData[index] = 0x01;
-                    *I2CLength = 0x01;
-                    break;
-
-                case 's':
-                case 'S':
-                    // Start the execution of a track
-                    // Example: [0x40 0x0B "S" "r" "e" "b" "e" "l" "." "m" "p" "3"]
-                    // Response: [0x41 r r]
-                    I2CData[length + 1] = '\0';
-                    argv[1] = &I2CData[index + 1];
-                    Play(2, argv);
-                    // If user asks to receive the response, will send 1 byte with indication of operation completed successful
-                    I2CData[index] = 0x01;
-                    *I2CLength = 0x01;
-                    break;
-
-                case 'k':
-                case 'K':
-                    // Kill
-                    // Example: [0x40 0x02 "k"]
-                    Stop(1, NULL);
-                    // If user asks to receive the response, will send 1 byte with indication of operation completed successful
-                    I2CData[index] = 0x01; // Response with 1 byte
-                    *I2CLength = 0x01; // 0x01 -> OK
-                    break;
-
-                case 'l':
-                case 'L':
-                    // Start a new playlist
-                    // Example: [0x40 0x0e "l" "playlist.pls"]
-                    if (length == 2) {
-                        Playlist(1, NULL);
-                    } else {
-                        I2CData[length + 1] = '\0';
-                        argv[1] = &I2CData[index + 1];
-                        Playlist(2, argv);
-                    }
-                    // If user asks to receive the response, will send 1 byte with indication of operation completed successful
-                    I2CData[index] = 0x01;
-                    *I2CLength = 0x01;
-                    break;
-
-                case 'r':
-                case 'R':
-                    // Recording
-                    if (length == 2) {
-                        Record(1, NULL);
-                    } else {
-                        I2CData[length + 1] = '\0';
-                        argv[1] = &I2CData[index + 1];
-                        Record(2, argv);
-                    }
-                    // If user asks to receive the response, will send 1 byte with indication of operation completed successful
-                    I2CData[index] = 0x01;
-                    *I2CLength = 0x01;
-                    break;
-
-                case 'p':
-                case 'P':
-                    // Pause
-                    // Modificare p in modo da poter prendere anche il tempo
-                    // se p# allora toggle
-                    // se p100# pausa per 100ms
-                    Pause(1, NULL);
-                    // If user asks to receive the response, will send 1 byte with indication of operation completed successful
-                    I2CData[index] = 0x01;
-                    *I2CLength = 0x01;
-                    break;
-            }
-            I2COperation = I2C_OP_NONE;
+    for (i = 0; i < count; i++) {
+        if (((i2c.txTail + 1) & (I2C_DATA_SIZE - 1)) == i2c.txHead) {
+            // Discard the first byte in FIFO queue
+            i2c.txHead = (i2c.txHead + 1) & (I2C_DATA_SIZE - 1);
         }
-    } else if (I2COperation == I2C_OP_READ) {
-        // Check if a Read operation is been asked
-        if (*I2CLength == I2CIndexRead || I2C1STATbits.P) {
-            // Resets the length indicator after that a response is sent
-            *I2CLength = I2C_operation_in_progress;
-            I2COperation = I2C_OP_NONE;
-        }
+        //        while (((i2c.tail + 1) & (I2C_DATA_SIZE - 1)) == i2c.head) {
+        //            Nop();
+        //        }
+        i2c.txBuf[i2c.txTail] = buffer[i];
+        i2c.txTail = (i2c.txTail + 1) & (I2C_DATA_SIZE - 1);
     }
-
+    return i;
 }
+
+WORD I2CRead(CHAR8 *buffer, WORD count) {
+
+    int i = 0;
+
+    while (i2c.rxHead != i2c.rxTail && i < count) {
+        // If buffer is not empty take the first byte in it
+        buffer[i++] = i2c.rxBuf[i2c.rxHead];
+        i2c.rxHead = (i2c.rxHead + 1) & (I2C_DATA_SIZE - 1);
+    }
+    return i;
+}
+
+//// true - if queue if full
+//
+//BOOL isFull(void) {
+//    return ( ((i2c.txTail + 1) & (I2C_DATA_SIZE - 1)) == i2c.txHead);
+//}
+//
+//// Count elements
+//
+//int getBusy(void) {
+//    return ((i2c.txHead > i2c.txTail) ? I2C_DATA_SIZE : 0) +i2c.txTail - i2c.txHead;
+//}
+//
+//// true - if queue if empty
+//
+//BOOL isEmpty(void) {
+//    return (i2c.txHead == i2c.txTail);
+//}
+//
+//void clear(void) {
+//    i2c.txHead = i2c.txTail = 0;
+//}
+//
+//int getCapacity(void) {
+//    return (I2C_DATA_SIZE - 1);
+//}
+//
+//// Retrieve the item from the queue
+//
+//void dequeue(BYTE *byte) {
+//    *byte = i2c.txBuf[i2c.txHead];
+//    i2c.txHead = (i2c.txHead + 1) & (I2C_DATA_SIZE - 1);
+//}
+//
+//// Get i-element with not delete
+//
+//int peek(const int i, BYTE *byte) {
+//    int j = 0;
+//    int k = i2c.txHead;
+//    while (k != i2c.txTail) {
+//        if (j == i)
+//            break;
+//        j++;
+//        k = (k + 1) & (I2C_DATA_SIZE - 1);
+//    }
+//    if (k == i2c.txTail)
+//        return;
+//    *byte = i2c.txBuf[k];
+//}
+//
+//void enqueue(BYTE *byte) {
+//    i2c.txBuf[i2c.txTail] = *byte;
+//    i2c.txTail = (i2c.txTail + 1) & (I2C_DATA_SIZE - 1);
+//}

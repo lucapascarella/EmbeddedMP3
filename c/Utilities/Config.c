@@ -5,10 +5,10 @@
  *********************************************************************
  * FileName:        Config.c
  * Dependencies:    Config.h
- * Processor:       PIC32MX250F128B
- * Compiler:        Microchip XC32 v1.11a or higher
+ * Processor:       PIC32MX270F256B
+ * Compiler:        Microchip XC32 v1.33 or higher
  * Company:         LP Systems
- * Author:	    Luca Pascarella luca.pascarella@gmail.com
+ * Author:          Luca Pascarella luca.pascarella@gmail.com
  * Web Site:        www.lucapascarella.it
  *
  * Software License Agreement
@@ -40,6 +40,8 @@
 #include "Utilities/Config.h"
 #include "Utilities/Logging.h"
 #include "Utilities/GPIO.h"
+
+const char config_msg[] = "Config.c";
 
 const char file_ini[] = "conf.ini";
 const char file_ini_dump[] = "conf.dmp";
@@ -97,12 +99,16 @@ baudrate = 115200\r\n\
 # 1 = SCC, Single Character Commands;\r\n\
 # 2 = SCC with Echo.\r\n\
 console = 0\r\n\
-# Console port: <0> = UART and 1 = USB serial emulator\r\n\
+# Console echo: 0 = off and <1> = on\r\n\
+echo = 0\r\n\
+# Console port: <0> = UART, 1 = USB serial emulator and 2 = I2C\r\n\
 port = 0\r\n\
 # Verbose: 0 = none, <1> = minimal and 2 = debug\r\n\
-verbose = 2\r\n\
+verbose = 1\r\n\
 # Print boot info at startup: 0 = none, 1 = restricted or <2> = extended\r\n\
 boot = 2\r\n\
+# Log file: 0 = none, 1 = minimal, 2 = normal or <3> = debug\r\n\
+log = 2\r\n\
 \r\n\
 [Play]\r\n\
 # Playlist file name.\r\n\
@@ -127,6 +133,8 @@ gain = 1\r\n\
 max_gain = 10\r\n\
 # Format of encoding: <0> = MP3 or 1 = Ogg Vorbis.\r\n\
 format = 0\r\n\
+# ADC mode: 0 = Joint stereo (common AGC), 1 = Dual channel (separate AGC), 2 = Left, 3 = Right, 4 = Mono.\r\n\
+adcMode = 0\r\n\
 \r\n\
 [Volume]\r\n\
 # Initial volume attenuation from maximum in 1/2 dB steps (1 ... 255, 0 = mute). Example: 36 -> 36 * -0.5 = -18dB of attenuation.\r\n\
@@ -239,6 +247,8 @@ static int handler(void* user, const char* section, const char* name, const char
         pconfig->console.baudrate = atoi(value);
     } else if (MATCH(c_console, "console")) {
         pconfig->console.console = atoi(value);
+    } else if (MATCH(c_console, "echo")) {
+        pconfig->console.echo = atoi(value);
     } else if (MATCH(c_console, "port")) {
         pconfig->console.port = atoi(value);
     } else if (MATCH(c_console, "verbose")) {
@@ -273,6 +283,8 @@ static int handler(void* user, const char* section, const char* name, const char
         pconfig->record.max_gain = atoi(value);
     } else if (MATCH(c_record, "format")) {
         pconfig->record.format = atoi(value);
+    } else if (MATCH(c_record, "adcMode")) {
+        pconfig->record.adcMode = atoi(value);
     } else
 
         // [Volume]
@@ -377,10 +389,11 @@ BOOL ConfigInit(void) {
 
     config.console.baudrate = 115200;
     config.console.console = 0;
+    config.console.echo = 0;        // Console echo: 0 = off and 1 = on
     config.console.port = 0;
     config.console.verbose = 1;
     config.console.versionMajor = 0;
-    config.console.versionMinor = 1;
+    config.console.versionMinor = 2;
     config.console.bootInfo = 1;
     config.console.log = 0;
 
@@ -395,6 +408,7 @@ BOOL ConfigInit(void) {
     config.record.gain = 1;
     config.record.max_gain = 10;
     config.record.format = 0;
+    config.record.adcMode = 0;  // ADC mode: 0 = Joint stereo (common AGC), 1 = Dual channel (separate AGC), 2 = Left, 3 = Right, 4 = Mono
 
     config.volume.bits.left = config.volume.bits.right = 10;
     config.volume.word.balance = 0;
@@ -446,9 +460,9 @@ BOOL ConfigInit(void) {
 
     for (i = 0; i < 5; i++) {
         // Try to open 'ini' file
-        //        writeLogFile(LOG_DEBUG, "Config", "Try to open '%s'", pIni);
+        writeToLogFile(LOG_NORMAL, config_msg, "Try to open '%s'", pIni);
         if (ini_parse(pIni, handler, &config) < 0) {
-            //            writeLogFile(LOG_DEBUG, "Config", "Can't load '%s'", pIni);
+            writeToLogFile(LOG_NORMAL, config_msg, "Can't load '%s'", pIni);
             if (pIni == (char*) file_ini) {
                 // Try to open 'dump' file
                 pIni = (char*) file_ini_dump;
@@ -458,19 +472,19 @@ BOOL ConfigInit(void) {
                 pIni = (char*) file_ini;
                 pDmp = (char*) file_ini_dump;
                 if (ConfigGenerate()) {
-                    //                    writeLogFile(LOG_DEBUG, "Config", "Generated '%s'", pIni);
+                    writeToLogFile(LOG_DEBUG, config_msg, "Generated '%s'", pIni);
                 } else {
-                    //                    writeLogFile(LOG_DEBUG, "Config", "Can't generated '%s'", pIni);
+                    writeToLogFile(LOG_NORMAL, config_msg, "Can't generated '%s'", pIni);
                     return FALSE;
                 }
             }
             // File opend successful
         } else {
             if (ConfigDumpIni(pIni, pDmp)) {
-                //                writeLogFile(LOG_DEBUG, "Config", "Backupped '%s' in '%s'", pIni, pDmp);
+                writeToLogFile(LOG_DEBUG, config_msg, "Backupped '%s' in '%s'", pIni, pDmp);
                 return TRUE;
             } else {
-                //                writeLogFile(LOG_DEBUG, "Config", "Can't backup '%s' in '%s'", pIni, pDmp);
+                writeToLogFile(LOG_NORMAL, config_msg, "Can't backup '%s' in '%s'", pIni, pDmp);
                 return FALSE;
             }
         }

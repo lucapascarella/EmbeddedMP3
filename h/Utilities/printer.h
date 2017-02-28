@@ -42,6 +42,14 @@
 #include <string.h>
 #include "Compiler.h"
 
+#define PRINTER_BUFFER_SIZE         1024
+#define PRI_BUF_ALT_DIM             2u
+
+typedef struct __attribute__((__packed__)) {
+    DWORD alt;
+    char txBuf[PRI_BUF_ALT_DIM][PRINTER_BUFFER_SIZE];    
+} PRINTER_CONFIG;
+
 #ifdef printf
 #undef printf
 #endif
@@ -75,17 +83,11 @@ char __getc();
 int verbosePrintf(int level, const char * fmt, ...);
 
 
-WORD SerialWrite(CHAR8 *buffer, WORD count);
-WORD SerialRead(CHAR8 *buffer, WORD count);
-BOOL SerialIsByteAviableInRX(void);
+WORD ConsolWrite(CHAR8 *buffer, WORD count);
+WORD ConsolRead(CHAR8 *buffer, WORD count);
 
-
-void USBAddCharToBuffer(char *p, int count);
-void USBPrintTaskHandler();
-
-
-void Config(int, char **);
-void Verbose(int, char **);
+int Config(int, char **);
+int Verbose(int, char **);
 
 
 #endif // PRINTER_H

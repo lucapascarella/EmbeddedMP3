@@ -50,10 +50,34 @@ typedef enum week {
     Sunday = 1, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
 } week;
 
+typedef union {
+    DWORD val;
+
+    struct __PACKED {
+        WORD time;
+        WORD data;
+    } word;
+
+    struct {
+        WORD sec : 5;
+        WORD min : 6;
+        WORD hour : 5;
+
+        WORD day : 5;
+        WORD month : 4;
+        WORD year : 7;
+    } fields;
+} FAT_TIME;
+
 typedef struct tm time_tm;
 
 void InitRtcc(void);
-time_tm * rtccGetTime(void);
+time_tm * rtccGetDateAndTimeTM(void);
+
+void rtccGetDate(WORD *rtccYear, BYTE *rtccMon, BYTE *rtccMday);
+void rtccGetTime(BYTE *rtccHour, BYTE *rtccMin, BYTE *rtccSec);
+void rtccGetDateAndTime(WORD *rtccYear, BYTE *rtccMon, BYTE *rtccMday, BYTE *rtccHour, BYTE *rtccMin, BYTE *rtccSec);
+void rtccIncDateAndTime(WORD *rtccYear, BYTE *rtccMon, BYTE *rtccMday, BYTE *rtccHour, BYTE *rtccMin, BYTE *rtccSec, WORD secToInc);
 //BOOL RtccSetTime(WORD year, BYTE month, BYTE date, BYTE hour, BYTE min, BYTE sec, BYTE day, BOOL forceUpdate);
 //void RtccGetTime(int *year, int *month, int *date, int *hour, int *min, int *sec);
 //void RtccSetEpochTime(time_t time, BOOL forceUpdate);
@@ -61,7 +85,7 @@ time_tm * rtccGetTime(void);
 void RtccSetDateAndTime(void);
 void RtccHoldTime(void);
 int RtccWeekDay(int year, int month, int day);
-void Rtcc(int argc, char **argv);
+int Rtcc(int argc, char **argv);
 
 #endif	/* RTCC_H */
 

@@ -9,7 +9,7 @@
  *                  Compiler.h
  *                  GenericTypeDefs.h
  * Processor:       PIC32MX250F128B
- * Compiler:        Microchip XC32 v1.21 or higher
+ * Compiler:        Microchip XC32 v1.33 or higher
  * Company:         LP Systems
  * Author:          Luca Pascarella www.lucapascarella.it
  *
@@ -48,6 +48,7 @@
 #include "Delay/Tick.h"
 #include "FatFS/Diskio.h"
 #include "Delay/Delay.h"
+#include "Utilities/RTCC.h"
 
 extern _command_line cl;
 extern const _command commands[];
@@ -57,138 +58,9 @@ DWORD AccSize; /* Work register for fs command */
 WORD AccFiles, AccDirs;
 //FILINFO Finfo;
 
-void List(int argc, char **argv) {
 
-    extern FILINFO finfo;
-    extern DIR dir;
-    FATFS *fs;
-    BOOL hidden;
-    long totalSize, size, integer, decimal;
-    double sized;
-    char units;
-    int count, countFile, countDir, time, hour, minute, second, year, month, day;
 
-    // Get the current directory name
-    if (!put_rc(f_getcwd(cl.tmp, CLI_MAX_DIR_SIZE)))
-        return;
-
-    if (argc == 1) {
-        // Open the current directory
-        if (put_rc(f_opendir(&dir, cl.tmp))) {
-
-            while (TRUE) {
-                // Read a directory item
-                if (!put_rc(f_readdir(&dir, &finfo)))
-                    break;
-                // Break on end of dir
-                if (finfo.fname[0] == 0)
-                    break;
-                // Ignore dot entry
-                if (finfo.fname[0] == '.')
-                    continue;
-
-                // Print everything that is not hidden
-                if (!(finfo.fattrib & AM_HID)) {
-                    // It is a file or directory
-                    printf("%s\r\n", GetFileNamePointer(&finfo));
-                }
-            }
-            // Close the current directory
-            put_rc(f_closedir(&dir));
-        }
-    } else if (argc == 2) {
-        if (strchr(argv[1], '-') != NULL) {
-            //if (strchr(argv[1], 'l') != NULL || strchr(argv[1], 'a') != NULL) {
-            if (strchr(argv[1], 'l') != NULL) {
-                hidden = FALSE;
-                if (strchr(argv[1], 'a') != NULL)
-                    hidden = TRUE;
-            } else {
-                printf("ls: invalid option %s\r\n", argv[1]);
-                return;
-            }
-        } else {
-            printf("ls: invalid option %s\r\n", argv[1]);
-            return;
-        }
-
-        // Reset file counter
-        size = countFile = countDir = count = 0;
-
-        // Open the current directory
-        if (put_rc(f_opendir(&dir, cl.tmp))) {
-
-            while (TRUE) {
-                // Read a directory item
-                if (!put_rc(f_readdir(&dir, &finfo)))
-                    break;
-                // Break on end of dir
-                if (finfo.fname[0] == 0)
-                    break;
-                // Ignore dot entry
-                //if (finfo.fname[0] == '.')
-                //    continue;
-
-                // Print everything that is not hidden
-                if (!hidden && (finfo.fattrib & AM_HID))
-                    continue;
-                // It is a file or directory
-
-                size = finfo.fsize;
-                if (size < 1024) {
-                    sized = size;
-                    units = ' ';
-                } else if (size < 1048576) {
-                    sized = (double) (size / 1024.0);
-                    units = 'k';
-                } else if (size < 1073741824) {
-                    sized = size / 1048576.0;
-                    units = 'M';
-                } else {
-                    sized = size / 1073741824.0;
-                    units = 'G';
-                }
-                integer = sized;
-                decimal = (sized - integer) * 100;
-
-                time = finfo.fdate;
-                year = (time >> 9 & 0x7F) + 1980;
-                month = time >> 5 & 0x1F;
-                day = time & 0x1F;
-
-                time = finfo.ftime;
-                hour = time >> 11 & 0x1F;
-                minute = time >> 5 & 0x3F;
-                second = (time & 0x1F) * 2;
-                printf("%s %4d.%-2d %cByte  %d/%d/%d\t%02d:%02d\t%s\r\n", ByteToFatAttributes(finfo.fattrib), integer, decimal, units, day, month, year, hour, minute, GetFileNamePointer(&finfo));
-                count++;
-                if (finfo.fattrib & AM_DIR) {
-                    countDir++;
-                } else {
-                    countFile++;
-                    totalSize += finfo.fsize;
-                }
-
-            }
-            // Close the current directory
-            put_rc(f_closedir(&dir));
-
-            if (count == 0)
-                printf("The directory is empty\r\n");
-            else
-                printf("Total itme(s): %d\r\n", count);
-
-            printf("%4u File(s), %10lu bytes\r\n%4u Dir(s)", countFile, totalSize, countDir);
-            if (f_getfree("0", (DWORD*) & totalSize, &fs) == FR_OK)
-                printf(", %10lu Mbytes free\r\n", totalSize * fs->csize / 2 / 1024);
-        }
-
-    } else {
-        CliTooManyArgumnets(argv[0]);
-    }
-}
-
-void FileSystem(int argc, char **argv) {
+int FileSystem(int argc, char **argv) {
 
     BYTE res, b1;
     FATFS *fs;
@@ -271,9 +143,10 @@ void FileSystem(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
-void Move(int argc, char **argv) {
+int Move(int argc, char **argv) {
 
     FRESULT fres;
 
@@ -309,9 +182,14 @@ void Move(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
-void DeleteDir(int argc, char **argv) {
+
+
+
+
+int Delete(int argc, char **argv) {
 
     FRESULT fres;
 
@@ -320,50 +198,6 @@ void DeleteDir(int argc, char **argv) {
     } else if (argc == 2) {
         // Check the existence of the resource
         if ((fres = f_unlink(argv[1])) != FR_OK) {
-
-            if (fres == FR_NO_FILE)
-                // File not found
-                CliNoSuchFileOrDirectory();
-            else if (fres == FR_DENIED)
-                printf("The directory is not empty\r\n");
-            else
-                // Print the error message
-                put_rc(fres);
-        } else {
-            CliCreateFileListOfFilesEntry();
-        }
-    } else if (argc == 3) {
-        if (strcmp(argv[2], "-not-empty") == 0) {
-            // Check the existence of the resource
-            if (empty_directory(argv[1]) == FR_OK)
-
-                if ((fres = f_unlink(argv[1])) != FR_OK) {
-
-                    if (fres == FR_NO_FILE)
-                        // File not found
-                        CliNoSuchFileOrDirectory();
-                    else
-                        // Print the error message
-                        put_rc(fres);
-                } else {
-                    CliCreateFileListOfFilesEntry();
-                }
-        }
-    } else {
-        CliTooManyArgumnets(argv[0]);
-    }
-}
-
-void Delete(int argc, char **argv) {
-
-    FRESULT fres;
-
-    if (argc < 2) {
-        CliTooFewArgumnets(argv[0]);
-    } else if (argc == 2) {
-        // Check the existence of the resource
-        if ((fres = f_unlink(argv[1])) != FR_OK) {
-
             if (fres == FR_NO_FILE)
                 // File not found
                 CliNoSuchFileOrDirectory();
@@ -376,10 +210,10 @@ void Delete(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
-
+    return 0;
 }
 
-void Clear(int argc, char **argv) {
+int Clear(int argc, char **argv) {
 
     extern const char escape_clear_screen[];
 
@@ -390,9 +224,10 @@ void Clear(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
-void ChangeDir(int argc, char **argv) {
+int ChangeDir(int argc, char **argv) {
 
     if (argc < 2) {
         CliTooFewArgumnets(argv[0]);
@@ -401,24 +236,32 @@ void ChangeDir(int argc, char **argv) {
             CliErrorOccurred(argv[0]);
         CliCreateFileListOfFilesEntry();
     } else {
+
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
-void Mkdir(int argc, char **argv) {
+int Mkdir(int argc, char **argv) {
+
+    FRESULT fres;
 
     if (argc < 2) {
         CliTooFewArgumnets(argv[0]);
     } else if (argc == 2) {
-        if (f_mkdir(argv[1]) != FR_OK)
+        if ((fres = f_mkdir(argv[1])) != FR_OK) {
+            put_rc(fres);
             CliErrorOccurred(argv[0]);
+        }
         CliCreateFileListOfFilesEntry();
     } else {
+
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
-void Copy(int argc, char **argv) {
+int Copy(int argc, char **argv) {
 
     extern FIL ftmp1, ftmp2;
     FIL *fr, *fw;
@@ -462,54 +305,15 @@ void Copy(int argc, char **argv) {
             CliCreateFileListOfFilesEntry();
         }
     } else {
+
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
-void Cat(int argc, char **argv) {
 
-    extern FIL ftmp1;
-    FIL *fp = &ftmp1;
-    FRESULT fres;
-    int i = 0, read;
-    char *p, extension[32];
 
-    if (argc < 2) {
-        CliTooFewArgumnets(argv[0]);
-    } else if (argc == 2) {
-
-        if ((p = strrchr(argv[1], '.')) != NULL) {
-
-            while ((extension[i++] = toupper(*p++)) != '\0' && i < sizeof (extension));
-
-            if (strstr(extension, "TXT") != NULL || strstr(extension, "INI") != NULL || strstr(extension, "PLS") != NULL) {
-
-                if (!put_rc(f_open(fp, argv[1], FA_READ))) {
-                    // Unable to create temporary file.
-                    CliNoSuchFileOrDirectory();
-                    return;
-                }
-                printf("\r\n");
-                while ((fres = f_read(fp, cl.tmp, sizeof (cl.tmp), &read)) == FR_OK) {
-                    if (read == 0)
-                        break;
-                    SerialWrite(cl.tmp, read);
-                }
-                put_rc(f_close(fp));
-                printf("\r\n");
-            } else {
-                CliOnlyTextual();
-            }
-        } else {
-            CliOnlyTextual();
-        }
-
-    } else {
-        CliTooManyArgumnets(argv[0]);
-    }
-}
-
-void Reboot(int argc, char **argv) {
+int Reboot(int argc, char **argv) {
 
     extern char *MyScratchPad;
     DWORD *p;
@@ -529,11 +333,13 @@ void Reboot(int argc, char **argv) {
         Reset();
 
     } else {
+
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
-void Debug(int argc, char **argv) {
+int Debug(int argc, char **argv) {
 
     int i;
     extern char *MyScratchPad;
@@ -564,6 +370,7 @@ void Debug(int argc, char **argv) {
             const char *gpio7_off[] = {"gpio", "7", "36", "500", "0", "0"};
 
             for (i = 0; i < 3; i++) {
+
                 Gpio(6, gpio0_on);
                 Gpio(6, gpio1_on);
                 Gpio(6, gpio2_on);
@@ -590,9 +397,10 @@ void Debug(int argc, char **argv) {
             Reset();
         }
     }
+    return 0;
 }
 
-void Flash(int argc, char **argv) {
+int Flash(int argc, char **argv) {
 
     extern char *MyScratchPad;
     DWORD *p;
@@ -619,11 +427,13 @@ void Flash(int argc, char **argv) {
             Reset();
         }
     } else {
+
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
-void Version(int argc, char **argv) {
+int Version(int argc, char **argv) {
 
     extern char *MyScratchPad;
     extern configuration config;
@@ -632,8 +442,10 @@ void Version(int argc, char **argv) {
         printf("%s\r\n", MyScratchPad);
         printf("Embedded MP3 Player v%d.%d\r\n", config.console.versionMajor, config.console.versionMinor);
     } else {
+
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
 
@@ -673,7 +485,7 @@ void Version(int argc, char **argv) {
 #define version_VERSION     33
 #define vol_VOLUME          34
 
-void Help(int argc, char **argv) {
+int Help(int argc, char **argv) {
 
     int i;
 
@@ -718,8 +530,9 @@ void Help(int argc, char **argv) {
             case cat_CAT:
                 // Command cat
                 printf("Print the contents of a textual file.\r\n");
-                CliUsageCommand("cat file");
-                printf("file\tName of textual file\r\n");
+                CliUsageCommand("cat file [-bin]");
+                printf("file\tName of textual file (.txt, .ini or .pls)\r\n");
+                printf("-bin\tforce binary transfer\r\n");
                 CliUsageExample("cat conf.ini");
                 break;
 
@@ -737,7 +550,7 @@ void Help(int argc, char **argv) {
                 // Command cfg
                 printf("Changes the console port configuration values.\r\n");
                 CliUsageCommand("cfg [opt]");
-                printf("opt\t0 = UART, 1 = USB\r\n");
+                printf("opt\t0 = UART, 1 = USB and 2 = I2C\r\n");
                 CliUsageExample("cfg 1");
                 break;
 
@@ -864,9 +677,10 @@ void Help(int argc, char **argv) {
             case ls_LIST:
                 // Command ls
                 printf("Return the contents of the working directory.\r\n");
-                CliUsageCommand("ls [-l[a]]");
+                CliUsageCommand("ls [-la] [dir]");
                 printf("l\tlong format\r\n");
                 printf("a\tincludes hidden files\r\n");
+                printf("dir\trelative path\r\n");
                 CliUsageExample("ls -la");
                 break;
 
@@ -934,15 +748,17 @@ void Help(int argc, char **argv) {
                 printf("Starts a recording in MP3 or Ogg encoding format\r\n");
                 printf("Embedded MP3 supports all MP3 samplerates and bitrates, in stereo and mono, both with constant bit-rate (CBR) or variable bitrate (VBR).\r\n");
                 printf("The Ogg Vorbis Encoder supports encoding in mono and stereo, with any samplerate between 1 and 48000 Hz, and with different quality settings. Ogg Vorbis is always encoded using variable bitrate (VBR).\r\n");
-                CliUsageCommand("rec file [s, b, g, m, v, f]");
-                printf("file\tname of the track\r\n");
+                CliUsageCommand("rec file [s, b, g, m, v, f, i]");
+                printf("file\tname of the track (it will be ignored if i > 0)\r\n");
                 printf("s\tsamplerate (Hz): 8000 ... 48000\r\n");
                 printf("b\tbitrate (kbit/s): 32 ... 320\r\n");
                 printf("g\tgain (0 ... 63, 0 = auto gain)\r\n");
                 printf("m\tmax auto gain (0 ... 63)\r\n");
                 printf("v\tmode 0 = Quality Mode, 1 = VBR, 2 = ABR or 3 = CBR\r\n");
                 printf("f\tformat 0 = mp3 or 1 = ogg\r\n");
-                CliUsageExample("rec rec.mp3 44100 160 0 5 1 0");
+                printf("c\tChannels: 0 = Joint stereo (common AGC), 1 = Dual channel (separate AGC), 2 = Left, 3 = Right, 4 = Mono\r\n");
+                printf("i\ttime intervals (sec): 0 = disabled or 15 ... 3600\r\n");
+                CliUsageExample("rec rec.mp3 44100 160 0 5 1 0 0 0");
                 break;
 
             case rtcc_RTCC:
@@ -969,10 +785,10 @@ void Help(int argc, char **argv) {
             case rmdir_REMOVE_DIR:
                 // Command rmdir
                 printf("Removes a directory\r\n");
-                CliUsageCommand("rmdir dir");
+                CliUsageCommand("rmdir dir [-not-empty]");
                 printf("dir\tname of the directory to remove\r\n");
                 printf("-not-empty\tremoves a not empty directory\r\n");
-                CliUsageExample("rmdir folder [-not-empty]");
+                CliUsageExample("rmdir recs -not-empty");
                 break;
 
             case speed_SPEED_SHIFTER:
@@ -1034,13 +850,14 @@ void Help(int argc, char **argv) {
                 printf("att\tvolume attenuation in 0.5dB steps (255 = sound off ... 0 = max vol)\r\n");
                 printf("bal\tchannel attenuation in percentage of volume (L = -100%% ... 0%% ... 100%% = R)\r\n");
                 CliUsageExample("vol 10 0");
+
                 break;
 
             default:
                 CliCommandNotFound(argv[1]);
         }
-
     }
+    return 0;
 }
 
 BOOL CheckFileExistence(char *p) {
@@ -1050,6 +867,7 @@ BOOL CheckFileExistence(char *p) {
 
     if (fres == FR_OK)
         return TRUE;
+
     return FALSE;
 }
 
@@ -1078,7 +896,7 @@ const char *ByteToFatAttributes(BYTE att) {
     return str;
 }
 
-char *GetFileNamePointer(FILINFO *finfo) {
+char *GetFileNamePointer(FILINFO * finfo) {
 
     if (finfo->lfname == NULL)
         return finfo->fname;
@@ -1096,7 +914,6 @@ BOOL put_rc(FRESULT rc) {
             "INVALID_NAME\0" "DENIED\0" "EXIST\0" "INVALID_OBJECT\0" "WRITE_PROTECTED\0"
             "INVALID_DRIVE\0" "NOT_ENABLED\0" "NO_FILE_SYSTEM\0" "MKFS_ABORTED\0" "TIMEOUT\0"
             "LOCKED\0" "NOT_ENOUGH_CORE\0" "TOO_MANY_OPEN_FILES\0";
-
 
     if (rc != FR_OK) {
         for (i = 0; i != rc && *str; i++) {
@@ -1124,44 +941,46 @@ BOOL checkFatAttributes(FILINFO *finfo, BYTE attributes) {
 
     if (positive == attributes && negative == 0)
         return TRUE;
+
     return FALSE;
 }
 
-FRESULT empty_directory(char* path) {
-
-    UINT i, j;
-    FRESULT fr;
-    DIR dir;
-    // This function is recursive
-    FILINFO fno;
-
-#if _USE_LFN
-    fno.lfname = 0; /* Eliminate LFN output */
-#endif
-    fr = f_opendir(&dir, path);
-    if (fr == FR_OK) {
-        for (i = 0; path[i]; i++);
-        path[i++] = '/';
-        for (;;) {
-            fr = f_readdir(&dir, &fno);
-            if (fr != FR_OK || !fno.fname[0]) break;
-            if (fno.fname[0] == '.') continue;
-            j = 0;
-            do
-                path[i + j] = fno.fname[j]; while (fno.fname[j++]);
-            if (fno.fattrib & AM_DIR) {
-                fr = empty_directory(path);
-                if (fr != FR_OK) break;
-            }
-            fr = f_unlink(path);
-            if (fr != FR_OK) break;
-        }
-        path[--i] = '\0';
-        f_closedir(&dir);
-    }
-
-    return fr;
-}
+//FRESULT empty_directory(char* path) {
+//
+//    UINT i, j;
+//    FRESULT fr;
+//    DIR dir;
+//    // This function is recursive
+//    FILINFO fno;
+//
+//#if _USE_LFN
+//    fno.lfname = 0; /* Eliminate LFN output */
+//#endif
+//    fr = f_opendir(&dir, path);
+//    if (fr == FR_OK) {
+//        for (i = 0; path[i]; i++);
+//        path[i++] = '/';
+//        for (;;) {
+//            fr = f_readdir(&dir, &fno);
+//            if (fr != FR_OK || !fno.fname[0]) break;
+//            if (fno.fname[0] == '.') continue;
+//            j = 0;
+//            do
+//                path[i + j] = fno.fname[j]; while (fno.fname[j++]);
+//            if (fno.fattrib & AM_DIR) {
+//                fr = empty_directory(path);
+//                if (fr != FR_OK) break;
+//            }
+//            fr = f_unlink(path);
+//
+//            if (fr != FR_OK) break;
+//        }
+//        path[--i] = '\0';
+//        f_closedir(&dir);
+//    }
+//
+//    return fr;
+//}
 
 FRESULT scan_files(
         char* path /* Pointer to the working buffer with start path */
@@ -1191,6 +1010,7 @@ FRESULT scan_files(
                 if (res != FR_OK) break;
             } else {
                 //				xprintf(PSTR("%s/%s\n"), path, fn);
+
                 AccFiles++;
                 AccSize += finfo.fsize;
             }
@@ -1206,15 +1026,31 @@ void put_dump(const BYTE *buff, DWORD ofs, BYTE cnt) {
     char buf[256];
 
     sprintf(buf, "%08lX:", ofs);
-    puts(buf);
+    printf(buf);
 
     for (i = 0; i < cnt; i++) {
         //printf(" %02X", buff[i]);
         sprintf(buf, " %02X", buff[i]);
-        puts(buf);
+        printf(buf);
     }
 
-    puts(" ");
+    printf(" ");
+
     for (i = 0; i < cnt; i++)
         putc((buff[i] >= ' ' && buff[i] <= '~') ? buff[i] : '.');
+}
+
+void commandsTask(void) {
+    extern int argc;
+    extern char *argv[];
+    extern int (*commandToCall)(int, char**);
+
+    // Call a new command or continue to call the same command to compleate a task
+    if (commandToCall != NULL) {
+        if (commandToCall(argc, argv) == 0) {
+            // Command function return with 0 => command ended
+            commandToCall = NULL;
+            CliReprintConsole();
+        }
+    }
 }

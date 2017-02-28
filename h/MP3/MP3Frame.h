@@ -1,15 +1,14 @@
 /*********************************************************************
  *
- *  MP3 Encoder and Decoder Application Entry Point
+ *  MP3 MP3 frame Application Entry Point
  *
  *********************************************************************
- * FileName:        Play.h
- * Dependencies:    Compiler.h GenericTypeDefs.h HardwareProfile.h
- * Processor:       PIC32MX250F128B
+ * FileName:        MP3Frame.h
+ * Dependencies:
+ * Processor:       PIC32MX795F512L
  * Compiler:        Microchip XC32 v1.11a or higher
- * Company:         LP Systems
- * Author:	    Luca Pascarella luca.pascarella@gmail.com
- * Web Site:        www.lucapascarella.it
+ * Company:         xxx
+ * Author:	    Luca Pascarella www.lucapascarella.it
  *
  * Software License Agreement
  *
@@ -31,26 +30,50 @@
  * Change History: In progress
  * Rev   Description
  * ----  -----------------------------------------
- * 1.0   Initial release (1 September 2013, 16.00)
- *
+ * 
  ********************************************************************/
 
-#ifndef PLAY_H
-#define	PLAY_H
+#ifndef MP3_FRAME_H
+#define	MP3_FRAME_H
 
-#include <string.h>
-#include "Compiler.h"
-#include "GenericTypeDefs.h"
-#include "HardwareProfile.h"
+typedef union {
+    //DWORD dword;
 
-#define PLAY_IDLE               0
+    struct __PACKED {
+        BYTE LB;
+        BYTE HB;
+        BYTE UB;
+        BYTE MB;
+    } byte;
 
+    // little endin correction
 
-int PlayTaskHandler(void);
+    struct {
+        // First 8 bit
+        BYTE sync1 : 8;
 
-int Play(int, char **);
-BOOL PausePlay(int, char **);
-BOOL StopPlay(int, char **);
-BOOL InfoPlay(int, char **);
+        // Second 8 bit
+        BYTE protection : 1;
+        BYTE layerDesc : 2;
+        BYTE versionID : 2;
+        BYTE sync2 : 3;
 
-#endif // RECORD_H
+        // Third 8 bit
+        BYTE reserved : 1;
+        BYTE padding : 1;
+        BYTE sampling : 2;
+        BYTE bitrate : 4;
+
+        // Fourth 8 bit
+        BYTE emphasis : 2;
+        BYTE original : 1;
+        BYTE copyright : 1;
+        BYTE modeExtension : 2;
+        BYTE channelMode : 2;
+    } frame;
+} MP3_FRAME;
+
+DWORD CalcFrameSize(BYTE *buffer, double *duration);
+BOOL CheckFrameSyncBufferHead(BYTE *buffer);
+
+#endif

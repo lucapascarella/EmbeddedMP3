@@ -47,19 +47,22 @@
 #define ENABLED         1
 
 #define isUARTEnabled() (config.gpio[GPIO_4_RX].mode == GPIO_S_UART && config.gpio[GPIO_5_TX].mode == GPIO_S_UART)
-#define SER_BUF_SIZE    (1024ul * 4)
+#define UART_BUFFER_SIZE         1024
 
-typedef struct {
-    char buff[SER_BUF_SIZE];
-    int put; // Indica la successiva posizione libera
-    int get; // Indica la prima posizione piena
-    // Il buffer è vuoto se put == get. E' pieno se ((put+1)%SER_BUF_SIZE) == get
-} CIRCULAR_BUFFER;
+typedef struct __attribute__((__packed__)) {
+    CHAR txBuf[UART_BUFFER_SIZE];
+    WORD txLen;
+    CHAR rxBuf[UART_BUFFER_SIZE];
+    WORD rxHead;
+    WORD rxTail;
+    struct {
+        BYTE dmaTXBusyFlag : 1; // DMA TX busy flag
+    } flags;
+} UART_CONFIG;
 
 void UartInit(DWORD);
 WORD UartWrite(CHAR8 *buffer, WORD count);
+WORD UartWriteDirectly(CHAR8 *buffer, WORD count);
 WORD UartRead(CHAR8 *buffer, WORD count);
-BOOL UartIsByteAviableInRX(void);
-
 
 #endif // UART_H

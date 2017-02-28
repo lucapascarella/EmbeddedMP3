@@ -167,7 +167,7 @@ int PlayTaskHandler(void) {
             verbosePrintf(VER_DBG, "File opened successful");
             // Initialize the decoder
             // Todo spostare questa funzione in VLSI
-            VLSIWriteReg(VLSI_ADD_MODE, VLSI_VAL_MODE_DECODE, SPI_BRG_12MHZ);
+            VLSIWriteReg(VLSI_ADD_MODE, VLSI_VAL_MODE_DECODE, SPI_BRG_12_5MHZ);
             // Initialize the buffer counter and the plaing indicator
             read = write = 0;
             playIndicator = TRUE;
@@ -322,7 +322,7 @@ int PlayTaskHandler(void) {
     return mp3PlaySM;
 }
 
-void Play(int argc, char **argv) {
+int Play(int argc, char **argv) {
 
     //    return_t *rtn;
     //    option_t *optList, *thisOpt;
@@ -366,6 +366,7 @@ void Play(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
 BOOL PausePlay(int argc, char **argv) {
@@ -480,7 +481,7 @@ BOOL InfoPlay(int argc, char **argv) {
     return FALSE;
 }
 
-void FPlay(int argc, char **argv) {
+int FPlay(int argc, char **argv) {
 
     int speed = 0;
 
@@ -497,7 +498,7 @@ void FPlay(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
-
+    return 0;
 }
 // Speed Shifter allows the playback tempo to be changed without changing the playback pitch.
 // The playback tempo is speedShifter / 16384, i.e. 16384 is the normal speed. The minimum speed is
@@ -509,7 +510,7 @@ void FPlay(int argc, char **argv) {
 //
 // Speed Shifter and EarSpeaker can not be used at the same time. Speed Shifter overrides EarSpeaker.
 
-void SpeedShifter(int argc, char **argv) {
+int SpeedShifter(int argc, char **argv) {
 
     float f;
     long speed = 0;
@@ -531,7 +532,7 @@ void SpeedShifter(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
-
+    return 0;
 }
 
 // rateTune finetunes the samplerate in 1 ppm steps. This is useful in streaming applications
@@ -539,7 +540,7 @@ void SpeedShifter(int argc, char **argv) {
 // speed, positive values speed up, negative values slow down. To calculate rateTune for a speed,
 // use (x - 1.0) * 1000000. For example 5.95% speedup (1:0595 - 1.0) * 1000000 = 59500.
 
-void RateTune(int argc, char **argv) {
+int RateTune(int argc, char **argv) {
 
     float f;
     LONG speed = 0;
@@ -556,10 +557,10 @@ void RateTune(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
-
+    return 0;
 }
 
-void Semitone(int argc, char **argv) {
+int Semitone(int argc, char **argv) {
 
     LONG semitone;
     double result, exponent;
@@ -588,10 +589,10 @@ void Semitone(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
-
+    return 0;
 }
 
-void EarSpeaker(int argc, char **argv) {
+int EarSpeaker(int argc, char **argv) {
 
     LONG ear = 0;
 
@@ -606,9 +607,10 @@ void EarSpeaker(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
-void Playlist(int argc, char **argv) {
+int Playlist(int argc, char **argv) {
 
     if (argc == 1) {
         // Copy in Lfname gloabal variable the name of the default file
@@ -623,9 +625,10 @@ void Playlist(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
-
+    return 0;
 }
 
-void Bookmark(int argc, char **argv) {
+int Bookmark(int argc, char **argv) {
     printf("The command is not implemented yet\r\n");
+    return 0;
 }

@@ -5,10 +5,10 @@
  *********************************************************************
  * FileName:        Logging.h
  * Dependencies:    Compiler.h GenericTypeDefs.h HardwareProfile.h
- * Processor:       PIC32MX250F128B
+ * Processor:       PIC32MX270F256B
  * Compiler:        Microchip XC32 v1.11a or higher
  * Company:         LP Systems
- * Author:	    Luca Pascarella luca.pascarella@gmail.com
+ * Author:          Luca Pascarella luca.pascarella@gmail.com
  * Web Site:        www.lucapascarella.it
  *
  * Software License Agreement
@@ -46,17 +46,17 @@
 #include "MDD File System/Wrapper.h"
 
 #define	LOG_NONE	0	// Do nothing
-#define	LOG_MIN     	1	// Minimal log
+#define	LOG_MIN     1	// Minimal log
 #define	LOG_NORMAL 	2	// Normal log
 #define	LOG_DEBUG	3	// Debug-level messages
 
 // Initialize the file handle to the log file.
-BOOL openLogFile();
+BOOL openLogFile(void);
 
 // closes a log file opend in openLogFile function.
-void closeLogFile();
+void closeLogFile(void);
 
 // write to a log file. 2nd and following arguments are like in printf.
-void writeLogFile(int severity, char* progname, char* format, ...);
+void writeToLogFile(int severity, const char* progname, char* format, ...);
 
 #endif

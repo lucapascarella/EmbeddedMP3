@@ -56,7 +56,7 @@
 
 // Clock frequency values
 // These directly influence timed events using the Tick module.  They also are used for UART and SPI baud rate generation.
-#define GetSystemClock()		(50000000ul)		// Hz
+#define GetSystemClock()                (50000000ul)		// Hz
 #define GetInstructionClock()           (GetSystemClock()/1)	// Normally GetSystemClock()/4 for PIC18, GetSystemClock()/2 for PIC24/dsPIC, and GetSystemClock()/1 for PIC32.  Might need changing if using Doze modes.
 #define GetPeripheralClock()            (GetSystemClock()/1)	// Normally GetSystemClock()/4 for PIC18, GetSystemClock()/2 for PIC24/dsPIC, and GetSystemClock()/1 for PIC32.  Divisor may be different if using a PIC32 since it's configurable.
 
@@ -68,14 +68,14 @@
 // Hardware I/O pin mappings
 
 // LEDs
-#define LEDs_TRIS			(TRISBbits.TRISB4)	// Ref LEDs
-#define LED_RED_ON()                    {TRISBbits.TRISB4 = 0; LATBbits.LATB4 = 1;}
-#define LED_BLUE_ON()                   {TRISBbits.TRISB4 = 0; LATBbits.LATB4 = 0;}
-#define LEDs_OFF()                      (TRISBbits.TRISB4 = 1)
-#define LEDs_TOGGLE()                   {TRISBbits.TRISB4 = 0; mPORTBToggleBits(BIT_4);}
+#define LEDs_TRIS                       (TRISBbits.TRISB4)	// Ref LEDs
+#define LED_RED_ON()                    {TRISBCLR = 0x10; LATBSET = 0x10;}
+#define LED_BLUE_ON()                   {TRISBCLR = 0x10; LATBCLR = 0x10;}
+#define LEDs_OFF()                      (TRISBSET = 0x10)
+#define LEDs_TOGGLE()                   {TRISBCLR = 0x10; LATBINV = 0x10;}
 
-#define LED_RED_IO()                    (LATBbits.LATB4)
-#define LED_BLUE_IO()                   (LATBbits.LATB4)
+//#define LED_RED_IO()                    (LATBbits.LATB4)
+//#define LED_BLUE_IO()                   (LATBbits.LATB4)
 
 #define GPIO_0_TRIS                     TRISBbits.TRISB8    // SCL1
 #define GPIO_1_TRIS                     TRISBbits.TRISB9    // SDA1
@@ -158,6 +158,13 @@
 #define UART_TX_TRIS                    (TRISBbits.TRISB0)      // Testata ed è OK
 #define UART_RX_TRIS                    (TRISBbits.TRISB1)      // Testata ed è OK
 
+// DMA 3 for REC purpose
+#define UART_DMA_CHANNEL                 DMA_CHANNEL2
+#define UART_DMA_WORKING()               (DCH2INTbits.CHBCIF == FALSE)
+#define UART_DMA_CLR_BTC()               (DCH2INTCLR = 0x00FF)
+#define UART_DMA_SET_BTC()               (DCH2INTSET = 0x0008)
+
+
 #ifndef INPUT
 #define INPUT                           1
 #endif
@@ -169,16 +176,20 @@
 
 
 // VS1063
-#define MP3_XCS_O                       (LATBbits.LATB2)
+//#define MP3_XCS_O                       (LATBbits.LATB2)
 #define MP3_XCS_TRIS                    (TRISBbits.TRISB2)
-//#define MP3_XCS_ADC                   (ANSELBbits.ANSB2)
+#define MP3_XCS_O_LOW()                 (LATBCLR = 0x0004)
+#define MP3_XCS_O_HIGH()                (LATBSET = 0x0004)
 
-#define MP3_XDCS_O                      (LATBbits.LATB13)
+//#define MP3_XDCS_O                      (LATBbits.LATB13)
 #define MP3_XDCS_TRIS                   (TRISBbits.TRISB13)
-//#define MP3_XDCS_ADC                  (ANSELBbits.ANSB)
+#define MP3_XDCS_O_LOW()                (LATBCLR = 0x2000)
+#define MP3_XDCS_O_HIGH()               (LATBSET = 0x2000)
 
-#define MP3_XRESET_O                    (LATBbits.LATB15)
+//#define MP3_XRESET_O                    (LATBbits.LATB15)
 #define MP3_XRESET_TRIS                 (TRISBbits.TRISB15)
+#define MP3_XRESET_O_LOW()              (LATBCLR = 0x8000)
+#define MP3_XRESET_O_HIGH()             (LATBSET = 0x8000)
 
 #define MP3_DREQ_I                      (PORTBbits.RB7)
 #define MP3_DREQ_TRIS                   (TRISBbits.TRISB7)
@@ -232,15 +243,18 @@
 //#define SPI_START_CFG_2                 (SPI_ENABLE)
 
 // Define the SPI frequency
-#define SPI_BRG_24MHZ                   (0x00)      // With 48MHz clock
-#define SPI_BRG_12MHZ                   (0x01)      // With 48MHz clock
-#define SPI_BRG_8MHZ                    (0x02)      // With 48MHz clock
-#define SPI_BRG_1MHZ                    (0x17)      // With 48MHz (0x13 with 40Mhz)
+#define SPI_BRG_25MHZ                   (0x00)      // With 50MHz clock
+#define SPI_BRG_12_5MHZ                 (0x01)      // With 50MHz clock
+#define SPI_BRG_8_33MHZ                 (0x02)      // With 50MHz clock
+#define SPI_BRG_1MHZ                    (0x18)      // With 50MHz (0x13 with 40Mhz)
 
 
-#define SD_CS_O                         (LATBbits.LATB3)
-#define SD_CS_I                         (PORTBbits.RB3)
+//#define SD_CS_O                         (LATBbits.LATB3)
+//#define SD_CS_I                         (PORTBbits.RB3)
 #define SD_CS_TRIS                      (TRISBbits.TRISB3)
+#define SD_CS_CLR                       (LATBCLR = 0x08)
+#define SD_CS_SET                       (LATBSET = 0x08)
+#define SD_CS_INV                       (LATBINV = 0x08)
 
 #define MEDIA_SOFT_DETECT
 
@@ -264,5 +278,10 @@
 #define SPIOUT                          TRISAbits.TRISA4
 #define SPIIN_PULLUP                    (CNPUBbits.CNPUB8)
 
+// DMA 3 for REC purpose
+#define REC_DMA_CHANNEL                 DMA_CHANNEL3
+#define REC_DMA_WORKING()               (DCH3INTbits.CHBCIF == FALSE)
+#define REC_DMA_CLR_BTC()               (DCH3INTCLR = 0x00FF)
+#define REC_DMA_SET_BTC()               (DCH3INTSET = 0x0008)
 
 #endif // #ifndef HARDWARE_PROFILE_H

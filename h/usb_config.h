@@ -169,8 +169,8 @@
 
 /* CDC */
 #define CDC_COMM_INTF_ID        0x01
-#define CDC_COMM_EP              2
-#define CDC_COMM_IN_EP_SIZE      10
+#define CDC_COMM_EP             2
+#define CDC_COMM_IN_EP_SIZE     10
 
 #define CDC_DATA_INTF_ID        0x02
 #define CDC_DATA_EP             3

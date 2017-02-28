@@ -41,7 +41,7 @@
 #include "Utilities/printer.h"
 #include "MP3/VS1063.h"
 
-void Pause(int argc, char **argv) {
+int Pause(int argc, char **argv) {
 
     BOOL play, rec;
 
@@ -50,9 +50,10 @@ void Pause(int argc, char **argv) {
 
     if (play == FALSE && rec == FALSE)
         NoTrackInExecution();
+    return 0;
 }
 
-void Stop(int argc, char **argv) {
+int Stop(int argc, char **argv) {
 
     BOOL play, rec;
 
@@ -61,9 +62,10 @@ void Stop(int argc, char **argv) {
 
     if (play == FALSE && rec == FALSE)
         NoTrackInExecution();
+    return 0;
 }
 
-void Info(int argc, char **argv) {
+int Info(int argc, char **argv) {
 
     BOOL play, rec;
     //    SCI_MODE sci_mode;
@@ -83,9 +85,10 @@ void Info(int argc, char **argv) {
 
     if (play == FALSE && rec == FALSE)
         NoTrackInExecution();
+    return 0;
 }
 
-void Volume(int argc, char **argv) {
+int Volume(int argc, char **argv) {
 
     int left, right, vol, balance;
 
@@ -105,9 +108,10 @@ void Volume(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[1]);
     }
+    return 0;
 }
 
-void Treble(int argc, char **argv) {
+int Treble(int argc, char **argv) {
 
     int treble_db, treble_freq;
 
@@ -124,9 +128,10 @@ void Treble(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
-void Bass(int argc, char **argv) {
+int Bass(int argc, char **argv) {
 
     int bass_db, bass_freq;
 
@@ -141,6 +146,7 @@ void Bass(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
 BOOL IsConvertible(char *pstr) {

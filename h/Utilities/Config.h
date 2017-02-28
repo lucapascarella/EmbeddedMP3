@@ -61,6 +61,7 @@ typedef struct {
     struct {
         int baudrate;
         BYTE console;
+        BYTE echo;
         BYTE port;
         BYTE verbose;
         BYTE versionMajor;
@@ -83,6 +84,7 @@ typedef struct {
         int gain;
         int max_gain;
         int format;
+        int adcMode;
     } record;
 
     union {

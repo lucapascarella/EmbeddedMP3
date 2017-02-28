@@ -35,6 +35,8 @@
  *
  ********************************************************************/
 
+#include <xc.h>
+
 #include "MP3/Record.h"
 #include "MP3/MP3.h"
 #include "MP3/VS1063.h"
@@ -45,83 +47,172 @@
 #include "Utilities/Utilities.h"
 #include "Delay/Tick.h"
 #include "Utilities/GPIO.h"
-#include "FatFS/ff.h"
 #include "MP3/Play.h"
 #include "Commands.h"
+#include "Delay/Delay.h"
+#include "MP3/MP3Frame.h"
+#include "Utilities/RTCC.h"
 
-static enum {
-    MP3_RECORD_HOME = 0,
-
-    MP3_RECORD_OPEN_FILE,
-    MP3_RECORD_OPEN_NEXT_FILE,
-    MP3_RECORD_OPENED_SUCCESSFUL,
-    MP3_RECORD_OPENED_FAILED,
-
-    MP3_RECORD_READ_BUFFER,
-    MP3_RECORD_WRITE_BUFFER,
-
-    MP3_RECORD_PAUSE_WAIT_ENTERING,
-    MP3_RECORD_PAUSE_WAIT,
-    MP3_RECORD_PAUSE_DELAY_ENTERING,
-    MP3_RECORD_PAUSE_DELAY,
-    MP3_RECORD_PAUSE_EXIT,
-
-    MP3_RECORD_SEND_FINISH_RECORDING,
-    MP3_RECORD_FINISH_RECORDING,
-    MP3_RECORD_FINALIZE,
-
-    MP3_RECORD_CLOSE_FILE,
-    MP3_RECORD_CLOSED_SUCCESSFUL,
-    MP3_RECORD_CLOSED_FAILED,
-
-} mp3RecSM = MP3_RECORD_HOME;
 
 _REC_PRESET recPreSet;
-BOOL timeout;
+//BOOL timeout;
 // See ffconf.h for dimension of LFN
 extern TCHAR Lfname[];
 // See MP3.h for dimension of stream
 extern char stream[];
-DWORD tick_delay, tick_max;
+
+
+
+REC_CONFIG rec;
+
+//BOOL dmaTXBusyFlag;
+
+//void __ISR(_DMA2_VECTOR, IPL5AUTO) DmaHandler2(void) {
+//    int evFlags; // event flags when getting the interrupt
+//
+//    INTClearFlag(INT_SOURCE_DMA(DMA_CHANNEL2)); // release the interrupt in the INT controller, we're servicing int
+//
+//    evFlags = DmaChnGetEvFlags(DMA_CHANNEL2); // get the event flags
+//
+//    if (evFlags & DMA_EV_BLOCK_DONE) { // just a sanity check. we enabled just the DMA_EV_BLOCK_DONE transfer done interrupt
+//        dmaTXBusyFlag = FALSE;
+//        DmaChnClrEvFlags(DMA_CHANNEL2, DMA_EV_BLOCK_DONE);
+//    }
+////    if (evFlags & DMA_EV_CELL_DONE) { // just a sanity check. we enabled just the DMA_EV_BLOCK_DONE transfer done interrupt
+////        DmaChnClrEvFlags(DMA_CHANNEL2, DMA_EV_CELL_DONE);
+////    }
+//    
+//}
 
 int RecordTaskHandler() {
 
-    extern FIL fstream;
-    static FIL *fp = &fstream;
-    FRESULT fres;
-    static UINT read, write;
+    extern int (*commandToCall)(int, char**);
+    extern int argc;
+    extern char *argv[];
+    extern FIL fstream, ftmp2;
+    extern TCHAR Lfname[_MAX_LFN + 1];
+    BYTE index;
+    DWORD nextFrame, frameLength;
+    UINT written, size;
+    WORD i, j;
     char byte, *p, *b;
+    double duration;
 
-    switch (mp3RecSM) {
+    FAT_TIME fat_time;
+    FATFS *fs;
+    DWORD fre_clust, fre_sect, tot_sect;
 
-        case MP3_RECORD_HOME:
+    switch (rec.sm) {
+
+        case SM_REC_HOME:
             // Do nothing, wait a record command
-            Nop();
             break;
 
 
+        case SM_REC_OPEN_FILE:
 
-        case MP3_RECORD_OPEN_FILE:
+            // Configure the DMA Channel 3 to Recording purpose
+            DmaChnOpen(REC_DMA_CHANNEL, DMA_CHN_PRI3, DMA_OPEN_DEFAULT);
+            // Clear flags indicators
+            //REC_DMA_CLR_BTC();
+            REC_DMA_SET_BTC();
 
-            // Checks if incremental mode is enabled otherwise overrides file
-            if (config.record.prog_over == 0) {
-                verbosePrintf(VER_DBG, "Try to open or override: %s", Lfname);
-                fres = f_open(fp, Lfname, FA_WRITE | FA_CREATE_ALWAYS);
+            //DmaChnSetEventControl(REC_DMA_CHANNEL, DMA_EV_START_IRQ_EN | DMA_EV_START_IRQ(_DMA2_IRQ));
+
+            //            // enable the transfer done interrupt: all the characters transferred
+            //            DmaChnSetEvEnableFlags(REC_DMA_CHANNEL, DMA_EV_BLOCK_DONE);
+            //            // enable system wide multi vectored interrupts
+            //            INTSetVectorPriority(INT_VECTOR_DMA(REC_DMA_CHANNEL), INT_PRIORITY_LEVEL_5); // set INT controller priority
+            //            INTSetVectorSubPriority(INT_VECTOR_DMA(REC_DMA_CHANNEL), INT_SUB_PRIORITY_LEVEL_3); // set INT controller sub-priority
+            //            // enable the chn interrupt in the INT controller
+            //            INTEnable(INT_SOURCE_DMA(REC_DMA_CHANNEL), INT_ENABLED);
+            //            // Reset busy flag indicator
+            //            dmaTXBusyFlag = FALSE;
+
+            //            LED_RED_ON()
+            //            for (i = STREAM_BUF_SIZE / 2; i < STREAM_BUF_SIZE; i++)
+            //                stream[i] = rand();
+            //            LEDs_OFF();
+
+            //            DelayMs(10);
+            //            // Test velovità DMA
+            //            LED_RED_ON()
+            //            for (j = 0, i = STREAM_BUF_SIZE / 2; i < STREAM_BUF_SIZE; i++, j++)
+            //                stream[j] = stream[i];
+            //            LEDs_OFF();
+            //            DelayMs(10);
+            //
+            //            for (i = 0, j = STREAM_BUF_SIZE / 2; i < STREAM_BUF_SIZE / 2; i++, j++)
+            //                if (stream[i] != stream[j])
+            //                    while (1);
+
+
+            //            Nop();
+            //            DelayMs(10);
+            //            LED_RED_ON();
+            //            dmaTXBusyFlag = TRUE;
+            //            int size2 = STREAM_BUF_SIZE / 2;
+            //            DmaChnSetTxfer(REC_DMA_CHANNEL, &stream[STREAM_BUF_SIZE / 2], &stream[0], size2, size2, size2);
+            //            DmaChnStartTxfer(REC_DMA_CHANNEL, DMA_WAIT_NOT, 0);
+            //            //            for (i = 0; dmaTXBusyFlag; i++)
+            //            //                stream[i] = 0x00;
+            //            //while (dmaTXBusyFlag);
+            //            while (!DCH2INTbits.CHBCIF);
+            //            DmaChnClrEvFlags(DMA_CHANNEL2, DMA_EV_CELL_DONE);
+            //            LEDs_OFF();
+            //            DelayMs(10);
+            //            Nop();
+            //
+            //            for (i = 0, j = STREAM_BUF_SIZE / 2; i < STREAM_BUF_SIZE / 2; i++, j++)
+            //                if (stream[i] != stream[j])
+            //                    while (1);
+
+            // Save the global file ponter in a local pointer
+            rec.fp[0] = &fstream;
+            if (rec.intervalRec) {
+                rec.sm = SM_REC_OPENED_SUCCESSFUL;
+                // Do samething for the second file pointer
+                rec.fp[1] = &ftmp2;
+                // Get date and time
+                rtccGetDateAndTime(&rec.year, &rec.mon, &rec.day, &rec.hour, &rec.mins, &rec.sec);
+                sprintf(Lfname, "/%04d%02d%02d", rec.year, rec.mon, rec.day);
+                rec.fres = f_mkdir(Lfname);
+                //                rec.fno.fdate = fat_time.word.data;
+                //                rec.fno.ftime = fat_time.word.time;
+                //                rec.fres = f_utime(Lfname, &rec.fno);
+                if (rec.fres == FR_OK || rec.fres == FR_EXIST) {
+                    sprintf(Lfname, "/%04d%02d%02d/%02d%02d%02d.mp3", rec.year, rec.mon, rec.day, rec.hour, rec.mins, rec.sec);
+                    rec.fres = f_open(rec.fp[0], Lfname, FA_WRITE | FA_CREATE_ALWAYS);
+                    rtccIncDateAndTime(&rec.year, &rec.mon, &rec.day, &rec.hour, &rec.mins, &rec.sec, rec.intervalRec);
+                    sprintf(Lfname, "/%04d%02d%02d/%02d%02d%02d.mp3", rec.year, rec.mon, rec.day, rec.hour, rec.mins, rec.sec);
+                    rec.fres |= f_open(rec.fp[1], Lfname, FA_WRITE | FA_CREATE_ALWAYS);
+                    if (rec.fres != FR_OK)
+                        rec.sm = SM_REC_OPENED_FAILED;
+                } else {
+                    rec.sm = SM_REC_OPENED_FAILED;
+                }
             } else {
-                verbosePrintf(VER_DBG, "Try to open: %s", Lfname);
-                fres = f_open(fp, Lfname, FA_WRITE | FA_CREATE_NEW);
-            }
+                // Time intervals is disabled
+                // Checks if incremental mode is enabled otherwise overrides file
+                if (config.record.prog_over == 0) {
+                    verbosePrintf(VER_DBG, "Try to open or override: %s", Lfname);
+                    rec.fres = f_open(rec.fp[0], Lfname, FA_WRITE | FA_CREATE_ALWAYS);
+                } else {
+                    verbosePrintf(VER_DBG, "Try to open: %s", Lfname);
+                    rec.fres = f_open(rec.fp[0], Lfname, FA_WRITE | FA_CREATE_NEW);
+                }
 
-            if (fres == FR_EXIST) {
-                mp3RecSM = MP3_RECORD_OPEN_NEXT_FILE;
-            } else if (fres == FR_OK) {
-                mp3RecSM = MP3_RECORD_OPENED_SUCCESSFUL;
-            } else {
-                mp3RecSM = MP3_RECORD_OPENED_FAILED;
+                if (rec.fres == FR_EXIST) {
+                    rec.sm = SM_REC_OPEN_NEXT_FILE;
+                } else if (rec.fres == FR_OK) {
+                    rec.sm = SM_REC_OPENED_SUCCESSFUL;
+                } else {
+                    rec.sm = SM_REC_OPENED_FAILED;
+                }
             }
             break;
 
-        case MP3_RECORD_OPEN_NEXT_FILE:
+        case SM_REC_OPEN_NEXT_FILE:
 
             // Gets a copy of extension if it exist
             if ((p = strrchr(Lfname, '.')) == NULL) {
@@ -133,23 +224,23 @@ int RecordTaskHandler() {
             }
             // Check if there is already a incremental number to increase it, otherwise starts with zero
             if ((b = strrchr(Lfname, '(')) != NULL) {
-                read = atoi(b + 1);
+                rec.read = atoi(b + 1);
             } else {
-                read = 0;
+                rec.read = 0;
                 b = p;
             }
             // Copy in Lfname the incremental number and previous extension
-            sprintf(b, "(%d)%s", ++read, stream);
+            sprintf(b, "(%d)%s", ++rec.read, stream);
 
-            mp3RecSM = MP3_RECORD_OPEN_FILE;
+            rec.sm = SM_REC_OPEN_FILE;
             break;
 
 
-        case MP3_RECORD_OPENED_SUCCESSFUL:
+        case SM_REC_OPENED_SUCCESSFUL:
 
             GpioUpdateOutputState(GPIO_BIT_STARTS_REC);
 
-            verbosePrintf(VER_DBG, "File opend successful");
+            verbosePrintf(VER_DBG, "File opened successfully");
 
             // Reinitialize the VS1063 and load patch
             VLSI_SoftReset();
@@ -157,82 +248,267 @@ int RecordTaskHandler() {
             // Send all the parameters and start recording
             VLSI_InitRecording(&recPreSet);
 
-            write = read = 0;
-            mp3RecSM = MP3_RECORD_READ_BUFFER;
+            rec.toWrite = rec.read = 0;
+            rec.alt = rec.fpIndex = 0;
+            rec.sm = SM_REC_READ_BUFFER;
+
+            rec.longDuration = 0;
+            rec.frameCount = rec.fileLength = 0;
+            rec.smSub = SM_REC_SUB_DEFAULT;
             break;
 
 
-
-        case MP3_RECORD_OPENED_FAILED:
-            verbosePrintf(VER_MIN, "File: %s not found", Lfname);
+        case SM_REC_OPENED_FAILED:
+            verbosePrintf(VER_MIN, "Cannot open: %s", Lfname);
             GpioUpdateOutputState(GPIO_BIT_FILE_NOT_FOUND);
             FlashLight(100, 10, FALSE);
-            mp3RecSM = MP3_RECORD_HOME;
+            rec.sm = SM_REC_HOME;
             break;
 
 
 
-        case MP3_RECORD_READ_BUFFER:
-            read = VLSIGetArray(stream, STREAM_BUF_SIZE_RECORD, 1024);
-            if (read == 0)
+        case SM_REC_READ_BUFFER:
+            // Check the DMA busy flag
+            if (REC_DMA_WORKING())
                 break;
-            //            if (read != 0)
-            //                mp3RecSM = MP3_RECORD_WRITE_BUFFER;
-            //            break;
+
+            // The absolute theoretical maximum frame size is 2881 bytes: MPEG 2.5 Layer II, 8000 Hz @ 160 kbps, with a padding slot.
+            if (rec.read >= 4u && CheckFrameSyncBufferHead(stream) == FALSE) {
+                for (i = 0; i < rec.read; i++)
+                    if (0xFF == (BYTE) stream[i])
+                        if (rec.read - i >= 4u && CheckFrameSyncBufferHead(&stream[i]) > 0)
+                            break;
+                // Clear Block transfer complete interrupt flag
+                REC_DMA_CLR_BTC();
+                // Set the transfer source and dest addresses, source and dest size and cell size
+                size = rec.read - i;
+                DmaChnSetTxfer(REC_DMA_CHANNEL, &stream[i], &stream[0], size, size, size);
+                DmaChnStartTxfer(REC_DMA_CHANNEL, DMA_WAIT_NOT, 0);
+                rec.read = size; // There are an error reset the buffer
+                break;
+            }
+
+            // The encoding data buffer is 3712 16-bit words => 7424 bytes
+            rec.read += VLSIGetArray(&stream[rec.read], STREAM_BUF_SIZE_RECORD - rec.read, 4);
 
 
+            if (rec.intervalRec) {
+                if (rec.longDuration >= rec.intervalRec) {
+                    rec.smSub = SM_REC_SUB_CLOSE;
+                    rec.alt++;
+                    rec.fpIndex = rec.alt % 2;
+                    rec.longDuration = 0;
+                }
+                if (rec.read == 0) {
+                    switch (rec.smSub) {
+                        case SM_REC_SUB_CLOSE:
+                            index = (rec.alt + 1) % 2;
+                            rec.fres = f_close(rec.fp[index]);
+                            if (rec.fres != FR_OK) {
+                                rec.sm = SM_REC_PUT_ERROR;
+                                break;
+                            }
+                            rec.smSub++;
+                            break;
 
-        case MP3_RECORD_WRITE_BUFFER:
+                        case SM_REC_SUB_FS_STAT:
+                            rec.smSub = SM_REC_SUB_MKDIR;
+                            rec.fres = f_getfree("0", &fre_clust, &fs);
+                            if (rec.fres != FR_OK) {
+                                rec.sm = SM_REC_PUT_ERROR;
+                                break;
+                            }
+                            // Get total sectors and free sectors size in Kbyte
+                            tot_sect = (fs->n_fatent - 2) * fs->csize / 2;
+                            fre_sect = fre_clust * fs->csize / 2;
+                            // Check the free space in kByte
+                            if (fre_sect < 1000 * 1024) {
+                                rec.smSub = SM_REC_SUB_OPEN_DIR;
+                            }
+                            break;
+
+                        case SM_REC_SUB_OPEN_DIR:
+                            if ((rec.fres = f_opendir(&rec.dir, "/")) == FR_OK) {
+                                rec.smSub++;
+                                rec.fno.lfname = Lfname;
+                                rec.fno.lfsize = sizeof (Lfname);
+                                rec.ffind = FALSE;
+                            } else {
+                                rec.smSub = SM_REC_PUT_ERROR;
+                            }
+                            break;
+
+                        case SM_REC_SUB_READ_DIR:
+                            if ((rec.fres = f_readdir(&rec.dir, &rec.fno)) == FR_OK) {
+                                if (!rec.fno.fname[0]) {
+                                    if (rec.ffind)
+                                        rec.smSub = SM_REC_SUB_DELETE_DIR;
+                                    else
+                                        // Current directory is empty
+                                        rec.smSub = SM_REC_SUB_CLOSE_DIR;
+                                } else {
+                                    // Check dircetory entry
+                                    if (rec.fno.fattrib & AM_DIR) {
+                                        if (rec.ffind == FALSE) {
+                                            strcpy(rec.lfname, GetFileNamePointer(&rec.fno));
+                                            rec.fat_time.word.data = rec.fno.fdate;
+                                            rec.fat_time.word.time = rec.fno.ftime;
+                                            rec.ffind = TRUE;
+                                        } else {
+                                            fat_time.word.data = rec.fno.fdate;
+                                            fat_time.word.time = rec.fno.ftime;
+                                            if (fat_time.val < rec.fat_time.val) {
+                                                strcpy(rec.lfname, GetFileNamePointer(&rec.fno));
+                                                fat_time.word.data = rec.fno.fdate;
+                                                fat_time.word.time = rec.fno.ftime;
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                rec.sm = SM_REC_PUT_ERROR;
+                            }
+                            break;
+                        case SM_REC_SUB_DELETE_DIR:
+                            // Inviare il comando per la cancellazione di una directory
+                            argv[0] = "rec";
+                            argv[1] = rec.lfname;
+                            argv[2] = "-not-empty"; //(char*) notEmpty;
+                            argc = 3;
+                            commandToCall = DeleteDir;
+                            rec.smSub = SM_REC_SUB_CLOSE_DIR;
+                            break;
+
+                        case SM_REC_SUB_CLOSE_DIR:
+                            f_closedir(&rec.dir);
+                            //rec.smSub = SM_REC_SUB_FS_STAT;
+                            rec.smSub = SM_REC_SUB_MKDIR;
+                            break;
+
+                        case SM_REC_SUB_MKDIR:
+                            rtccGetDateAndTime(&rec.year, &rec.mon, &rec.day, &rec.hour, &rec.mins, &rec.sec);
+                            rtccIncDateAndTime(&rec.year, &rec.mon, &rec.day, &rec.hour, &rec.mins, &rec.sec, rec.intervalRec);
+                            sprintf(Lfname, "/%04d%02d%02d", rec.year, rec.mon, rec.day);
+                            rec.fres = f_mkdir(Lfname);
+                            if (rec.fres == FR_OK || rec.fres == FR_EXIST) {
+                                rec.smSub++;
+                            } else {
+                                rec.sm = SM_REC_OPENED_FAILED;
+                                break;
+                            }
+                            break;
+
+                        case SM_REC_SUB_OPEN_FILE:
+                            //rtccGetTime(&hour, &mins, &sec);
+                            sprintf(Lfname, "/%04d%02d%02d/%02d%02d%02d.mp3", rec.year, rec.mon, rec.day, rec.hour, rec.mins, rec.sec);
+                            index = (rec.alt + 1) % 2;
+                            rec.fres = f_open(rec.fp[index], Lfname, FA_WRITE | FA_CREATE_ALWAYS);
+                            if (rec.fres != FR_OK) {
+                                rec.sm = SM_REC_OPENED_FAILED;
+                                break;
+                            }
+                            rec.smSub++;
+                            break;
+                    }
+                    break;
+                } else {
+                    if (rec.read >= 4u && CheckFrameSyncBufferHead(stream) == FALSE) {
+                        Nop();
+                    }
+                    rec.toWrite = nextFrame = 0;
+                    while ((rec.read - nextFrame) >= 4u && (frameLength = CalcFrameSize(&stream[nextFrame], &duration)) > 0u) {
+                        // framLength represents the next frame to be written
+                        nextFrame += frameLength;
+                        if (nextFrame <= rec.read) {
+                            rec.toWrite += frameLength;
+                            rec.frameCount++;
+                            rec.longDuration += duration;
+                            rec.sm = SM_REC_WRITE_BUFFER;
+                            if (rec.longDuration >= rec.intervalRec)
+                                break;
+                        } else {
+                            // We have only the first bytes of the next frame
+                            break;
+                        }
+                    }
+                    if (rec.toWrite == 0)
+                        break;
+                }
+            } else {
+                // Recording intervals disabled
+                if (rec.read == 0)
+                    break;
+                rec.toWrite = rec.read;
+            }
+            //rec.sm++;
+
+        case SM_REC_WRITE_BUFFER:
 
             LED_BLUE_ON();
-            put_rc(f_write(fp, stream, read, &write));
+            rec.fres = f_write(rec.fp[rec.fpIndex], stream, rec.toWrite, &written);
+            if (rec.fres != FR_OK) {
+                rec.sm = SM_REC_PUT_ERROR;
+                break;
+            }
+            // Reposition to beginning of the buffer the byte is not yet copied into the micro SD card
+            size = rec.read - written;
+            if (size > 0) {
+                // Clear Block transfer complete interrupt flag
+                REC_DMA_CLR_BTC();
+                // Set the transfer source and dest addresses, source and dest size and cell size
+                DmaChnSetTxfer(REC_DMA_CHANNEL, &stream[written], &stream[0], size, size, size);
+                DmaChnStartTxfer(REC_DMA_CHANNEL, DMA_WAIT_NOT, 0);
+            }
+            rec.toWrite = size;
+            rec.read = size;
+            rec.fileLength += written;
+            rec.sm = SM_REC_READ_BUFFER;
             LEDs_OFF();
-            //	    if (read != write)
-            //		while (1);
-            mp3RecSM = MP3_RECORD_READ_BUFFER;
             break;
 
 
 
-        case MP3_RECORD_PAUSE_WAIT_ENTERING:
+
+        case SM_REC_PAUSE_WAIT_ENTERING:
             GpioUpdateOutputState(GPIO_BIT_PAUSE_REC);
             // Sets the bit to enter in pause during recording
             VLSI_SetBitRecMode();
             // Read pending data and write to file
-            read = VLSIGetArray(stream, STREAM_BUF_SIZE_RECORD, 1);
-            put_rc(f_write(fp, stream, read, &write));
+            rec.read += VLSIGetArray(stream, STREAM_BUF_SIZE_RECORD, 4);
+            //put_rc(f_write(rec.fp[rec.fpIndex], stream, rec.read, &rec.written));
+            //rec.read = rec.read - rec.written;
 
-            mp3RecSM = MP3_RECORD_PAUSE_WAIT;
+            rec.sm = SM_REC_PAUSE_WAIT;
             break;
 
-        case MP3_RECORD_PAUSE_WAIT:
+        case SM_REC_PAUSE_WAIT:
             // Wait until pause is resent
             Toggle1Second();
             break;
 
 
-        case MP3_RECORD_PAUSE_DELAY_ENTERING:
-            GpioUpdateOutputState(GPIO_BIT_PAUSE_REC);
+        case SM_REC_PAUSE_DELAY_ENTERING:
             GpioUpdateOutputState(GPIO_BIT_PAUSE_REC);
             // Sets the bit to enter in pause during recording
             VLSI_SetBitRecMode();
             // Read pending data and write to file
-            read = VLSIGetArray(stream, STREAM_BUF_SIZE_RECORD, 1);
-            put_rc(f_write(fp, stream, read, &write));
+            rec.read += VLSIGetArray(stream, STREAM_BUF_SIZE_RECORD, 4);
+            //put_rc(f_write(rec.fp[rec.fpIndex], stream, rec.read, &rec.written));
+            //rec.read = rec.read - rec.written;
 
-            mp3RecSM = MP3_RECORD_PAUSE_DELAY;
+            rec.sm = SM_REC_PAUSE_DELAY;
             break;
 
-        case MP3_RECORD_PAUSE_DELAY:
-            if (TickGet() - tick_delay >= tick_max)
-                mp3RecSM = MP3_RECORD_PAUSE_EXIT;
+        case SM_REC_PAUSE_DELAY:
+            if (TickGet() - rec.tick_delay >= rec.tick_max)
+                rec.sm = SM_REC_PAUSE_EXIT;
             Toggle1Second();
             break;
 
-        case MP3_RECORD_PAUSE_EXIT:
+        case SM_REC_PAUSE_EXIT:
             GpioUpdateOutputState(GPIO_BIT_PAUSE_REC);
             VLSI_ClearBitRecMode();
-            mp3RecSM = MP3_RECORD_WRITE_BUFFER;
+            rec.sm = SM_REC_READ_BUFFER;
             break;
 
 
@@ -240,94 +516,116 @@ int RecordTaskHandler() {
 
 
 
-        case MP3_RECORD_SEND_FINISH_RECORDING:
+        case SM_REC_SEND_FINISH_RECORDING:
 
             GpioUpdateOutputState(GPIO_BIT_STOP_REC);
             // Send stop signal to encoder
             VLSI_SendFinishRecording();
 
             verbosePrintf(VER_DBG, "Send finish recording");
-            mp3RecSM = MP3_RECORD_FINISH_RECORDING;
+            rec.sm = SM_REC_FINISH_RECORDING;
             break;
 
 
 
-        case MP3_RECORD_FINISH_RECORDING:
+        case SM_REC_FINISH_RECORDING:
             // Finish to plaing the current song until Stop indicator is cleared or have passed 1000ms
 
-            //fwrite(stream, sizeof (char), read, fp);
-            f_write(fp, stream, read, &write);
-            read = VLSIGetArray(stream, STREAM_BUF_SIZE_RECORD, 0);
+            //fwrite(stream, sizeof (char), rec.read, fp);
+            rec.fres = f_write(rec.fp[rec.fpIndex], stream, rec.read, &written);
+            rec.read = VLSIGetArray(stream, STREAM_BUF_SIZE_RECORD, 0);
 
 
-            //            if (read == 0 && VLSI_IsClearedSmCancel() && (TickGet() - tick_delay) >= TICK_SECOND / 4ul) {
+            //            if (rec.read == 0 && VLSI_IsClearedSmCancel() && (TickGet() - rec.tick_delay) >= TICK_SECOND / 4ul) {
             //                // Normal condition termination
             //                if (VLSI_GetEndFillByte(&byte)) {
             //                    // There was still a byte to be written, write it
             //                    fwrite(&byte, sizeof (char), 1, fp);
             //                }
             //            }
-            if (read == 0 && VLSI_GetEndFillByte(&byte)) {
+            if (rec.read == 0 && VLSI_GetEndFillByte(&byte)) {
                 // There was still a byte to be written, write it
                 //fwrite(&byte, sizeof (char), 1, fp);
-                f_write(fp, &byte, 1, &write);
+                rec.fres = f_write(rec.fp[rec.fpIndex], &byte, 1, &written);
             }
 
             // When all samples have been transmitted, SM_ENCODE bit of SCI_MODE will be
             // cleared by VS1063a, and SCI_HDAT1 and SCI_HDAT0 are cleared.
             if (VLSI_IsClearedSmEncode()) {
-                mp3RecSM = MP3_RECORD_FINALIZE;
+                rec.sm = SM_REC_FINALIZE;
             }
 
             break;
 
 
 
-        case MP3_RECORD_FINALIZE:
-
+        case SM_REC_FINALIZE:
             verbosePrintf(VER_DBG, "Reset encoder");
             VLSI_SoftReset();
-            mp3RecSM = MP3_RECORD_CLOSE_FILE;
+            rec.sm = SM_REC_CLOSE_FILE;
             break;
 
 
 
-        case MP3_RECORD_CLOSE_FILE:
+        case SM_REC_CLOSE_FILE:
             verbosePrintf(VER_DBG, "Try to close file");
-            if (f_close(fp) != FR_OK)
-                mp3RecSM = MP3_RECORD_CLOSED_FAILED;
-            else
-                mp3RecSM = MP3_RECORD_CLOSED_SUCCESSFUL;
+            if (rec.intervalRec) {
+                if (f_close(rec.fp[0]) != FR_OK || f_close(rec.fp[1]) != FR_OK) {
+                    rec.sm = SM_REC_CLOSED_FAILED;
+                } else {
+                    sprintf(Lfname, "/%04d%02d%02d/%02d%02d%02d.mp3", rec.year, rec.mon, rec.day, rec.hour, rec.mins, rec.sec);
+                    rec.fres = f_unlink(Lfname);
+                    if (rec.fres == FR_OK)
+                        rec.sm = SM_REC_CLOSED_SUCCESSFUL;
+                    else
+                        rec.sm = SM_REC_CLOSED_FAILED;
+                }
+            } else {
+                if (f_close(rec.fp[0]) != FR_OK)
+                    rec.sm = SM_REC_CLOSED_FAILED;
+                else
+                    rec.sm = SM_REC_CLOSED_SUCCESSFUL;
+            }
             break;
 
-        case MP3_RECORD_CLOSED_SUCCESSFUL:
+        case SM_REC_CLOSED_SUCCESSFUL:
             verbosePrintf(VER_DBG, "File closed successful");
             CliCreateFileListOfFilesEntry();
             // Goto idle state machine
-            mp3RecSM = MP3_RECORD_HOME;
+            rec.sm = SM_REC_HOME;
             break;
 
-
-
-        case MP3_RECORD_CLOSED_FAILED:
+        case SM_REC_CLOSED_FAILED:
             verbosePrintf(VER_DBG, "File: %s not closed", Lfname);
             FlashLight(100, 100, FALSE);
-            // Goto idle state machine
-            mp3RecSM = MP3_RECORD_HOME;
+            //            rec.sm = SM_REC_PUT_ERROR;
+            //            break;
+
+        case SM_REC_PUT_ERROR:
+            put_rc(rec.fres);
+            rec.sm = SM_REC_HOME;
             break;
 
 
         default:
             verbosePrintf(VER_DBG, "Return to idle state");
             // Goto idle state machine
-            mp3RecSM = MP3_RECORD_HOME;
+            rec.sm = SM_REC_HOME;
+
             break;
     }
 
-    return mp3RecSM;
+    return rec.sm;
 }
 
-void SetBitRate(long samplerate, int bitrate, int gain, int maxgain, BOOL input, char mode, char format, BOOL reservoir) {
+void TestRecInternalGet(void) {
+    if (rec.sm == SM_REC_WRITE_BUFFER || rec.sm == SM_REC_READ_BUFFER) {
+        // The encoding data buffer is 3712 16-bit words => 7424 bytes
+        rec.read += VLSIGetArray(&stream[rec.read], STREAM_BUF_SIZE_RECORD - rec.read, 64);
+    }
+}
+
+void SetBitRate(long samplerate, int bitrate, int gain, int maxgain, BOOL input, char mode, char format, char adc, BOOL reservoir) {
 
     //BOOL reservoir = FALSE;
     char bitrateMultiplier;
@@ -430,6 +728,20 @@ void SetBitRate(long samplerate, int bitrate, int gain, int maxgain, BOOL input,
             reservoir = BIT_RESERVOIR_ON;
     }
 
+    // SCI_AICTRL3 bits 0 to 2 select the ADC mode and implicitly the number of channels. 0 = joint
+    // stereo (common AGC), 1 = dual channel (separate AGC), 2 = left channel, 3 = right channel, 4 = mono downmix.
+    switch (adc) {
+        case JOINT_STEREO:
+        case DUAL_CHANNEL:
+        case RIGHT_CHANNEL:
+        case LEFT_CHANNEL:
+        case MONO:
+            break;
+        default:
+            adc = JOINT_STEREO;
+    }
+    recPreSet.sci_aictrl3.bits.ADC_mode = adc;
+
     //recPreSet.SCI_WRAMADDR = mode << 14 | reservoir << 11 | bitrateMultiplier << 12 | bitrate;
     recPreSet.sci_wramaddr.bits.bitrateBase = bitrate;
     recPreSet.sci_wramaddr.bits.bitrateMultiplier = bitrateMultiplier;
@@ -438,30 +750,41 @@ void SetBitRate(long samplerate, int bitrate, int gain, int maxgain, BOOL input,
 
     if (input == INPUT_MIC)
         recPreSet.sci_mode.word = VLSI_VAL_MODE_ENCODE_MIC;
+
     else
         recPreSet.sci_mode.word = VLSI_VAL_MODE_ENCODE_LINE;
 
 }
 
-void Record(int argc, char **argv) {
+int Record(int argc, char **argv) {
 
-    int samplerate, bitrate, gain, maxGain, mode, format;
+    int samplerate, bitrate, gain, maxGain, mode, format, adc;
+
+    if (rec.sm != SM_REC_HOME) {
+        verbosePrintf(VER_MIN, "Recording already started\r\n");
+        return 0;
+    }
 
     if (argc == 1) {
         // Copy in Lfname gloabal variable the name of the default file
         strncpy(Lfname, config.record.r_name, _MAX_LFN);
         // Struct recording information
-        SetBitRate(config.record.samplerate, config.record.bitrate, config.record.gain, config.record.max_gain, INPUT_LINE, config.record.bitrate_mode, config.record.format, BIT_RESERVOIR_ON);
+        SetBitRate(config.record.samplerate, config.record.bitrate, config.record.gain, config.record.max_gain, INPUT_LINE, config.record.bitrate_mode, config.record.format, config.record.adcMode, BIT_RESERVOIR_ON);
+        // Disable intervals recording
+        rec.intervalRec = 0;
         // Put in recording mode
-        mp3RecSM = MP3_RECORD_OPEN_FILE;
+        rec.sm = SM_REC_OPEN_FILE;
+        config.record.prog_over = 2;
     } else if (argc == 2) {
         // Extract the name of the recording file
         strncpy(Lfname, argv[1], _MAX_LFN);
         // Struct recording information
-        SetBitRate(config.record.samplerate, config.record.bitrate, config.record.gain, config.record.max_gain, INPUT_LINE, config.record.bitrate_mode, config.record.format, BIT_RESERVOIR_ON);
+        SetBitRate(config.record.samplerate, config.record.bitrate, config.record.gain, config.record.max_gain, INPUT_LINE, config.record.bitrate_mode, config.record.format, config.record.adcMode, BIT_RESERVOIR_ON);
+        // Disable intervals recording
+        rec.intervalRec = 0;
         // Put in recording mode
-        mp3RecSM = MP3_RECORD_OPEN_FILE;
-    } else if (argc == 8) {
+        rec.sm = SM_REC_OPEN_FILE;
+    } else if (argc == 10) {
         // Extract the name of the recording file
         strncpy(Lfname, argv[1], _MAX_LFN);
         // Extract the samplerate
@@ -476,15 +799,18 @@ void Record(int argc, char **argv) {
         mode = atoimm(argv[6], QUALITY_MODE, CBR_MODE, VBR_MODE);
         // Extract format
         format = atoimm(argv[7], REC_MP3, REC_OGG, REC_MP3);
-
+        // Extract ADC mode
+        adc = atoimm(argv[8], JOINT_STEREO, MONO, JOINT_STEREO);
+        // Enable recording intervals
+        rec.intervalRec = atoimm(argv[9], MIN_DISABLED_REC, MAX_INT_REC, MID_INT_REC);
         // Struct recording information
-        SetBitRate(samplerate, bitrate, gain, maxGain, INPUT_LINE, mode, format, BIT_RESERVOIR_ON);
+        SetBitRate(samplerate, bitrate, gain, maxGain, INPUT_LINE, mode, format, adc, BIT_RESERVOIR_ON);
         // Put in recording mode
-        mp3RecSM = MP3_RECORD_OPEN_FILE;
-
+        rec.sm = SM_REC_OPEN_FILE;
     } else {
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
 BOOL PauseRecord(int argc, char **argv) {
@@ -493,30 +819,30 @@ BOOL PauseRecord(int argc, char **argv) {
 
     if (argc == 1) {
 
-        if (mp3RecSM >= MP3_RECORD_READ_BUFFER && mp3RecSM <= MP3_RECORD_WRITE_BUFFER) {
+        if (rec.sm >= SM_REC_READ_BUFFER && rec.sm <= SM_REC_WRITE_BUFFER) {
             // Enter in pause
-            mp3RecSM = MP3_RECORD_PAUSE_WAIT_ENTERING;
+            rec.sm = SM_REC_PAUSE_WAIT_ENTERING;
             printf("Pause: ON\r\n");
             return TRUE;
-        } else if (mp3RecSM >= MP3_RECORD_PAUSE_WAIT && mp3RecSM <= MP3_RECORD_PAUSE_DELAY) {
+        } else if (rec.sm >= SM_REC_PAUSE_WAIT && rec.sm <= SM_REC_PAUSE_DELAY) {
             // Exit from pause
-            mp3RecSM = MP3_RECORD_PAUSE_EXIT;
+            rec.sm = SM_REC_PAUSE_EXIT;
             printf("Pause: OFF\r\n");
             return TRUE;
         }
 
     } else if (argc == 2) {
 
-        if (mp3RecSM >= MP3_RECORD_READ_BUFFER && mp3RecSM <= MP3_RECORD_WRITE_BUFFER) {
+        if (rec.sm >= SM_REC_READ_BUFFER && rec.sm <= SM_REC_WRITE_BUFFER) {
             delay = atoimm(argv[1], 0, 10000000, 1000);
 
-            tick_delay = TickGet();
-            tick_max = TICK_SECOND / 1000 * delay;
-            mp3RecSM = MP3_RECORD_PAUSE_DELAY_ENTERING;
+            rec.tick_delay = TickGet();
+            rec.tick_max = TICK_SECOND / 1000 * delay;
+            rec.sm = SM_REC_PAUSE_DELAY_ENTERING;
 
             // Aggiungere il corretto pause del record
             //VLSI_SetBitPlayMode(PLAYMODE_PAUSE_ON);
-            //            mp3RecSM = MP3_RECORD_PAUSE_DELAY;
+            //            rec.sm = MP3_RECORD_PAUSE_DELAY;
             //            GpioUpdateState(GPIO_BIT_PAUSE_REC);
 
             printf("Pause for %ld ms\r\n", delay);
@@ -524,6 +850,7 @@ BOOL PauseRecord(int argc, char **argv) {
         }
 
     } else {
+
         CliTooManyArgumnets(argv[0]);
     }
 
@@ -534,11 +861,11 @@ BOOL StopRecord(int argc, char **argv) {
 
 
     if (argc == 1) {
-        if (mp3RecSM >= MP3_RECORD_OPEN_FILE && mp3RecSM <= MP3_RECORD_FINISH_RECORDING) {
+        if (rec.sm >= SM_REC_OPEN_FILE && rec.sm <= SM_REC_FINISH_RECORDING) {
             //VLSI_FinishRecording();
             //r_check = TRUE;
-            tick_delay = TickGet();
-            mp3RecSM = MP3_RECORD_SEND_FINISH_RECORDING;
+            rec.tick_delay = TickGet();
+            rec.sm = SM_REC_SEND_FINISH_RECORDING;
         } else {
             return FALSE;
         }
@@ -549,6 +876,7 @@ BOOL StopRecord(int argc, char **argv) {
 
     } else {
         CliTooManyArgumnets(argv[0]);
+
         return FALSE;
     }
     return TRUE;
@@ -562,7 +890,7 @@ BOOL InfoRecord(int argc, char **argv) {
 
     if (argc == 1) {
         // Print the track name in play otherwise print no track in execution
-        if (mp3RecSM > MP3_RECORD_OPENED_SUCCESSFUL && mp3RecSM <= MP3_RECORD_CLOSED_SUCCESSFUL) {
+        if (rec.sm > SM_REC_OPENED_SUCCESSFUL && rec.sm <= SM_REC_CLOSED_SUCCESSFUL) {
             // First update the _REC_PRESET registers
             VLSI_GetRecordingInfo(&recPreSet);
             // Then prints all updatetd info

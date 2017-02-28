@@ -1,37 +1,19 @@
 /*********************************************************************
  *
- *  Main Application Entry Point and TCP/IP Stack Demo
- *  Module for Microchip TCP/IP Stack
- *   -Demonstrates how to call and use the Microchip TCP/IP stack
- *	 -Reference: Microchip TCP/IP Stack Help (TCPIP Stack Help.chm)
+ *  MP3 Encoder and Decoder Main Application
  *
  *********************************************************************
- * FileName:        MainDemo.c
- * Dependencies:    TCPIP.h
- * Processor:       PIC18, PIC24F, PIC24H, dsPIC30F, dsPIC33F, PIC32
- * Compiler:        Microchip C32 v1.11b or higher
- *					Microchip C30 v3.24 or higher
- *					Microchip C18 v3.36 or higher
- * Company:         Microchip Technology, Inc.
+ * FileName:        Main.c
+ * Dependencies:    Main.h
+ * Processor:       PIC32MX270F256B
+ * Compiler:        Microchip XC32 v1.33 or higher
+ * Company:         LP Systems
+ * Author:          Luca Pascarella luca.pascarella@gmail.com
+ * Web Site:        www.lucapascarella.it
  *
  * Software License Agreement
  *
- * Copyright (C) 2002-2010 Microchip Technology Inc.  All rights
- * reserved.
- *
- * Microchip licenses to you the right to use, modify, copy, and
- * distribute:
- * (i)  the Software when embedded on a Microchip microcontroller or
- *      digital signal controller product ("Device") which is
- *      integrated into Licensee's product; or
- * (ii) ONLY the Software driver source files ENC28J60.c, ENC28J60.h,
- *		ENCX24J600.c and ENCX24J600.h ported to a non-Microchip device
- *		used in conjunction with a Microchip ethernet controller for
- *		the sole purpose of interfacing with the ethernet controller.
- *
- * You should refer to the license agreement accompanying this
- * Software for additional information regarding your rights and
- * obligations.
+ * Copyright (C) 2012-2013 LP Systems  All rights reserved.
  *
  * THE SOFTWARE AND DOCUMENTATION ARE PROVIDED "AS IS" WITHOUT
  * WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT
@@ -45,13 +27,14 @@
  * SIMILAR COSTS, WHETHER ASSERTED ON THE BASIS OF CONTRACT, TORT
  * (INCLUDING NEGLIGENCE), BREACH OF WARRANTY, OR OTHERWISE.
  *
- * File Description:
- * Change History:
+ * File Description: Encoder and Decoder state finite machine
+ * Change History: In progress
  * Rev   Description
  * ----  -----------------------------------------
- * 1.0   Initial release
- * V5.36 ---- STACK_USE_MPFS support has been removed 
+ * 1.0   Initial release (1 September 2013, 16.00)
+ *
  ********************************************************************/
+
 /*
  * This macro uniquely defines this file as the main entry point.
  * There should only be one such definition in the entire project,
@@ -128,7 +111,7 @@
 #include "MP3/Record.h"
 #include "Utilities/GPIO.h"
 #include "FatFS/ff.h"
-#include "FatFS/Diskio.h"
+#include "FatFS/diskio.h"
 #include "CommandLineInterpreter.h"
 #include "SingleCharacterCommands.h"
 #include "I2CSlave.h"
@@ -191,7 +174,7 @@ const ROM InquiryResponse inq_resp = {
 ////static void InitializeSystem(void);
 void USBDeviceTasks(void);
 void ProcessIO(void);
-WORD_VAL ReadPOT(void);
+//WORD_VAL ReadPOT(void);
 void YourHighPriorityISRCode(void);
 void YourLowPriorityISRCode(void);
 void USBCBSendResume(void);
@@ -328,8 +311,10 @@ int main(void) {
         else
             SCCHandler();
 
+        commandsTask();
+
         // Manager of I2C commander receiver
-        I2CHandler();
+        //        I2CHandler();
 
         // Manager of the recording routine
         if (play == PLAY_IDLE)
@@ -340,13 +325,8 @@ int main(void) {
             play = PlayTaskHandler();
 
         // BlinkLed
-        if (play == REC_IDLE && rec == PLAY_IDLE) {
+        if (play == REC_IDLE && rec == PLAY_IDLE)
             Toggle1Second();
-        }
-
-        //	// USB printer handler
-        //	if (isUSBEnabled())
-        //	    USBPrintTaskHandler();
 
         // GPIO Output Task handler
         GPIOOutputTaskHandler();
@@ -374,8 +354,8 @@ int main(void) {
         if ((USBDeviceState < CONFIGURED_STATE) || (USBSuspendControl == 1)) {
 
         } else {
-            // USB printer handler if the USB cable is connected and correctly enumerated
-            USBPrintTaskHandler();
+            // USB CDC low level handler, if the USB cable is connected and correctly enumerated
+            USBCDCCustomTaskHandler();
             CDCTxService();
             MSDTasks();
         }
@@ -950,81 +930,3 @@ BOOL USER_USB_CALLBACK_EVENT_HANDLER(USB_EVENT event, void *pdata, WORD size) {
     return TRUE;
 }
 
-
-//// prototypes
-//int	DmaDoM2Spi(void);
-//int	DmaDoSpi2M(void);
-//
-//// some local data
-//int		DmaTxIntFlag;			// flag used in interrupts, signal that DMA transfer ended
-//int		DmaRxIntFlag;			// flag used in interrupts, signal that DMA transfer ended
-//
-//int DmaDoM2Spi(void) {
-//    int ix;
-//
-//    static unsigned char txferTxBuff[256]; // the buffer containing the data to be transmitted
-//    // less than DmaGetMaxTxferSize() bytes per transfer
-//    DmaChannel dmaTxChn = DMA_CHANNEL1; // DMA channel to use for our example
-//    // NOTE: the DMA ISR setting has to match the channel number
-//    SpiChannel spiTxChn = SPI_CHANNEL1; // the transmitting SPI channel to use in our example
-//
-//    srand(ReadCoreTimer()); // init the random generator
-//
-//    // fill the transmit buffer with some random data
-//    for (ix = 0; ix<sizeof (txferTxBuff) / sizeof (*txferTxBuff); ix++) {
-//	txferTxBuff[ix] = rand();
-//    }
-//
-//    // open and configure the SPI channel to use: master, no frame mode, 8 bit mode.
-//    // won't use SS for communicating with the slave
-//    // we'll be using 40MHz/4=10MHz SPI clock
-//    //SpiChnOpen(spiTxChn, SPI_OPEN_MSTEN | SPI_OPEN_SMP_END | SPI_OPEN_MODE8, 4);
-//
-//    // open and configure the DMA channel.
-//    DmaChnOpen(dmaTxChn, DMA_CHN_PRI2, DMA_OPEN_DEFAULT);
-//
-//    // set the events: we want the SPI transmit buffer empty interrupt to start our transfer
-//    DmaChnSetEventControl(dmaTxChn, DMA_EV_START_IRQ_EN | DMA_EV_START_IRQ(_SPI1_TX_IRQ));
-//
-//    // set the transfer:
-//    // source is our buffer, dest is the SPI transmit buffer
-//    // source size is the whole buffer, destination size is one byte
-//    // cell size is one byte: we want one byte to be sent per each SPI TXBE event
-//    DmaChnSetTxfer(dmaTxChn, txferTxBuff, (void*) &SPI1BUF, sizeof (txferTxBuff), 1, 1);
-//
-//    DmaChnSetEvEnableFlags(dmaTxChn, DMA_EV_BLOCK_DONE); // enable the transfer done interrupt, when all buffer transferred
-//
-////    INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
-////    INTEnableInterrupts();
-////
-//    INTSetVectorPriority(INT_VECTOR_DMA(dmaTxChn), INT_PRIORITY_LEVEL_5); // set INT controller priority
-//    INTSetVectorSubPriority(INT_VECTOR_DMA(dmaTxChn), INT_SUB_PRIORITY_LEVEL_3); // set INT controller sub-priority
-//
-//    INTEnable(INT_SOURCE_DMA(dmaTxChn), INT_ENABLED); // enable the chn interrupt in the INT controller
-//
-//    DmaTxIntFlag = 0; // clear the interrupt flag we're  waiting on
-//
-//    DmaChnStartTxfer(dmaTxChn, DMA_WAIT_NOT, 0); // force the DMA transfer: the SPI TBE flag it's already been active
-//
-//    // wait for the transfer to complete
-//    // In a real application you can do some other stuff while the DMA transfer is taking place
-//    while (!DmaTxIntFlag);
-//
-//    // ok, we've sent the data in the buffer
-//    return 1;
-//}
-//
-//// handler for the DMA channel 1 interrupt
-//void __ISR(_DMA1_VECTOR, ipl5) DmaHandler1(void)
-//{
-//    int evFlags; // event flags when getting the interrupt
-//
-//    INTClearFlag(INT_SOURCE_DMA(DMA_CHANNEL1)); // acknowledge the INT controller, we're servicing int
-//
-//    evFlags = DmaChnGetEvFlags(DMA_CHANNEL1); // get the event flags
-//
-//    if (evFlags & DMA_EV_BLOCK_DONE) { // just a sanity check. we enabled just the DMA_EV_BLOCK_DONE transfer done interrupt
-//        DmaTxIntFlag = 1;
-//        DmaChnClrEvFlags(DMA_CHANNEL1, DMA_EV_BLOCK_DONE);
-//    }
-//}

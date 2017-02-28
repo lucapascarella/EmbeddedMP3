@@ -20,7 +20,7 @@
 // changes: parametrization of SPI port number
 
 #include "HardwareProfile.h"
-#include "FatFS/Diskio.h"
+#include "FatFS/diskio.h"
 
 /* Definitions for MMC/SDC command */
 #define CMD0   (0)			/* GO_IDLE_STATE */
@@ -57,17 +57,17 @@
  */
 //EXPLORER 16 CONFIGURATION
 #define CS_SETOUT()         SD_CS_TRIS
-#define CS_LOW()            SD_CS_O = 0	//MMC CS = L
-#define CS_HIGH()           SD_CS_O = 1	//MMC CS = H
+#define CS_LOW()            SD_CS_CLR // SD_CS_O = 0	//MMC CS = L
+#define CS_HIGH()           SD_CS_SET // SD_CS_O = 1	//MMC CS = H
 //Change the SPI port number as needed on the following 5 lines
 
 
 //REVEIW THIS LATER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // Makes assumptions that sockwp and sockins are on the same port...
 // Should probably remove sockport define and then go fix what used it to be general.
-#define SOCKPORT            PORTD		/* Socket contact port */
-#define SOCKWP              0 // disable write protect (1<<10)                  /* Write protect switch (RB10) */
-#define SOCKINS             0 // Pretend card is always inserted (1<<11)	/* Card detect switch (RB11) */
+//#define SOCKPORT            PORTD		/* Socket contact port */
+//#define SOCKWP              0 // disable write protect (1<<10)                  /* Write protect switch (RB10) */
+//#define SOCKINS             0 // Pretend card is always inserted (1<<11)	/* Card detect switch (RB11) */
 
 #define	FCLK_SLOW()         SPIBRG = 64		/* Set slow clock (100k-400k) */
 #define	FCLK_FAST()         SPIBRG = 0		/* Set fast clock (depends on the CSD) */
@@ -96,7 +96,7 @@ UINT CardType;
 /*-----------------------------------------------------------------------*/
 
 #define xmit_spi(dat)			    xchg_spi(dat)
-#define rcvr_spi()			    xchg_spi(0xFF)
+#define rcvr_spi()                  xchg_spi(0xFF)
 #define rcvr_spi_m(p)			    SPIBUF = 0xFF; while (!SPISTATbits.SPIRBF); *(p) = (BYTE)SPIBUF;
 
 #define transferWordToByte(dummy, buff)	    *buff++ = (BYTE) (dummy >> 24);  *buff++ = (BYTE) (dummy >> 16); *buff++ = (BYTE) (dummy >> 8); *buff++ = (BYTE) (dummy);
@@ -117,14 +117,42 @@ BYTE xchg_spi(BYTE dat) {
 static
 BYTE wait_ready(void) {
     BYTE res;
-
+    DWORD Spibrg, dummy;
 
     Timer2 = 500; /* Wait for ready in timeout of 500ms */
     rcvr_spi();
-    do {
-        res = rcvr_spi();
-    } while ((res != 0xFF) && Timer2);
+    //    do {
+    //        res = rcvr_spi();
+    //    } while ((res != 0xFF) && Timer2);
 
+        res = rcvr_spi();
+    while ((res != 0xFF) && Timer2) {
+        // Wait 4 ms before check VS1063 status
+        if (Timer2 < 497) {
+            // Deactive SD Card
+            CS_HIGH();
+            // Save the BRG value
+            Spibrg = SPIBRG;
+            SPIBRG = SPI_BRG_8_33MHZ;
+
+            MP3_SPIBUF = 0xFF;
+            while (!SPISTATbits.SPIRBF);
+            dummy = MP3_SPIBUF;
+
+            TestRecInternalGet();
+
+            // Restore BRG value
+            SPIBRG = Spibrg;
+
+            MP3_SPIBUF = 0xFF;
+            while (!SPISTATbits.SPIRBF);
+            dummy = MP3_SPIBUF;
+            // Active SD Card
+            CS_LOW();
+        }
+        // Poll SD Card for busy flag
+        res = rcvr_spi();
+    }
     return res;
 }
 
@@ -171,7 +199,7 @@ static
 void power_on(void) {
 
     //Initialize Chip Select line
-    SD_CS_O = 1;
+    CS_HIGH();
     //Card Select - output
     SD_CS_TRIS = OUTPUT;
 
@@ -433,6 +461,8 @@ DRESULT disk_read(
     if (Stat & STA_NOINIT)
         return RES_NOTRDY;
 
+    SPIBRG = SPI_BRG_25MHZ;
+
     if (!(CardType & CT_BLOCK))
         sector *= 512; /* Convert to byte address if needed */
 
@@ -472,6 +502,8 @@ DRESULT disk_write(
         return RES_NOTRDY;
     if (Stat & STA_PROTECT)
         return RES_WRPRT;
+
+    SPIBRG = SPI_BRG_25MHZ;
 
     if (!(CardType & CT_BLOCK))
         sector *= 512; /* Convert to byte address if needed */
@@ -716,9 +748,11 @@ void disk_timerproc(void) {
 
 
     n = Timer1; /* 1000Hz decrement timer */
-    if (n) Timer1 = --n;
+    if (n)
+        Timer1 = --n;
     n = Timer2;
-    if (n) Timer2 = --n;
+    if (n)
+        Timer2 = --n;
 
     //    p = pv;
     //    pv = SOCKPORT & (SOCKWP | SOCKINS); /* Sample socket switch */

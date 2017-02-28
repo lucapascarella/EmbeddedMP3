@@ -8,40 +8,50 @@
 #include "USB/usb_function_cdc.h"
 #include "Utilities/Uart.h"
 #include "Utilities/GPIO.h"
+#include "I2CSlave.h"
+#include "Delay/Delay.h"
 
+PRINTER_CONFIG pri;
 
-CIRCULAR_BUFFER txUSB;
+void InitPinter(void) {
+    // Reset alternating buffer
+    pri.alt = 0;
+}
 
 int __putc(char c) {
-
     // print a single character
-    SerialWrite(&c, 1);
+    ConsolWrite(&c, 1);
 }
 
-int __puts(const char *p) {
-
-    // print a string
-    while (*p != 0)
-        __putc(*p++);
-}
+//int __puts(const char *p) {
+//
+//    // print a string
+//    while (*p != 0)
+//        __putc(*p++);
+//}
 
 int __printf(const char * fmt, ...) {
 
     va_list ap;
-    int n = 0;
-    char buf[1024];
+    int len, sent, retry;
+    char *p;
+
+    retry = 20;
+    len = sent = 0;
+    p = pri.txBuf[pri.alt++ % PRI_BUF_ALT_DIM];
 
     // If the user disable both UART and USB serial console do anything
-    if (isUARTEnabled() || isUSBEnabled()) {
+    if (isUARTEnabled() || isUSBEnabled() || isI2CEnabled()) {
         va_start(ap, fmt);
-        n = vsnprintf(buf, sizeof (buf), fmt, ap);
+        len = vsnprintf(p, PRINTER_BUFFER_SIZE, fmt, ap);
         va_end(ap);
 
-        // Print on UART or USB port
-        SerialWrite(buf, n);
+        // Print on UART, USB or I2C port
+        do {
+            sent += ConsolWrite(&p[sent], len - sent);
+        } while (sent < len && retry--);
     }
-
-    return n;
+    return sent;
 }
 
 char returnLineVerbose[] = "\r\n>";
@@ -54,14 +64,14 @@ int verbosePrintf(int level, const char * fmt, ...) {
 
     if (level <= config.console.verbose) {
         // If the user disable both UART and USB serial console do anything
-        if (isUARTEnabled() || isUSBEnabled()) {
+        if (isUARTEnabled() || isUSBEnabled() || isI2CEnabled()) {
             va_start(ap, fmt);
             n = vsnprintf(buf, sizeof (buf), fmt, ap);
             va_end(ap);
 
-            // Print on UART or USB port
-            SerialWrite(buf, n);
-            SerialWrite(returnLineVerbose, sizeof (returnLineVerbose));
+            // Print on UART, USB or I2C port
+            ConsolWrite(buf, n);
+            ConsolWrite(returnLineVerbose, sizeof (returnLineVerbose));
 
             return n;
         }
@@ -70,45 +80,54 @@ int verbosePrintf(int level, const char * fmt, ...) {
     return 0;
 }
 
-WORD SerialWrite(CHAR8 *buffer, WORD count) {
+WORD ConsolWrite(CHAR8 *buffer, WORD count) {
 
     if (config.console.port == 0) {
         // Print on UART port
-        //SerialWrite(returnLine, sizeof (returnLine));
-        UartWrite(buffer, count);
-    } else {
+        return UartWrite(buffer, count);
+    } else if (config.console.port == 1) {
         // Print on USB port
-        USBAddCharToBuffer(buffer, count);
+        return USBWrite(buffer, count);
+    } else {
+        // Print on I2C port
+        return I2CWrite(buffer, count);
     }
 }
 
-WORD SerialRead(CHAR8 *buffer, WORD count) {
+WORD ConsolRead(CHAR8 *buffer, WORD count) {
 
     WORD read;
 
     if (config.console.port == 0) {
         read = UartRead(buffer, count);
+    } else if (config.console.port == 1) {
+        read = USBRead(buffer, count);
     } else {
-        if ((USBDeviceState < CONFIGURED_STATE) || (USBSuspendControl == 1))
-            return 0;
-        read = getsUSBUSART(buffer, count);
+        read = I2CRead(buffer, count);
     }
     return read;
 }
 
-void Config(int argc, char **argv) {
+int Config(int argc, char **argv) {
 
     if (argc < 2) {
-        printf("Serial-port: %s\r\n", config.console.port ? "USB" : "UART");
+        printf("Serial-port: ");
+        if (config.console.port == 0)
+            printf("UART\r\n");
+        else if (config.console.port == 1)
+            printf("USB\r\n");
+        else if (config.console.port == 2)
+            printf("I2C\r\n");
     } else if (argc == 2) {
         // Check first the existence of the passed file
-        config.console.port = atoimm(argv[1], 0, 1, 0);
+        config.console.port = atoimm(argv[1], 0, 2, 0);
     } else {
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
-void Verbose(int argc, char **argv) {
+int Verbose(int argc, char **argv) {
 
     if (argc < 2) {
         printf("Verbose: %d\r\n", config.console.verbose);
@@ -118,38 +137,10 @@ void Verbose(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
-void USBAddCharToBuffer(char *p, int count) {
 
-    int i;
 
-    for (i = 0; i < count; i++) {
-        // Wait so that the buffer has at least one empty position
-        //            while (((tx.put + 1) % SER_BUF_SIZE) == tx.get) {
-        //                Nop();
-        //            }
-        txUSB.buff[txUSB.put] = p[i];
-        txUSB.put = ((txUSB.put + 1) % SER_BUF_SIZE);
-    }
-}
 
-BOOL USBSerialEmulatorOpened = FALSE;
 
-void USBPrintTaskHandler() {
-
-    // The DTR Signal is automatically raised by PuTTY terminal
-    // Instead Hercules doesn't have this automatic function, but there is a specific button
-    // To enable the functionality, uncomment the following line in usb_config.h:
-    // #define USB_CDC_SUPPORT_DTR_SIGNALING
-    // Also in usb_function_cdc.c there is an optional code individuated by USB_CDC_SUPPORT_DTR_SIGNALING
-    // in this point we manage the CDC Signal enabling a global variable to indicate the new state
-    // Also in usb_function_cdc.c there is unused statment mInitDTRPin();
-    if (USBSerialEmulatorOpened)
-        // Update the buffer only if a terminal, like PuTTY is detected.
-        while (USBUSARTIsTxTrfReady() && txUSB.put != txUSB.get) {
-            putUSBUSART(&txUSB.buff[txUSB.get], 1);
-            txUSB.get = (txUSB.get + 1) % SER_BUF_SIZE;
-        }
-
-}

@@ -54,7 +54,7 @@
 
 typedef struct {
     char *name;
-    void (*cmd)(int, char**);
+    int (*cmd)(int, char**);
 } _command;
 
 typedef struct {

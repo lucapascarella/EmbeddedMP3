@@ -388,13 +388,13 @@ typedef union {
 
 
 
-BOOL InitVLSI(void);
+void InitVLSI(void);
 void VLSI_SoftReset(void);
 
 WORD VLSIReadReg(BYTE vAddress, WORD brg);
 void VLSIWriteReg(BYTE vAddress, WORD wValue, WORD brg);
 WORD VLSIPutArray(BYTE*, int);
-WORD VLSIGetArray(BYTE*, int, int);
+UINT VLSIGetArray(BYTE*, UINT, UINT);
 
 void VLSI_FinishPlaying(void);
 void VLSI_SendFinishRecording(void);

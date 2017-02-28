@@ -44,28 +44,28 @@
 #include "HardwareProfile.h"
 
 #define STREAM_BUF_SIZE_PLAY            0x1000
-#define STREAM_BUF_SIZE_RECORD          0x1000
+#define STREAM_BUF_SIZE_RECORD          0x4000
 
 #define STREAM_BUF_SIZE                 max(STREAM_BUF_SIZE_PLAY , STREAM_BUF_SIZE_RECORD)
 
-void Play(int argc, char **argv);
-void Record(int argc, char **argv);
+int Play(int argc, char **argv);
+int Record(int argc, char **argv);
 
-void Pause(int argc, char **argv);
-void Stop(int argc, char **argv);
-void Info(int argc, char **argv);
-void FPlay(int argc, char **argv);
-void SpeedShifter(int argc, char **argv);
-void RateTune(int argc, char **argv);
-void Semitone(int argc, char **argv);
-void EarSpeaker(int argc, char **argv);
+int Pause(int argc, char **argv);
+int Stop(int argc, char **argv);
+int Info(int argc, char **argv);
+int FPlay(int argc, char **argv);
+int SpeedShifter(int argc, char **argv);
+int RateTune(int argc, char **argv);
+int Semitone(int argc, char **argv);
+int EarSpeaker(int argc, char **argv);
 
-void Volume(int argc, char **argv);
-void Treble(int argc, char **argv);
-void Bass(int argc, char **argv);
+int Volume(int argc, char **argv);
+int Treble(int argc, char **argv);
+int Bass(int argc, char **argv);
 
-void Playlist(int argc, char **argv);
-void Bookmark(int argc, char **argv);
+int Playlist(int argc, char **argv);
+int Bookmark(int argc, char **argv);
 
 BOOL IsConvertible(char *);
 long atoimm(char*, long, long, long);

@@ -91,6 +91,11 @@ const _command commands[] = {
 };
 
 #define NUMBER_OF_COMMANDS          sizeof(commands)/(sizeof(commands[0].name)+sizeof(commands[0].cmd))
+#define MAX_TOKEN   20
+
+int (*commandToCall)(int, char**);
+int argc;
+char *argv[MAX_TOKEN];
 
 // Some useful constants
 const char temporaryFileEntryList[] = "/lst.tmp";
@@ -151,17 +156,19 @@ BOOL InitCli() {
     // CliPrintConsole
     CliReprintConsole();
 
+    commandToCall = NULL;
+
     return TRUE;
 }
 
 void CliHandler(void) {
 
-#define MAX_TOKEN   20
-    int nCmd, argc;
-    char c, *argv[MAX_TOKEN];
+    int nCmd;
+    char c;
 
-    // Check if a character is available, otherwise wait to next cycle
-    if (CliGetCharFromConsole(&c)) {
+    // Check if commandsTask is free to manage another command
+    // and if a character is available, otherwise wait to next cycle
+    if (commandToCall == NULL && CliGetCharFromConsole(&c)) {
 
         if (c == '\t') {
             // Horizontal Tab. Completes command
@@ -188,17 +195,21 @@ void CliHandler(void) {
                     argv[++argc] = strtok(NULL, " ");
 
                 // Call the function associated with the command found and passes arguments argc and argv
-                commands[nCmd].cmd(argc, argv);
+                ////commands[nCmd].cmd(argc, argv);
+                commandToCall = commands[nCmd].cmd;
+                // Clear the command buffer
+                CliClearCommand();
             } else {
-                if (strlen(cl.cmd) != 0) {
+                //if (strlen(cl.cmd) != 0) {
+                if (cl.cmdlen != 0) {
                     GpioUpdateOutputState(GPIO_BIT_CMD_ERR);
                     // The command was not found
                     CliCommandNotFound(cl.cmd);
+                    // Clear the command buffer and reprint the console indicator
+                    CliClearCommand();
                 }
+                CliReprintConsole();
             }
-            // Clear the command buffer and reprint the console indicator
-            CliClearCommand();
-
         } else {
             // Any other character (printable or control), add it to the buffer and update sceen console
             CliAddCharAndUpdateConsole(c);
@@ -212,7 +223,7 @@ BOOL CliGetCharFromConsole(char *p) {
     static int countEscape;
     int i;
 
-    while (SerialRead(p, 1) != 0) {
+    while (ConsolRead(p, 1) != 0) {
 
         if (countEscape == 0 && *p != ESCAPE) {
             return TRUE;
@@ -369,39 +380,34 @@ int CliSearchCommand(char *search) {
 }
 
 void CliClearCommand() {
-
-    cl.cmd[0] = '\0';
+    //cl.cmd[0] = '\0';
     cl.cmdlen = cl.cmdi = 0;
-
-    CliReprintConsole();
 }
 
 void CliReprintConsole() {
-
     CliPrintEscape(escape_arrow_left, cl.cmdlen - cl.cmdi);
+    if (cl.cmdlen)
     printf(">%s", cl.cmd);
+    else
+        putc('>');
 }
 
 BOOL CliAddStringAndUpdateConsole(char *str) {
-
     while (*str != '\0')
         CliAddCharAndUpdateConsole(*str++);
 }
 
 void CliPrintEscape(const char *p, int i) {
-
     while (i--)
-        puts((char*) p);
+        printf((char*) p);
 }
 
 void CliPrintBackspace() {
-
     char c = 0x7F;
     putc(c);
 }
 
 void CliPrintFor(char *p, int i, int len) {
-
     // Stampa gli elementi che sono da i a len
     while (i < len)
         putc(p[i++]);
@@ -495,6 +501,7 @@ BOOL CliAddCharAndUpdateConsole(unsigned char c) {
             if (cl.lastCmd < cl.nCmd) {
                 cl.lastCmd++;
                 CliGetLastCommandFromFile(cl.lastCmd);
+                if (config.console.echo)
                 printf("\r>%s", cl.cmd);
                 CliPrintEscape(escape_clear_end_row, 1);
             }
@@ -505,33 +512,16 @@ BOOL CliAddCharAndUpdateConsole(unsigned char c) {
             if (cl.lastCmd > 1) {
                 cl.lastCmd--;
                 CliGetLastCommandFromFile(cl.lastCmd);
-                //CliReprintConsole();
+                if (config.console.echo)
                 printf("\r>%s", cl.cmd);
                 CliPrintEscape(escape_clear_end_row, 1);
             } else if (cl.lastCmd == 1) {
                 cl.cmd[0] = '\0';
                 cl.lastCmd = cl.cmdi = cl.cmdlen = 0;
-                //CliReprintConsole();
+                if (config.console.echo)
                 printf("\r>%s", cl.cmd);
                 CliPrintEscape(escape_clear_end_row, 1);
             }
-            //
-            //            //            // Copy the current command in temporary buffer
-            //            //            strcpy(cl.tmp, cl.cmd);
-            //            //            cl.tmpi = cl.cmdi;
-            //            //            cl.tmplen = cl.cmdlen;
-            //            //
-            //            //            // Copy the last command in the buffer
-            //            //            strcpy(cl.cmd, cl.last);
-            //            //            cl.cmdi = cl.lasti;
-            //            //            cl.cmdlen = cl.lastlen;
-            //            //
-            //            //            // Copy the temporary buffer in last command
-            //            //            strcpy(cl.last, cl.tmp);
-            //            //            cl.lasti = cl.tmpi;
-            //            //            cl.lastlen = cl.tmplen;
-            //
-            //            CliReprintConsole();
             break;
 
         default:
@@ -547,6 +537,7 @@ BOOL CliAddCharAndUpdateConsole(unsigned char c) {
                 // Aggiunge il carattere ricevuto al buffer e lo stampa
                 cl.cmd[cl.cmdi++] = c;
                 cl.cmd[++cl.cmdlen] = '\0';
+                if (config.console.echo)
                 putc(c);
 
                 // Stampa gli elementi che sono da i a len
@@ -556,7 +547,6 @@ BOOL CliAddCharAndUpdateConsole(unsigned char c) {
                 CliPrintEscape(escape_arrow_left, cl.cmdlen - cl.cmdi);
             }
             break;
-
     }
 
     return FALSE;
@@ -608,7 +598,7 @@ BOOL CliCreateFileListOfFilesEntry(void) {
     // Changes the properties of the temporary file to hide it
     put_rc(f_chmod(temporaryFileEntryList, AM_HID, AM_HID));
 
-    // Flsuh the conent of the fiel
+    // Flush the hidden property
     put_rc(f_sync(fp));
 
     // Get the current directory name

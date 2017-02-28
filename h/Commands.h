@@ -44,31 +44,33 @@
 #include "FatFS/ff.h"
 
 
-void Help(int, char**);
-void List(int, char **);
-void FileSystem(int, char **);
-void Move(int, char **);
-void Delete(int, char **);
-void DeleteDir(int, char **);
-void Clear(int, char **);
-void ChangeDir(int, char **);
-void Mkdir(int, char **);
-void Cat(int, char **);
-void Copy(int, char **);
-void Reboot(int, char **);
-void Debug(int, char **);
-void Flash(int, char **);
-void Version(int, char **);
+int Help(int, char**);
+int List(int, char **);
+int FileSystem(int, char **);
+int Move(int, char **);
+int Delete(int, char **);
+int DeleteDir(int, char **);
+int Clear(int, char **);
+int ChangeDir(int, char **);
+int Mkdir(int, char **);
+int Cat(int, char **);
+int Copy(int, char **);
+int Reboot(int, char **);
+int Debug(int, char **);
+int Flash(int, char **);
+int Version(int, char **);
 
 BOOL CheckFileExistence(char *p);
 const char *ByteToFatAttributes(BYTE);
 char *GetFileNamePointer(FILINFO *);
 BOOL put_rc(FRESULT);
 BOOL checkFatAttributes(FILINFO *, BYTE);
-FRESULT empty_directory(char* path);
+//FRESULT empty_directory(char* path);
 
 FRESULT scan_files(char* path);
 void put_dump(const BYTE *buff, DWORD ofs, BYTE cnt);
+
+void commandsTask(void);
 
 #endif	/* _COMMANDS_H */
 

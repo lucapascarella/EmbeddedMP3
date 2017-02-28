@@ -14,7 +14,7 @@
 #include "FatFS/usbdevFatFs.h"
 #include "HardwareProfile.h"
 #include "USB/usb.h"
-#include "FatFS/Diskio.h"
+#include "FatFS/diskio.h"
 #include "./USB/usb_function_msd.h"
 
 

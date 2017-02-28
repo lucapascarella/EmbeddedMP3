@@ -43,16 +43,20 @@
 #include "Utilities/RTCC.h"
 #include "Utilities/printer.h"
 
+//#include "FatFS/ff.h"
+
+const BYTE dom[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
 volatile unsigned long tick; // Used for time benchmarking purposes
-volatile BYTE rtccYear = 2014 - 1980, rtccMon = 2, rtccMday = 9; // RTC starting values
-volatile BYTE rtccHour = 0, rtccMin = 0, rtccSec = 0;
+volatile BYTE rtccYear, rtccMon, rtccMday; // RTC starting values
+volatile BYTE rtccHour, rtccMin, rtccSec;
 BYTE holdRtccYear, holdRtccMon, holdRtccMday; // RTC starting values
 BYTE holdRtccHour, holdRtccMin, holdRtccSec;
 
 void InitRtcc(void) {
 
     rtccYear = 2015 - 1980;
-    rtccMon = 4;
+    rtccMon = 8;
     rtccMday = 1;
 
     rtccHour = 12;
@@ -72,8 +76,8 @@ void InitRtcc(void) {
 
     // Set up the timer interrupt with a priority of 2
     INTEnable(INT_T2, INT_ENABLED);
-    INTSetVectorPriority(INT_TIMER_2_VECTOR, INT_PRIORITY_LEVEL_2);
-    INTSetVectorSubPriority(INT_TIMER_2_VECTOR, INT_SUB_PRIORITY_LEVEL_0);
+    INTSetVectorPriority(INT_TIMER_2_VECTOR, INT_PRIORITY_LEVEL_6);
+    INTSetVectorSubPriority(INT_TIMER_2_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
 }
 
 //BOOL RtccSetTime(WORD year, BYTE month, BYTE date, BYTE hour, BYTE min, BYTE sec, BYTE day, BOOL forceUpdate) {
@@ -93,29 +97,82 @@ void InitRtcc(void) {
 //    //    RtccSetTime(cal->tm_year + 1900, cal->tm_mon + 1, cal->tm_mday, cal->tm_hour, cal->tm_min, cal->tm_sec, cal->tm_wday, forceUpdate);
 //}
 
-time_tm * rtccGetTime(void) {
+//time_tm * rtccGetDateAndTimeTM(void) {
+//
+//    //int year, month, date, hour, min, sec;
+//    static time_tm time;
+//
+//    RtccHoldTime();
+//
+//    // Set the time and interval desired
+//    time.tm_sec = holdRtccSec;
+//    time.tm_min = holdRtccMin;
+//    time.tm_hour = holdRtccHour;
+//
+//    time.tm_mday = holdRtccMday;
+//    time.tm_mon = holdRtccMon - 1;
+//    time.tm_year = holdRtccYear + 1980 - 1900;
+//
+//    time.tm_wday = RtccWeekDay(holdRtccYear, holdRtccMon, holdRtccMday);
+//
+//    //return mktime(&time);
+//    return &time;
+//}
 
-    //int year, month, date, hour, min, sec;
-    static time_tm time;
-
+void rtccGetDate(WORD *rtccYear, BYTE *rtccMon, BYTE *rtccMday) {
     RtccHoldTime();
-
-    // Set the time and interval desired
-    time.tm_sec = holdRtccSec;
-    time.tm_min = holdRtccMin;
-    time.tm_hour = holdRtccHour;
-
-    time.tm_mday = holdRtccMday;
-    time.tm_mon = holdRtccMon - 1;
-    time.tm_year = holdRtccYear + 1980 - 1900;
-
-    time.tm_wday = RtccWeekDay(holdRtccYear, holdRtccMon, holdRtccMday);
-
-    //return mktime(&time);
-    return &time;
+    *rtccMday = holdRtccMday;
+    *rtccMon = holdRtccMon;
+    *rtccYear = holdRtccYear + 1980;
 }
 
-void Rtcc(int argc, char **argv) {
+void rtccGetTime(BYTE *rtccHour, BYTE *rtccMin, BYTE *rtccSec) {
+    RtccHoldTime();
+    *rtccSec = holdRtccSec;
+    *rtccMin = holdRtccMin;
+    *rtccHour = holdRtccHour;
+}
+
+void rtccGetDateAndTime(WORD *rtccYear, BYTE *rtccMon, BYTE *rtccMday, BYTE *rtccHour, BYTE *rtccMin, BYTE *rtccSec) {
+    RtccHoldTime();
+    *rtccMday = holdRtccMday;
+    *rtccMon = holdRtccMon;
+    *rtccYear = holdRtccYear + 1980;
+    *rtccSec = holdRtccSec;
+    *rtccMin = holdRtccMin;
+    *rtccHour = holdRtccHour;
+}
+
+void rtccIncDateAndTime(WORD *rtccYear, BYTE *rtccMon, BYTE *rtccMday, BYTE *rtccHour, BYTE *rtccMin, BYTE *rtccSec, WORD secToInc) {
+
+    BYTE n;
+    WORD i;
+
+    // Increments a 'fake' RTCC
+    for (i = 0; i < secToInc; i++) {
+        if (++*rtccSec >= 60) {
+            *rtccSec = 0;
+            if (++*rtccMin >= 60) {
+                *rtccMin = 0;
+                if (++*rtccHour >= 24) {
+                    *rtccHour = 0;
+                    n = dom[*rtccMon - 1];
+                    if ((n == 28) && !(*rtccYear & 3))
+                        n++;
+                    if (++*rtccMday > n) {
+                        *rtccMday = 1;
+                        if (++*rtccMon > 12) {
+                            *rtccMon = 1;
+                            *rtccYear++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+int Rtcc(int argc, char **argv) {
 
     if (argc < 2) {
         RtccHoldTime();
@@ -124,17 +181,18 @@ void Rtcc(int argc, char **argv) {
         // To do add the set functionality
         holdRtccMday = atoimm(argv[1], 1, 31, 1);
         holdRtccMon = atoimm(argv[2], 1, 12, 1);
-        holdRtccYear = atoimm(argv[3], 2014, 2200, 2014) - 1980;
+        holdRtccYear = atoimm(argv[3], 2010, 2200, 2015) - 1980;
 
-        holdRtccHour = atoimm(argv[4], 1, 23, 1);
-        holdRtccMin = atoimm(argv[5], 1, 59, 1);
-        holdRtccSec = atoimm(argv[6], 1, 59, 1);
+        holdRtccHour = atoimm(argv[4], 0, 23, 1);
+        holdRtccMin = atoimm(argv[5], 0, 59, 1);
+        holdRtccSec = atoimm(argv[6], 0, 59, 1);
 
         RtccSetDateAndTime();
 
     } else {
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }
 
 /*****************************************************************************
@@ -149,9 +207,9 @@ void Rtcc(int argc, char **argv) {
  *****************************************************************************/
 //void __ISR(_CORE_TIMER_VECTOR, IPL2SOFT) CoreTimerHandler(void) {
 
-void __ISR(_TIMER_2_VECTOR, ipl2) Timer2Handler(void) {
+void __ISR(_TIMER_2_VECTOR, IPL6AUTO) Timer2Handler(void) {
 
-    static const BYTE dom[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    //static const BYTE dom[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     static int div1k;
     BYTE n;
 
@@ -176,7 +234,8 @@ void __ISR(_TIMER_2_VECTOR, ipl2) Timer2Handler(void) {
                 if (++rtccHour >= 24) {
                     rtccHour = 0;
                     n = dom[rtccMon - 1];
-                    if ((n == 28) && !(rtccYear & 3)) n++;
+                    if ((n == 28) && !(rtccYear & 3))
+                        n++;
                     if (++rtccMday > n) {
                         rtccMday = 1;
                         if (++rtccMon > 12) {
@@ -252,17 +311,35 @@ void RtccHoldTime(void) {
  ********************************************************************/
 DWORD get_fattime(void) {
     DWORD tmr;
+    //    FILINFO fno;
+    FAT_TIME fat;
 
     RtccHoldTime();
 
-    tmr = (((DWORD) holdRtccYear - 80) << 25)
-            | ((DWORD) holdRtccMon << 21)
-            | ((DWORD) holdRtccMday << 16)
-            | (WORD) (holdRtccHour << 11)
-            | (WORD) (holdRtccMin << 5)
-            | (WORD) (holdRtccSec >> 1);
+    //    fno.fdate = (WORD) (((holdRtccYear) * 512U) | holdRtccMon * 32U | holdRtccMday);
+    //    fno.ftime = (WORD) (holdRtccHour * 2048U | holdRtccMin * 32U | holdRtccSec / 2U);
+    //
+    fat.fields.day = holdRtccMday;
+    fat.fields.month = holdRtccMon;
+    fat.fields.year = holdRtccYear;
 
-    return tmr;
+    fat.fields.sec = holdRtccSec / 2;
+    fat.fields.min = holdRtccMin;
+    fat.fields.hour = holdRtccHour;
+    //    
+    //    tmr = (fno.fdate << 16) | fno.ftime;
+    //
+    //
+    //
+    ////    tmr = (((DWORD) holdRtccYear) << 25)
+    ////            | ((DWORD) holdRtccMon << 21)
+    ////            | ((DWORD) holdRtccMday << 16)
+    ////            | (WORD) (holdRtccHour << 11)
+    ////            | (WORD) (holdRtccMin << 5)
+    ////            | (WORD) (holdRtccSec >> 1);
+    //
+    //    return tmr;
+    return fat.val;
 }
 
 /*****************************************************************************

@@ -28,6 +28,7 @@
         <itemPath>h/MP3/Record.h</itemPath>
         <itemPath>h/MP3/VS1063.h</itemPath>
         <itemPath>h/MP3/VS1063Patches.h</itemPath>
+        <itemPath>h/MP3/MP3Frame.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f4" displayName="Properties" projectFiles="true">
         <itemPath>h/Properties/ini.h</itemPath>
@@ -53,6 +54,7 @@
         <itemPath>h/Utilities/ADC.h</itemPath>
         <itemPath>h/Utilities/Optlist.h</itemPath>
         <itemPath>h/Utilities/Logging.h</itemPath>
+        <itemPath>h/Utilities/USB.h</itemPath>
       </logicalFolder>
       <itemPath>h/HardwareProfile.h</itemPath>
       <itemPath>h/usb_config.h</itemPath>
@@ -78,6 +80,11 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <logicalFolder name="f3" displayName="Commands" projectFiles="true">
+        <itemPath>c/Commands/Cat.c</itemPath>
+        <itemPath>c/Commands/DeleteDir.c</itemPath>
+        <itemPath>c/Commands/List.c</itemPath>
+      </logicalFolder>
       <logicalFolder name="f2" displayName="Delay" projectFiles="true">
         <itemPath>c/Delay/Delay.c</itemPath>
         <itemPath>c/Delay/Tick.c</itemPath>
@@ -94,6 +101,7 @@
         <itemPath>c/MP3/Record.c</itemPath>
         <itemPath>c/MP3/VS1063.c</itemPath>
         <itemPath>c/MP3/VS1063Patches.c</itemPath>
+        <itemPath>c/MP3/MP3Frame.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f4" displayName="Properties" projectFiles="true">
         <itemPath>c/Properties/ini.c</itemPath>
@@ -113,6 +121,7 @@
         <itemPath>c/Utilities/ADC.c</itemPath>
         <itemPath>c/Utilities/Optlist.c</itemPath>
         <itemPath>c/Utilities/Logging.c</itemPath>
+        <itemPath>c/Utilities/USB.c</itemPath>
       </logicalFolder>
       <itemPath>c/usb_descriptors.c</itemPath>
       <itemPath>c/Main.c</itemPath>

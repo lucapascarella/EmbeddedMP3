@@ -6,9 +6,9 @@
  * FileName:        VS1063.c
  * Dependencies:    VS1063.h
  * Processor:       PIC32MX270F256B
- * Compiler:        Microchip XC32 v1.32 or higher
+ * Compiler:        Microchip XC32 v1.33 or higher
  * Company:         LP Systems
- * Author:	    Luca Pascarella www.lucapascarella.it
+ * Author:          Luca Pascarella www.lucapascarella.it
  *
  * Software License Agreement
  *
@@ -34,13 +34,14 @@
  *
  ********************************************************************/
 
-
+const char file_name[] = "VS1063.c";
 
 #include "MP3/VS1063.h"
 #include "Delay/Delay.h"
 #include "Utilities/Config.h"
 #include "Utilities/Utilities.h"
 #include "MP3/VS1063Patches.h"
+#include "Utilities/Logging.h"
 
 #define DEBUG
 
@@ -68,15 +69,15 @@ _MP3_RECORD mp3_record;
   Remarks:
     None
  ***************************************************************************/
-BOOL InitVLSI(void) {
+void InitVLSI(void) {
 
     WORD read;
     SHORT count;
 
     // Set up SPI port pins
-    MP3_XDCS_O = 1; // Make the Data CS pin high
-    MP3_XCS_O = 1; // Make the Control CS pin high
-    MP3_XRESET_O = 0;
+    MP3_XDCS_O_HIGH(); // Make the Data CS pin high
+    MP3_XCS_O_HIGH(); // Make the Control CS pin high
+    MP3_XRESET_O_LOW();
 
     MP3_XRESET_TRIS = 0;
     MP3_DREQ_TRIS = 1;
@@ -89,19 +90,21 @@ BOOL InitVLSI(void) {
 
 
     // Deassert RESET (active low)
-    MP3_XRESET_O = 1;
+    MP3_XRESET_O_HIGH();
     DelayMs(5);
-    MP3_XRESET_O = 0;
+    MP3_XRESET_O_LOW();
     DelayMs(5);
-    MP3_XRESET_O = 1;
+    MP3_XRESET_O_HIGH();
 
     // Wait until DREQ is pulled high
     for (count = 0; MP3_DREQ_I == 0 && count < 100; count++)
-	DelayMs(10);
+        DelayMs(10);
 
     // If DREQ is not pulled high reboot the board
-    if (count == 100)
-	FlashLight(100, 50, TRUE);
+    if (count == 100) {
+        writeToLogFile(LOG_NORMAL, file_name, "DREQ error.");
+        FlashLight(100, 50, TRUE);
+    }
 
     // A quick sanity check: write to two registers, then test if we
     // get the same results. Note that if you use a too high SPI
@@ -109,26 +112,27 @@ BOOL InitVLSI(void) {
     VLSIWriteReg(VLSI_ADD_HDAT0, 0xABAD, SPI_BRG_1MHZ);
     VLSIWriteReg(VLSI_ADD_HDAT1, 0x1DEA, SPI_BRG_1MHZ);
     if (VLSIReadReg(VLSI_ADD_HDAT0, SPI_BRG_1MHZ) != 0xABAD || VLSIReadReg(VLSI_ADD_HDAT1, SPI_BRG_1MHZ) != 0x1DEA) {
-	FlashLight(100, 50, TRUE);
+        writeToLogFile(LOG_NORMAL, file_name, "Read back error.");
+        FlashLight(100, 50, TRUE);
     }
 
     // Write configuration MODE register in a loop to verify that the chip is
     // connected and running correctly
     count = 0;
     do {
-	#if defined VLSI_SINE_TEST
-	VLSIWriteReg(VLSI_ADD_MODE, 0x0822); //0822 for a SineTest
+#if defined VLSI_SINE_TEST
+        VLSIWriteReg(VLSI_ADD_MODE, 0x0822); //0822 for a SineTest
     } while ((read = VLSIReadReg(VLSI_ADD_MODE)) != 0x0822u && count++ < 10);
-	#else
-	VLSIWriteReg(VLSI_ADD_MODE, VLSI_VAL_MODE_DECODE, SPI_BRG_1MHZ); // 0x0802 for a normal operations
+#else
+        VLSIWriteReg(VLSI_ADD_MODE, VLSI_VAL_MODE_DECODE, SPI_BRG_1MHZ); // 0x0802 for a normal operations
     } while ((read = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_1MHZ)) != VLSI_VAL_MODE_DECODE && count++ < 10);
-    #endif
+#endif
 
     if (count == 10)
-	FlashLight(100, 50, TRUE);
+        FlashLight(100, 50, TRUE);
 
     if (((read = VLSIReadReg(VLSI_ADD_STATUS, SPI_BRG_1MHZ)) & VLSI_STATUS_VER) != VER_VS1063)
-	FlashLight(100, 50, TRUE);
+        FlashLight(100, 50, TRUE);
 
     // Set the Clock reference
     VLSIWriteReg(VLSI_ADD_CLOCKF, VLSI_VAL_CLOCKF_12MHz288, SPI_BRG_1MHZ);
@@ -137,15 +141,13 @@ BOOL InitVLSI(void) {
 
     VLSI_SoftReset();
 
-    SCI_MODE sci_mode;
-    SCI_STATUS sci_status;
-    SCI_CLOCK sci_clock;
-
-    sci_mode.word = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8MHZ);
-    sci_status.word = VLSIReadReg(VLSI_ADD_STATUS, SPI_BRG_8MHZ);
-    sci_clock.word = VLSIReadReg(VLSI_ADD_CLOCKF, SPI_BRG_8MHZ);
-
-    return TRUE;
+    //    SCI_MODE sci_mode;
+    //    SCI_STATUS sci_status;
+    //    SCI_CLOCK sci_clock;
+    //
+    //    sci_mode.word = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8MHZ);
+    //    sci_status.word = VLSIReadReg(VLSI_ADD_STATUS, SPI_BRG_8MHZ);
+    //    sci_clock.word = VLSIReadReg(VLSI_ADD_CLOCKF, SPI_BRG_8MHZ);
 }
 
 /****************************************************************************
@@ -171,11 +173,11 @@ void VLSI_SoftReset(void) {
 
     SCI_MODE sci_mode;
 
-    sci_mode.word = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8MHZ);
+    sci_mode.word = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8_33MHZ);
     sci_mode.bits.SM_RESET = TRUE;
-    VLSIWriteReg(VLSI_ADD_MODE, sci_mode.word, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_MODE, sci_mode.word, SPI_BRG_12_5MHZ);
     DelayMs(1);
-    VLSIWriteReg(VLSI_ADD_CLOCKF, VLSI_VAL_CLOCKF_12MHz288, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_CLOCKF, VLSI_VAL_CLOCKF_12MHz288, SPI_BRG_12_5MHZ);
 
     DelayMs(1);
     while (MP3_DREQ_I == 0);
@@ -219,11 +221,11 @@ WORD VLSIReadReg(BYTE vAddress, WORD brg) {
     // Switch in Mode32 to speed up the bytes exchanged
     SPICON1bits.MODE32 = 1;
     while (!MP3_DREQ_I);
-    MP3_XCS_O = 0;
+    MP3_XCS_O_LOW();
     MP3_SPIBUF = 0x0300FFFF | vAddress << 16;
     while (!SPISTATbits.SPIRBF);
     dummy = MP3_SPIBUF;
-    MP3_XCS_O = 1;
+    MP3_XCS_O_HIGH();
     // Return to default Mode8
     SPICON1bits.MODE32 = 0;
 
@@ -267,11 +269,11 @@ void VLSIWriteReg(BYTE vAddress, WORD wValue, WORD brg) {
     // Switch in Mode32 to speed up the bytes exchanged
     SPICON1bits.MODE32 = 1;
     while (!MP3_DREQ_I);
-    MP3_XCS_O = 0;
+    MP3_XCS_O_LOW();
     MP3_SPIBUF = 0x02000000 | vAddress << 16 | wValue;
     while (!SPISTATbits.SPIRBF);
     dummy = MP3_SPIBUF;
-    MP3_XCS_O = 1;
+    MP3_XCS_O_HIGH();
     // Return to default Mode8
     SPICON1bits.MODE32 = 0;
 
@@ -309,37 +311,37 @@ WORD VLSIPutArray(BYTE *bfr, int len) {
     // If DREQ is high, VS1063a can take at least 32 bytes of SDI data or one SCI command.
     // DREQ is turned low when the stream buffer is too full and for the duration of an SCI command.
     if (DREQ_IS_FULL)
-	return 0;
+        return 0;
 
     Spibrg = SPIBRG;
-    SPIBRG = SPI_BRG_12MHZ;
+    SPIBRG = SPI_BRG_12_5MHZ;
 
-    MP3_XDCS_O = 0;
+    MP3_XDCS_O_LOW();
 
     MP3_SPIBUF = bfr[0];
     i = 1;
     if (len != 1) {
-	do {
-	    tmp = bfr[i++];
-	    while (!MP3_SPI_RBF);
-	    ret = MP3_SPIBUF;
-	    // If DREQ is high, VS1063a can take at least 32 bytes of SDI data or one SCI command.
-	    // DREQ is turned low when the stream buffer is too full and for the duration of an SCI command.
-	    if (DREQ_IS_FULL) {
-		MP3_XDCS_O = 1;
-		i--;
-		SPIBRG = Spibrg;
-		return i;
-	    }
-	    MP3_SPIBUF = tmp;
-	} while (i < len);
+        do {
+            tmp = bfr[i++];
+            while (!MP3_SPI_RBF);
+            ret = MP3_SPIBUF;
+            // If DREQ is high, VS1063a can take at least 32 bytes of SDI data or one SCI command.
+            // DREQ is turned low when the stream buffer is too full and for the duration of an SCI command.
+            if (DREQ_IS_FULL) {
+                MP3_XDCS_O_HIGH();
+                i--;
+                SPIBRG = Spibrg;
+                return i;
+            }
+            MP3_SPIBUF = tmp;
+        } while (i < len);
     }
 
     // Attendo che finisce di trasferire l'ultimo byte del buffer
     while (!MP3_SPI_RBF);
     ret = MP3_SPIBUF;
 
-    MP3_XDCS_O = 1;
+    MP3_XDCS_O_HIGH();
     SPIBRG = Spibrg;
 
     return i;
@@ -432,110 +434,62 @@ WORD VLSIPutArray(BYTE *bfr, int len) {
   Remarks:
     None
  ***************************************************************************/
-WORD VLSIGetArray(BYTE *bfr, int len, int minLenght) {
+UINT VLSIGetArray(BYTE *bfr, UINT byteLength, UINT minByteLenght) {
 
-    int i, k;
-    volatile DWORD dummy;
-    WORD BytesToRead, Spibrg;
-    WORD_VAL WordsToRead;
+    UINT i, wordLength, minWordLenght;
+    //volatile DWORD dummy;
+    //WORD Spibrg;
+    DWORD_VAL WordsToRead;
 
     if (DREQ_IS_FULL) {
-	for (k = 0; k < 2; k++)
-	    Nop();
-	if (DREQ_IS_FULL)
-	    return 0;
+        for (i = 0; i < 2; i++)
+            Nop();
+        if (DREQ_IS_FULL)
+            return 0;
     }
-    #ifdef DEBUG
-    LED_RED_ON();
-    #endif
+#ifdef DEBUG
+    //LED_RED_ON();
+#endif
 
-    //    // Max SPI clock speed allowd with 12.288MHz * 4 is 7MHz
-    //    WordsToRead.Val = VLSIReadReg(VLSI_ADD_HDAT1, SPI_BRG_5MHZ);
-
-    Spibrg = SPIBRG;
-    SPIBRG = SPI_BRG_8MHZ; // SPI 6.66MHz
+    // Max SPI clock speed allowd with 12.288MHz * 4 is 7MHz
+    //Spibrg = SPIBRG;
+    SPIBRG = SPI_BRG_8_33MHZ;
 
     // Switch in Mode32 to speed up the bytes exchanged
     SPICON1bits.MODE32 = 1;
-    MP3_XCS_O = 0;
+    MP3_XCS_O_LOW();
     MP3_SPIBUF = 0x0309FFFF;
     while (!SPISTATbits.SPIRBF);
-    dummy = MP3_SPIBUF;
-    MP3_XCS_O = 1;
-    WordsToRead.v[1] = (BYTE) (dummy >> 8);
-    WordsToRead.v[0] = (BYTE) (dummy);
-    //    SPICON1bits.MODE32 = 0;
+    WordsToRead.Val = MP3_SPIBUF;
+    MP3_XCS_O_HIGH();
 
-    //    MP3_XCS_O = 0;
-    //    MP3_SPIBUF = 0x03;
-    //    while (!MP3_SPI_RBF);
-    //    ret = MP3_SPIBUF;
-    //    MP3_SPIBUF = VLSI_ADD_HDAT1;
-    //    while (!MP3_SPI_RBF);
-    //    ret = MP3_SPIBUF;
-    //    MP3_SPIBUF = 0xFF;
-    //    while (!MP3_SPI_RBF);
-    //    WordsToRead.v[1] = MP3_SPIBUF;
-    //    MP3_SPIBUF = 0xFF;
-    //    while (!MP3_SPI_RBF);
-    //    WordsToRead.v[0] = MP3_SPIBUF;
-    //    MP3_XCS_O = 1;
+    wordLength = byteLength / 2;
+    minWordLenght = minByteLenght / 2;
+    if (WordsToRead.word.LW < minWordLenght)
+        wordLength = 0;
+    else
+        wordLength = min(wordLength, WordsToRead.word.LW);
 
-    BytesToRead = WordsToRead.Val * 2;
-    if (BytesToRead < minLenght)
-	len = 0;
-    else if (BytesToRead < len)
-	len = BytesToRead;
-
-    //    SPICON1bits.MODE32 = 1;
-    for (i = 0; i < len; i++) {
-
-	//	if (DREQ_IS_FULL) {
-	//	    // Little busy wait necessary to wait the completion of the previous reading operation
-	//	    for (k = 0; k < 2; k++)
-	//		Nop();
-	//	    // If after the busy wait the decoder is always busy exit and returns later to read next byte
-	//	    if (DREQ_IS_FULL)
-	//		break;
-	//	}
-
-	while (DREQ_IS_FULL);
-	MP3_XCS_O = 0;
-	MP3_SPIBUF = 0x0308FFFF;
-	while (!SPISTATbits.SPIRBF);
-	dummy = MP3_SPIBUF;
-	MP3_XCS_O = 1;
-	bfr[i++] = (BYTE) (dummy >> 8);
-	bfr[i] = (BYTE) (dummy);
-
-
-	//	MP3_XCS_O = 0;
-	//	MP3_SPIBUF = 0x03;
-	//	while (!MP3_SPI_RBF);
-	//	ret = MP3_SPIBUF;
-	//	MP3_SPIBUF = VLSI_ADD_HDAT0;
-	//	while (!MP3_SPI_RBF);
-	//	ret = MP3_SPIBUF;
-	//	MP3_SPIBUF = 0xFF;
-	//	while (!MP3_SPI_RBF);
-	//	tmp = MP3_SPIBUF;
-	//	MP3_SPIBUF = 0xFF;
-	//	bfr[i] = tmp;
-	//	i++;
-	//	while (!MP3_SPI_RBF);
-	//	bfr[i] = MP3_SPIBUF;
-	//	MP3_XCS_O = 1;
+    for (i = 0; i < wordLength; i++) {
+        //while (DREQ_IS_FULL);
+        MP3_XCS_O_LOW();
+        MP3_SPIBUF = 0x0308FFFF;
+        while (!SPISTATbits.SPIRBF);
+        WordsToRead.Val = MP3_SPIBUF;
+        MP3_XCS_O_HIGH();
+        *bfr++ = WordsToRead.byte.HB;
+        *bfr++ = WordsToRead.byte.LB;
     }
-    // Return to default Mode8
+    // Return to default Mode 8 bit
     SPICON1bits.MODE32 = 0;
 
-    SPIBRG = Spibrg;
+    //SPIBRG = Spibrg;
 
-    #ifdef DEBUG
-    LEDs_OFF();
-    #endif
+#ifdef DEBUG
+    //LEDs_OFF();
+#endif
 
-    return i;
+    return i * 2;
 }
 
 /****************************************************************************
@@ -578,44 +532,44 @@ void VLSI_InitRecording(_REC_PRESET *recPreSet) {
     // SCI_WRAMADDR 15...0  Quality / bitrate selection for Ogg Vorbis and MP3
 
     // Send all the parameters
-    VLSIWriteReg(VLSI_ADD_AICTRL0, recPreSet->sci_aictrl0.word, SPI_BRG_12MHZ);
-    VLSIWriteReg(VLSI_ADD_AICTRL1, recPreSet->sci_aictrl1.word, SPI_BRG_12MHZ);
-    VLSIWriteReg(VLSI_ADD_AICTRL2, recPreSet->sci_aictrl2.word, SPI_BRG_12MHZ);
-    VLSIWriteReg(VLSI_ADD_AICTRL3, recPreSet->sci_aictrl3.word, SPI_BRG_12MHZ);
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, recPreSet->sci_wramaddr.word, SPI_BRG_12MHZ);
-    VLSIWriteReg(VLSI_ADD_MODE, recPreSet->sci_mode.word, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_AICTRL0, recPreSet->sci_aictrl0.word, SPI_BRG_12_5MHZ);
+    VLSIWriteReg(VLSI_ADD_AICTRL1, recPreSet->sci_aictrl1.word, SPI_BRG_12_5MHZ);
+    VLSIWriteReg(VLSI_ADD_AICTRL2, recPreSet->sci_aictrl2.word, SPI_BRG_12_5MHZ);
+    VLSIWriteReg(VLSI_ADD_AICTRL3, recPreSet->sci_aictrl3.word, SPI_BRG_12_5MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, recPreSet->sci_wramaddr.word, SPI_BRG_12_5MHZ);
+    VLSIWriteReg(VLSI_ADD_MODE, recPreSet->sci_mode.word, SPI_BRG_12_5MHZ);
 
     // Start the recording operation
-    VLSIWriteReg(VLSI_ADD_AIADDR, 0x50, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_AIADDR, 0x50, SPI_BRG_12_5MHZ);
 }
 
 void VLSI_GetRecordingInfo(_REC_PRESET *recPreSet) {
 
-    recPreSet->sci_aictrl0.word = VLSIReadReg(VLSI_ADD_AICTRL0, SPI_BRG_8MHZ);
-    recPreSet->sci_aictrl1.word = VLSIReadReg(VLSI_ADD_AICTRL1, SPI_BRG_8MHZ);
-    recPreSet->sci_aictrl2.word = VLSIReadReg(VLSI_ADD_AICTRL2, SPI_BRG_8MHZ);
-    recPreSet->sci_aictrl3.word = VLSIReadReg(VLSI_ADD_AICTRL3, SPI_BRG_8MHZ);
-    recPreSet->sci_wramaddr.word = VLSIReadReg(VLSI_ADD_WRAMADDR, SPI_BRG_8MHZ);
-    recPreSet->sci_mode.word = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8MHZ);
+    recPreSet->sci_aictrl0.word = VLSIReadReg(VLSI_ADD_AICTRL0, SPI_BRG_8_33MHZ);
+    recPreSet->sci_aictrl1.word = VLSIReadReg(VLSI_ADD_AICTRL1, SPI_BRG_8_33MHZ);
+    recPreSet->sci_aictrl2.word = VLSIReadReg(VLSI_ADD_AICTRL2, SPI_BRG_8_33MHZ);
+    recPreSet->sci_aictrl3.word = VLSIReadReg(VLSI_ADD_AICTRL3, SPI_BRG_8_33MHZ);
+    recPreSet->sci_wramaddr.word = VLSIReadReg(VLSI_ADD_WRAMADDR, SPI_BRG_8_33MHZ);
+    recPreSet->sci_mode.word = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8_33MHZ);
 }
 
 void VLSI_SetBitRecMode(void) {
 
-    mp3_record.word.AICTRL3 = VLSIReadReg(VLSI_ADD_AICTRL3, SPI_BRG_8MHZ);
+    mp3_record.word.AICTRL3 = VLSIReadReg(VLSI_ADD_AICTRL3, SPI_BRG_8_33MHZ);
     mp3_record.bits.pause = 1;
-    VLSIWriteReg(VLSI_ADD_AICTRL3, mp3_record.word.AICTRL3, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_AICTRL3, mp3_record.word.AICTRL3, SPI_BRG_12_5MHZ);
 }
 
 void VLSI_ClearBitRecMode(void) {
 
-    mp3_record.word.AICTRL3 = VLSIReadReg(VLSI_ADD_AICTRL3, SPI_BRG_8MHZ);
+    mp3_record.word.AICTRL3 = VLSIReadReg(VLSI_ADD_AICTRL3, SPI_BRG_8_33MHZ);
     mp3_record.bits.pause = 0;
-    VLSIWriteReg(VLSI_ADD_AICTRL3, mp3_record.word.AICTRL3, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_AICTRL3, mp3_record.word.AICTRL3, SPI_BRG_12_5MHZ);
 }
 
 WORD VLSI_GetPlayRecMode() {
 
-    mp3_record.word.AICTRL3 = VLSIReadReg(VLSI_ADD_AICTRL3, SPI_BRG_8MHZ);
+    mp3_record.word.AICTRL3 = VLSIReadReg(VLSI_ADD_AICTRL3, SPI_BRG_8_33MHZ);
     return mp3_record.word.AICTRL3;
 }
 
@@ -650,35 +604,35 @@ void VLSI_FinishPlaying(void) {
     WORD fill;
     BYTE buf[4];
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0xC0C0, SPI_BRG_8MHZ);
-    fill = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0xC0C0, SPI_BRG_8_33MHZ);
+    fill = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_12_5MHZ);
 
     buf[0] = buf[1] = buf[2] = buf[3] = 0x00FF & fill;
 
     for (i = 0; i < 2052 / 4; i++) {
-	send = 0;
-	while ((send += VLSIPutArray(&buf[send], sizeof (buf) - send)) != sizeof (buf));
+        send = 0;
+        while ((send += VLSIPutArray(&buf[send], sizeof (buf) - send)) != sizeof (buf));
     }
 
     // Set SM_CANCEL bit of SCI_MODE
-    fill = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8MHZ);
-    VLSIWriteReg(VLSI_ADD_MODE, fill | VLSI_VAL_SM_CANCEL, SPI_BRG_12MHZ);
+    fill = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8_33MHZ);
+    VLSIWriteReg(VLSI_ADD_MODE, fill | VLSI_VAL_SM_CANCEL, SPI_BRG_12_5MHZ);
 
     count = 0;
     do {
-	for (i = 0; i < 32 / 4; i++) {
-	    send = 0;
-	    while ((send += VLSIPutArray(&buf[send], sizeof (buf) - send)) != sizeof (buf));
-	}
+        for (i = 0; i < 32 / 4; i++) {
+            send = 0;
+            while ((send += VLSIPutArray(&buf[send], sizeof (buf) - send)) != sizeof (buf));
+        }
 
-	fill = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8MHZ);
+        fill = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8_33MHZ);
     } while (fill & VLSI_VAL_SM_CANCEL && count++ < 64);
 
     if (count >= 64)
-	VLSI_SoftReset();
+        VLSI_SoftReset();
 
-    if (VLSIReadReg(VLSI_ADD_HDAT0, SPI_BRG_8MHZ) != 0 || VLSIReadReg(VLSI_ADD_HDAT1, SPI_BRG_8MHZ) != 0)
-	VLSI_SoftReset();
+    if (VLSIReadReg(VLSI_ADD_HDAT0, SPI_BRG_8_33MHZ) != 0 || VLSIReadReg(VLSI_ADD_HDAT1, SPI_BRG_8_33MHZ) != 0)
+        VLSI_SoftReset();
 }
 
 /****************************************************************************
@@ -705,8 +659,8 @@ void VLSI_SendFinishRecording(void) {
     WORD fill;
 
     // Set SM_CANCEL bit of SCI_MODE
-    fill = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8MHZ);
-    VLSIWriteReg(VLSI_ADD_MODE, fill | VLSI_VAL_SM_CANCEL, SPI_BRG_12MHZ);
+    fill = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8_33MHZ);
+    VLSIWriteReg(VLSI_ADD_MODE, fill | VLSI_VAL_SM_CANCEL, SPI_BRG_12_5MHZ);
 }
 
 //// 1. Send a portion of an audio file to VS1063a.
@@ -752,19 +706,19 @@ void VLSI_SetBassBoost(BYTE bass, BYTE gfreq) {
 
     // Make sure values are in the allowed range
     if (bass > 15)
-	bass = 15;
+        bass = 15;
     if (bass < 0)
-	bass = 0;
+        bass = 0;
 
     if (gfreq > 15)
-	gfreq = 15;
+        gfreq = 15;
     if (gfreq < 2)
-	gfreq = 2;
+        gfreq = 2;
 
     config.volume.bits.bass_db = bass;
     config.volume.bits.bass_freq = gfreq;
 
-    VLSIWriteReg(VLSI_ADD_BASS, config.volume.word.boost, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_BASS, config.volume.word.boost, SPI_BRG_12_5MHZ);
 }
 
 /****************************************************************************
@@ -791,19 +745,19 @@ void VLSI_SetTrebleBoost(CHAR treble, BYTE gfreq) {
 
     // Make sure values are in the allowed range
     if (treble > 7)
-	treble = 7;
+        treble = 7;
     if (treble < -8)
-	treble = -8;
+        treble = -8;
 
     if (gfreq > 15)
-	gfreq = 15;
+        gfreq = 15;
     if (gfreq < 1)
-	gfreq = 1;
+        gfreq = 1;
 
     config.volume.bits.treble_db = treble;
     config.volume.bits.treble_freq = gfreq;
 
-    VLSIWriteReg(VLSI_ADD_BASS, config.volume.word.boost, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_BASS, config.volume.word.boost, SPI_BRG_12_5MHZ);
 }
 
 /****************************************************************************
@@ -830,19 +784,19 @@ void VLSI_SetVolume(SHORT left, SHORT right) {
 
     // Make sure values are in the allowed range
     if (left > 255)
-	left = 255;
+        left = 255;
     if (left < 0)
-	left = config.volume.bits.left;
+        left = config.volume.bits.left;
 
     if (right > 255)
-	right = 255;
+        right = 255;
     if (right < 0)
-	right = config.volume.bits.right;
+        right = config.volume.bits.right;
 
     config.volume.bits.left = left;
     config.volume.bits.right = right;
 
-    VLSIWriteReg(VLSI_ADD_VOL, config.volume.word.volume, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_VOL, config.volume.word.volume, SPI_BRG_12_5MHZ);
 }
 
 /****************************************************************************
@@ -870,13 +824,13 @@ void VLSI_SetBalance(BYTE volume, CHAR balance) {
     LONG left, right;
 
     if (balance == 0) {
-	right = left = volume;
+        right = left = volume;
     } else if (balance < 0) {
-	left = (LONG) ((255 - volume) * abs(balance) / 100) + volume;
-	right = volume;
+        left = (LONG) ((255 - volume) * abs(balance) / 100) + volume;
+        right = volume;
     } else if (balance > 0) {
-	right = (LONG) ((255 - volume) * abs(balance) / 100) + volume;
-	left = volume;
+        right = (LONG) ((255 - volume) * abs(balance) / 100) + volume;
+        left = volume;
     }
 
     VLSI_SetVolume(left, right);
@@ -1044,11 +998,11 @@ CHAR VLSI_GetBalance(void) {
     LONG temp;
 
     if (config.volume.bits.right < config.volume.bits.left)
-	temp = -(config.volume.bits.left - config.volume.bits.right) * 100 / (255 - config.volume.bits.right);
+        temp = -(config.volume.bits.left - config.volume.bits.right) * 100 / (255 - config.volume.bits.right);
     else if (config.volume.bits.left < config.volume.bits.right)
-	temp = (config.volume.bits.right - config.volume.bits.left) * 100 / (255 - config.volume.bits.left);
+        temp = (config.volume.bits.right - config.volume.bits.left) * 100 / (255 - config.volume.bits.left);
     else
-	temp = 0;
+        temp = 0;
 
     return temp;
 }
@@ -1079,8 +1033,8 @@ CHAR VLSI_GetBalance(void) {
  ***************************************************************************/
 void VLSI_SetFastSpeed(WORD speed) {
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e04, SPI_BRG_12MHZ);
-    VLSIWriteReg(VLSI_ADD_WRAM, speed, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e04, SPI_BRG_12_5MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAM, speed, SPI_BRG_12_5MHZ);
 }
 
 /****************************************************************************
@@ -1104,8 +1058,8 @@ void VLSI_SetFastSpeed(WORD speed) {
  ***************************************************************************/
 WORD VLSI_GetFastSpeed(void) {
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e04, SPI_BRG_12MHZ);
-    extra_par.word.playSpeed = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e04, SPI_BRG_12_5MHZ);
+    extra_par.word.playSpeed = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8_33MHZ);
     return extra_par.word.playSpeed;
 }
 
@@ -1135,22 +1089,22 @@ WORD VLSI_GetFastSpeed(void) {
  ***************************************************************************/
 void VLSI_SetRateTune(DWORD finetune) {
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e08, SPI_BRG_12MHZ);
-    VLSIWriteReg(VLSI_ADD_WRAM, finetune >> 16, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e08, SPI_BRG_12_5MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAM, finetune >> 16, SPI_BRG_12_5MHZ);
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e07, SPI_BRG_12MHZ);
-    VLSIWriteReg(VLSI_ADD_WRAM, finetune, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e07, SPI_BRG_12_5MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAM, finetune, SPI_BRG_12_5MHZ);
 }
 
 DWORD VLSI_GetRateTune(void) {
 
     volatile DWORD tmp;
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e08, SPI_BRG_12MHZ);
-    tmp = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e08, SPI_BRG_12_5MHZ);
+    tmp = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8_33MHZ);
     tmp = tmp << 16;
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e07, SPI_BRG_12MHZ);
-    tmp |= VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e07, SPI_BRG_12_5MHZ);
+    tmp |= VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8_33MHZ);
 
     return tmp;
 }
@@ -1159,76 +1113,76 @@ void VLSI_SetSpeedShifter(WORD speed) {
 
     WORD tmp;
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e09, SPI_BRG_12MHZ);
-    tmp = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8MHZ);
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e09, SPI_BRG_12MHZ);
-    VLSIWriteReg(VLSI_ADD_WRAM, tmp | 0x40, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e09, SPI_BRG_12_5MHZ);
+    tmp = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8_33MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e09, SPI_BRG_12_5MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAM, tmp | 0x40, SPI_BRG_12_5MHZ);
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e1D, SPI_BRG_12MHZ);
-    VLSIWriteReg(VLSI_ADD_WRAM, speed, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e1D, SPI_BRG_12_5MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAM, speed, SPI_BRG_12_5MHZ);
 }
 
 WORD VLSI_GetSpeedShifter() {
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e1D, SPI_BRG_12MHZ);
-    extra_par.word.speedShifter = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e1D, SPI_BRG_12_5MHZ);
+    extra_par.word.speedShifter = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8_33MHZ);
     return extra_par.word.speedShifter;
 }
 
 void VLSI_SetEarSpeaker(WORD ear) {
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e1e, SPI_BRG_12MHZ);
-    VLSIWriteReg(VLSI_ADD_WRAM, ear, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e1e, SPI_BRG_12_5MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAM, ear, SPI_BRG_12_5MHZ);
 }
 
 WORD VLSI_GetEarSpeaker(void) {
 
     volatile WORD tmp;
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e1e, SPI_BRG_12MHZ);
-    tmp = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e1e, SPI_BRG_12_5MHZ);
+    tmp = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8_33MHZ);
 
     return tmp;
 }
 
 void VLSI_SetBitPlayMode(BYTE mode) {
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e09, SPI_BRG_12MHZ);
-    extra_par.word.playMode = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8MHZ);
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e09, SPI_BRG_12MHZ);
-    VLSIWriteReg(VLSI_ADD_WRAM, extra_par.word.playMode | mode, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e09, SPI_BRG_12_5MHZ);
+    extra_par.word.playMode = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8_33MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e09, SPI_BRG_12_5MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAM, extra_par.word.playMode | mode, SPI_BRG_12_5MHZ);
 }
 
 void VLSI_ClearBitPlayMode(BYTE mode) {
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e09, SPI_BRG_12MHZ);
-    extra_par.word.playMode = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8MHZ);
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e09, SPI_BRG_12MHZ);
-    VLSIWriteReg(VLSI_ADD_WRAM, extra_par.word.playMode & mode, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e09, SPI_BRG_12_5MHZ);
+    extra_par.word.playMode = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8_33MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e09, SPI_BRG_12_5MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAM, extra_par.word.playMode & mode, SPI_BRG_12_5MHZ);
 }
 
 WORD VLSI_GetPlayMode() {
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e09, SPI_BRG_12MHZ);
-    extra_par.word.playMode = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e09, SPI_BRG_12_5MHZ);
+    extra_par.word.playMode = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8_33MHZ);
     return extra_par.word.playMode;
 }
 
 BOOL VLSI_GetEndFillByte(char *byte) {
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e06, SPI_BRG_12MHZ);
-    extra_par.word.endFillByte = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e06, SPI_BRG_12_5MHZ);
+    extra_par.word.endFillByte = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8_33MHZ);
 
     // If the most significant bit (bit 15) is set to 1, then the file is of an
     // odd length and bits 7:0 contain the last byte that still should be written
     // to the output file.
     if ((extra_par.word.endFillByte & 0x8000) != 0) {
-	// bits 7:0 contain the last byte, return it to caller
-	*byte = extra_par.word.endFillByte & 0x00FF;
-	// Now write 0 to endFillByte
-	VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e06, SPI_BRG_12MHZ);
-	VLSIWriteReg(VLSI_ADD_WRAM, 0x0000, SPI_BRG_12MHZ);
-	return TRUE;
+        // bits 7:0 contain the last byte, return it to caller
+        *byte = extra_par.word.endFillByte & 0x00FF;
+        // Now write 0 to endFillByte
+        VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e06, SPI_BRG_12_5MHZ);
+        VLSIWriteReg(VLSI_ADD_WRAM, 0x0000, SPI_BRG_12_5MHZ);
+        return TRUE;
     }
     return FALSE;
 }
@@ -1237,9 +1191,9 @@ BOOL VLSI_IsClearedSmCancel() {
 
     WORD tmp;
 
-    tmp = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8MHZ);
+    tmp = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8_33MHZ);
     if ((tmp & VLSI_VAL_SM_CANCEL) != 0)
-	return FALSE;
+        return FALSE;
     return TRUE;
 }
 
@@ -1247,16 +1201,16 @@ BOOL VLSI_IsClearedSmEncode(void) {
 
     WORD tmp;
 
-    tmp = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8MHZ);
+    tmp = VLSIReadReg(VLSI_ADD_MODE, SPI_BRG_8_33MHZ);
     if ((tmp & VLSI_BIT_SM_ENCODE) == 0)
-	return TRUE;
+        return TRUE;
     return FALSE;
 }
 
 void VLSI_GetHDAT(void) {
 
-    mp3_info.word.HDAT0 = VLSIReadReg(VLSI_ADD_HDAT0, SPI_BRG_8MHZ);
-    mp3_info.word.HDAT1 = VLSIReadReg(VLSI_ADD_HDAT1, SPI_BRG_8MHZ);
+    mp3_info.word.HDAT0 = VLSIReadReg(VLSI_ADD_HDAT0, SPI_BRG_8_33MHZ);
+    mp3_info.word.HDAT1 = VLSIReadReg(VLSI_ADD_HDAT1, SPI_BRG_8_33MHZ);
 }
 
 const char * VLSI_GetBitrateOthersFormat(WORD *bitrate) {
@@ -1264,29 +1218,29 @@ const char * VLSI_GetBitrateOthersFormat(WORD *bitrate) {
     const char *str_encoding_format[] = {"Ogg Vorbis", "Wav", "WMA", "mp4", "ACC", "AAC", "FLAC", "MP3"};
 
     if (mp3_info.word.HDAT1 == 0x4F67) { // "Og"
-	*bitrate = mp3_info.word.HDAT0 * 8; // Ogg
-	return str_encoding_format[0];
+        *bitrate = mp3_info.word.HDAT0 * 8; // Ogg
+        return str_encoding_format[0];
     } else if (mp3_info.word.HDAT1 == 0x7665) { // "ve"
-	*bitrate = mp3_info.word.HDAT0 * 8; // Wav
-	return str_encoding_format[1];
+        *bitrate = mp3_info.word.HDAT0 * 8; // Wav
+        return str_encoding_format[1];
     } else if (mp3_info.word.HDAT1 == 0x574D) { // "WM"
-	*bitrate = mp3_info.word.HDAT0 * 8; // WMA
-	return str_encoding_format[2];
+        *bitrate = mp3_info.word.HDAT0 * 8; // WMA
+        return str_encoding_format[2];
     } else if (mp3_info.word.HDAT1 == 0x4D34) { // "M4"
-	*bitrate = mp3_info.word.HDAT0 * 8; // mp4
-	return str_encoding_format[3];
+        *bitrate = mp3_info.word.HDAT0 * 8; // mp4
+        return str_encoding_format[3];
     } else if (mp3_info.word.HDAT1 == 0x4154) { // "AT"
-	*bitrate = mp3_info.word.HDAT0 * 8; // AAC ADTS
-	return str_encoding_format[4];
+        *bitrate = mp3_info.word.HDAT0 * 8; // AAC ADTS
+        return str_encoding_format[4];
     } else if (mp3_info.word.HDAT1 == 0x4144) { // "AD"
-	*bitrate = mp3_info.word.HDAT0 * 8; // AAC ADIF
-	return str_encoding_format[5];
+        *bitrate = mp3_info.word.HDAT0 * 8; // AAC ADIF
+        return str_encoding_format[5];
     } else if (mp3_info.word.HDAT1 == 0x664c) { // "fL"
-	*bitrate = mp3_info.word.HDAT0 * 32; // FLAC
-	return str_encoding_format[6];
+        *bitrate = mp3_info.word.HDAT0 * 32; // FLAC
+        return str_encoding_format[6];
     } else {
-	*bitrate = 0; // mp3
-	return str_encoding_format[7];
+        *bitrate = 0; // mp3
+        return str_encoding_format[7];
     }
 }
 
@@ -1306,17 +1260,17 @@ WORD VLSI_GetBitrateMP3Format(void) {
     id = mp3_info.bits.ID;
 
     if (layer == 3) {
-	if (id == 3)
-	    rtn = bitrate_tab_3[bitare];
-	else
-	    rtn = bitrate_tab_2[bitare];
+        if (id == 3)
+            rtn = bitrate_tab_3[bitare];
+        else
+            rtn = bitrate_tab_2[bitare];
     } else if (layer == 2) {
-	if (id == 3)
-	    rtn = bitrate_tab_1[bitare];
-	else
-	    rtn = bitrate_tab_2[bitare];
+        if (id == 3)
+            rtn = bitrate_tab_1[bitare];
+        else
+            rtn = bitrate_tab_2[bitare];
     } else {
-	rtn = 0;
+        rtn = 0;
     }
 
     // Return kbit/s
@@ -1326,9 +1280,9 @@ WORD VLSI_GetBitrateMP3Format(void) {
 WORD VLSI_GetSamplerate(void) {
 
     const unsigned int samplerate_tab[4][4] = {11025, 11025, 22050, 44100,
-	12000, 12000, 24000, 48000,
-	8000, 8000, 16000, 32000,
-	0, 0, 0, 0};
+        12000, 12000, 24000, 48000,
+        8000, 8000, 16000, 32000,
+        0, 0, 0, 0};
 
     int r, c;
 
@@ -1398,18 +1352,18 @@ void VLSI_GetExtra() {
 
     int i;
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0xC0C0, SPI_BRG_12MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0xC0C0, SPI_BRG_12_5MHZ);
 
     for (i = 0; i<sizeof (extra_par) / 2; i++)
-	extra_par.w[i] = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8MHZ);
+        extra_par.w[i] = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8_33MHZ);
 
     Nop();
 }
 
 WORD VLSI_GetBitRatePer100() {
 
-    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e05, SPI_BRG_12MHZ);
-    extra_par.word.bitRatePer100 = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8MHZ);
+    VLSIWriteReg(VLSI_ADD_WRAMADDR, 0x1e05, SPI_BRG_12_5MHZ);
+    extra_par.word.bitRatePer100 = VLSIReadReg(VLSI_ADD_WRAM, SPI_BRG_8_33MHZ);
 
     // byte/s
     // byte/s * 8 / 100 = kbit/s

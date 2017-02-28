@@ -42,7 +42,8 @@
 #include "Compiler.h"
 #include "GenericTypeDefs.h"
 #include "HardwareProfile.h"
-
+#include "FatFS/ff.h"
+#include "Utilities/RTCC.h"
 
 
 
@@ -234,8 +235,20 @@
 #define ABR_MODE            2
 #define CBR_MODE            3
 
+// ADC mode: 0 = Joint stereo (common AGC), 1 = Dual channel (separate AGC), 2 = Left, 3 = Right, 4 = Mono
+#define JOINT_STEREO        0
+#define DUAL_CHANNEL        1
+#define LEFT_CHANNEL        2
+#define RIGHT_CHANNEL       3
+#define MONO                4
+
 #define REC_MP3             0
 #define REC_OGG             1
+
+#define MIN_DISABLED_REC    0          // 0 Disabled
+#define MIN_INT_REC         15          // 15 Seconds
+#define MID_INT_REC         60          // 1 Minute
+#define MAX_INT_REC         1*60*60     // 1 Hour
 
 #define BITRATE_MULTIPLIER_X10      0
 #define BITRATE_MULTIPLIER_X100     1
@@ -249,13 +262,89 @@
 #define BIT_RESERVOIR_OFF           1
 
 #define REC_IDLE            0
+
+typedef enum {
+    SM_REC_HOME = 0,
+
+    SM_REC_OPEN_FILE,
+    SM_REC_OPEN_NEXT_FILE,
+    SM_REC_OPENED_SUCCESSFUL,
+    SM_REC_OPENED_FAILED,
+
+    SM_REC_READ_BUFFER,
+    SM_REC_WRITE_BUFFER,
+
+    SM_REC_PAUSE_WAIT_ENTERING,
+    SM_REC_PAUSE_WAIT,
+    SM_REC_PAUSE_DELAY_ENTERING,
+    SM_REC_PAUSE_DELAY,
+    SM_REC_PAUSE_EXIT,
+
+    SM_REC_SEND_FINISH_RECORDING,
+    SM_REC_FINISH_RECORDING,
+    SM_REC_FINALIZE,
+
+    SM_REC_CLOSE_FILE,
+    SM_REC_CLOSED_SUCCESSFUL,
+    SM_REC_CLOSED_FAILED,
+
+    SM_REC_PUT_ERROR,
+
+} REC_STATE_MACHINE;
+
+typedef enum {
+    SM_REC_SUB_CLOSE = 0,
+    SM_REC_SUB_FS_STAT,
+    SM_REC_SUB_OPEN_DIR,
+    SM_REC_SUB_READ_DIR,
+    SM_REC_SUB_DELETE_DIR,
+    SM_REC_SUB_CLOSE_DIR,
+    SM_REC_SUB_MKDIR,
+    SM_REC_SUB_OPEN_FILE,
+    SM_REC_SUB_DEFAULT,
+} SM_REC_SUB;
+
+typedef struct __attribute__((__packed__)) {
+
+    REC_STATE_MACHINE sm;
+    SM_REC_SUB smSub;
+    DIR dir;
+    FILINFO fno;
+    FRESULT fres;
+    DWORD tick_delay;
+    DWORD tick_max;
+    FIL * fp[2];
+    TCHAR lfname[_MAX_LFN + 1];
+    FAT_TIME fat_time;
+    BOOL ffind;
+    UINT16 intervalRec;
+    WORD read;
+    WORD toWrite;
+    DWORD alt;
+    DWORD nextFrame;
+    DWORD frameCount;
+    DWORD fileLength;
+    double longDuration;
+    UINT16 year;
+    BYTE fpIndex;
+    BYTE mon;
+    BYTE day;
+    BYTE hour;
+    BYTE mins;
+    BYTE sec;
+}
+REC_CONFIG;
+
+
 int RecordTaskHandler();
 
-void Record(int, char **);
+int Record(int, char **);
 BOOL PauseRecord(int, char **);
 BOOL StopRecord(int, char **);
 BOOL InfoRecord(int argc, char **argv);
 
-void SetBitRate(long samplerate, int bitrate, int gain, int maxgain, BOOL input, char mode, char format, BOOL reservoir);
+void SetBitRate(long samplerate, int bitrate, int gain, int maxgain, BOOL input, char mode, char format, char adc, BOOL reservoir);
 
+
+void TestRecInternalGet(void);
 #endif // _RECORD_H

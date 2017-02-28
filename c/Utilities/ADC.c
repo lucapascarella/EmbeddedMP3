@@ -74,7 +74,7 @@ BOOL InitADC(void) {
     EnableADC10();
 }
 
-void Adc(int argc, char **argv) {
+int Adc(int argc, char **argv) {
 
     unsigned int an0, an1;
     unsigned int offset; // Buffer offset to point to the base of the idle buffer
@@ -109,4 +109,5 @@ void Adc(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[0]);
     }
+    return 0;
 }

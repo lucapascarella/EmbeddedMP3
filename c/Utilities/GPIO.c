@@ -79,7 +79,7 @@ void GPIOInit() {
     ConfigIntCNB(CHANGE_INT_PRI_2 | CHANGE_INT_ON);
 }
 
-void __ISR(_CHANGE_NOTICE_VECTOR, ipl2) ChangeNotice_Handler(void) {
+void __ISR(_CHANGE_NOTICE_VECTOR, IPL2AUTO) ChangeNotice_Handler(void) {
     unsigned int tempA, tempB;
 
     // clear the mismatch condition
@@ -352,7 +352,7 @@ void GpioUpdateOutputState(int event) {
     state = event;
 }
 
-void Gpio(int argc, char **argv) {
+int Gpio(int argc, char **argv) {
 
     int pin, n, i;
 
@@ -391,6 +391,7 @@ void Gpio(int argc, char **argv) {
     } else {
         CliTooManyArgumnets(argv[1]);
     }
+    return 0;
 }
 
 BOOL GpioGetInputState(BYTE gpio) {

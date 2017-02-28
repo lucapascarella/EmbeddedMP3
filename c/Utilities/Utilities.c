@@ -151,7 +151,7 @@ void InitializeSystem(void) {
     // JTAG, you'll still have a tiny window before JTAG goes away.
     // The PIC32 Starter Kit debuggers use JTAG and therefore must not
     // disable JTAG.
-    DelayMs(50);
+//    DelayMs(50);
     mJTAGPortEnable(DEBUG_JTAGPORT_OFF);
 
 
@@ -261,7 +261,7 @@ void printOptionsAndArguments(return_t *rtn) {
                     sprintf(buf, " Arguments (%d): %s", thisOpt->argNumber, argument->argument);
                 comma = TRUE;
             }
-            puts(buf);
+            printf(buf);
             argument = argument->nextArgument;
         }
     }
@@ -272,6 +272,6 @@ void printOptionsAndArguments(return_t *rtn) {
         thisArg = argList;
         argList = argList->nextArgument;
         sprintf(buf, "%s ", thisArg->argument);
-        puts(buf);
+        printf(buf);
     }
 }

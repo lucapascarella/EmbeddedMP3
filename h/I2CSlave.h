@@ -8,21 +8,43 @@
 #ifndef I2CSLAVE_H
 #define	I2CSLAVE_H
 
+// this is the modules Slave Address
+#define SLAVE_ADDRESS 0x40
 
-typedef enum {
-    I2C_OP_NONE = 0,
-    I2C_OP_READ,
-    I2C_OP_WRITE
-} I2C_OPERATION;
+// I2C Buffer size
+#define I2C_DATA_SIZE	    128
 
-#define I2C_index_reset             0x01
-#define I2C_operation_in_progress   0x00
+typedef struct {
+    BYTE address;
+    BYTE regLen;
+    BOOL regFlag;
+
+    CHAR rxBuf[I2C_DATA_SIZE];
+    WORD rxHead;
+    WORD rxTail;
+
+    CHAR txBuf[I2C_DATA_SIZE];
+    WORD txHead;
+    WORD txTail;
+
+} I2C_SPECIAL_BUFFER;
 
 #define isI2CEnabled()      (config.gpio[GPIO_0_SCL].mode == GPIO_S_I2C && config.gpio[GPIO_1_SDA].mode == GPIO_S_I2C)
 
 void InitI2C(void);
 void I2CHandler(void);
 
+WORD I2CWrite(CHAR8 *buffer, WORD count);
+WORD I2CRead(CHAR8 *buffer, WORD count);
+
+//BOOL isFull(void);
+//int getBusy(void);
+//BOOL isEmpty(void);
+//void clear(void);
+//int getCapacity(void);
+//void dequeue(BYTE *byte);
+//int peek(const int i, BYTE *byte);
+//void enqueue(BYTE *byte);
 
 #endif	/* I2CSLAVE_H */
 

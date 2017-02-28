@@ -85,7 +85,7 @@ void GPIOOutputTaskHandler();
 void GPIOInputTaskHandler();
 void GpioUpdateOutputState(int state);
 
-void Gpio(int, char **);
+int Gpio(int, char **);
 BOOL GpioGetInputState(BYTE);
 BOOL GpioCheckSpecialFunction(BYTE, BYTE);
 void GpioSetTris(BYTE, BYTE);
