@@ -192,7 +192,7 @@ FIL fstream, ftmp1, ftmp2;
 // ftmp1: used to CLI
 // ftmp2: used to Playlist
 
-TCHAR Lfname[_MAX_LFN + 1];
+//TCHAR Lfname[_MAX_LFN + 1];
 BYTE stream[STREAM_BUF_SIZE];
 char * MyScratchPad = (char *) (0xA0000000 + (0x10000 - 0x0040));
 
@@ -285,6 +285,9 @@ int main(void) {
         USBDeviceAttach();
 #endif
 
+    // Initialize play and record tasks
+    PlayTaskInit();
+    RecordTaskInit();
 
     // Update gpio state with successful message
     GpioUpdateOutputState(GPIO_BIT_MICRO_SD);

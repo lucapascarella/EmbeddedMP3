@@ -314,7 +314,7 @@ typedef struct __attribute__((__packed__)) {
     DWORD tick_delay;
     DWORD tick_max;
     FIL * fp[2];
-    TCHAR lfname[_MAX_LFN + 1];
+    TCHAR filename[_MAX_LFN + 1];
     FAT_TIME fat_time;
     BOOL ffind;
     UINT16 intervalRec;
@@ -336,7 +336,8 @@ typedef struct __attribute__((__packed__)) {
 REC_CONFIG;
 
 
-int RecordTaskHandler();
+void RecordTaskInit(void);
+int RecordTaskHandler(void);
 
 int Record(int, char **);
 BOOL PauseRecord(int, char **);

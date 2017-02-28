@@ -55,9 +55,6 @@
 
 
 _REC_PRESET recPreSet;
-//BOOL timeout;
-// See ffconf.h for dimension of LFN
-extern TCHAR Lfname[];
 // See MP3.h for dimension of stream
 extern char stream[];
 
@@ -65,36 +62,22 @@ extern char stream[];
 
 REC_CONFIG rec;
 
-//BOOL dmaTXBusyFlag;
+void RecordTaskInit(void) {
+    rec.sm = SM_REC_HOME;
+    memset(rec.filename, sizeof (rec.filename), '\0');
+}
 
-//void __ISR(_DMA2_VECTOR, IPL5AUTO) DmaHandler2(void) {
-//    int evFlags; // event flags when getting the interrupt
-//
-//    INTClearFlag(INT_SOURCE_DMA(DMA_CHANNEL2)); // release the interrupt in the INT controller, we're servicing int
-//
-//    evFlags = DmaChnGetEvFlags(DMA_CHANNEL2); // get the event flags
-//
-//    if (evFlags & DMA_EV_BLOCK_DONE) { // just a sanity check. we enabled just the DMA_EV_BLOCK_DONE transfer done interrupt
-//        dmaTXBusyFlag = FALSE;
-//        DmaChnClrEvFlags(DMA_CHANNEL2, DMA_EV_BLOCK_DONE);
-//    }
-////    if (evFlags & DMA_EV_CELL_DONE) { // just a sanity check. we enabled just the DMA_EV_BLOCK_DONE transfer done interrupt
-////        DmaChnClrEvFlags(DMA_CHANNEL2, DMA_EV_CELL_DONE);
-////    }
-//    
-//}
-
-int RecordTaskHandler() {
+int RecordTaskHandler(void) {
 
     extern int (*commandToCall)(int, char**);
     extern int argc;
     extern char *argv[];
     extern FIL fstream, ftmp2;
-    //extern TCHAR Lfname[_MAX_LFN + 1];
+    
     BYTE index;
     DWORD nextFrame, frameLength;
     UINT written, size;
-    WORD i, j;
+    WORD i;
     char byte, *p, *b;
     double duration;
 
@@ -175,17 +158,17 @@ int RecordTaskHandler() {
                 rec.fp[1] = &ftmp2;
                 // Get date and time
                 rtccGetDateAndTime(&rec.year, &rec.mon, &rec.day, &rec.hour, &rec.mins, &rec.sec);
-                sprintf(Lfname, "/%04d%02d%02d", rec.year, rec.mon, rec.day);
-                rec.fres = f_mkdir(Lfname);
+                sprintf(rec.filename, "/%04d%02d%02d", rec.year, rec.mon, rec.day);
+                rec.fres = f_mkdir(rec.filename);
                 //                rec.fno.fdate = fat_time.word.data;
                 //                rec.fno.ftime = fat_time.word.time;
                 //                rec.fres = f_utime(Lfname, &rec.fno);
                 if (rec.fres == FR_OK || rec.fres == FR_EXIST) {
-                    sprintf(Lfname, "/%04d%02d%02d/%02d%02d%02d.mp3", rec.year, rec.mon, rec.day, rec.hour, rec.mins, rec.sec);
-                    rec.fres = f_open(rec.fp[0], Lfname, FA_WRITE | FA_CREATE_ALWAYS);
+                    sprintf(rec.filename, "/%04d%02d%02d/%02d%02d%02d.mp3", rec.year, rec.mon, rec.day, rec.hour, rec.mins, rec.sec);
+                    rec.fres = f_open(rec.fp[0], rec.filename, FA_WRITE | FA_CREATE_ALWAYS);
                     rtccIncDateAndTime(&rec.year, &rec.mon, &rec.day, &rec.hour, &rec.mins, &rec.sec, rec.intervalRec);
-                    sprintf(Lfname, "/%04d%02d%02d/%02d%02d%02d.mp3", rec.year, rec.mon, rec.day, rec.hour, rec.mins, rec.sec);
-                    rec.fres |= f_open(rec.fp[1], Lfname, FA_WRITE | FA_CREATE_ALWAYS);
+                    sprintf(rec.filename, "/%04d%02d%02d/%02d%02d%02d.mp3", rec.year, rec.mon, rec.day, rec.hour, rec.mins, rec.sec);
+                    rec.fres |= f_open(rec.fp[1], rec.filename, FA_WRITE | FA_CREATE_ALWAYS);
                     if (rec.fres != FR_OK)
                         rec.sm = SM_REC_OPENED_FAILED;
                 } else {
@@ -195,11 +178,11 @@ int RecordTaskHandler() {
                 // Time intervals is disabled
                 // Checks if incremental mode is enabled otherwise overrides file
                 if (config.record.prog_over == 0) {
-                    verbosePrintf(VER_DBG, "Try to open or override: %s", Lfname);
-                    rec.fres = f_open(rec.fp[0], Lfname, FA_WRITE | FA_CREATE_ALWAYS);
+                    verbosePrintf(VER_DBG, "Try to open or override: %s", rec.filename);
+                    rec.fres = f_open(rec.fp[0], rec.filename, FA_WRITE | FA_CREATE_ALWAYS);
                 } else {
-                    verbosePrintf(VER_DBG, "Try to open: %s", Lfname);
-                    rec.fres = f_open(rec.fp[0], Lfname, FA_WRITE | FA_CREATE_NEW);
+                    verbosePrintf(VER_DBG, "Try to open: %s", rec.filename);
+                    rec.fres = f_open(rec.fp[0], rec.filename, FA_WRITE | FA_CREATE_NEW);
                 }
 
                 if (rec.fres == FR_EXIST) {
@@ -215,21 +198,21 @@ int RecordTaskHandler() {
         case SM_REC_OPEN_NEXT_FILE:
 
             // Gets a copy of extension if it exist
-            if ((p = strrchr(Lfname, '.')) == NULL) {
-                p = &Lfname[strlen(Lfname) - 1];
+            if ((p = strrchr(rec.filename, '.')) == NULL) {
+                p = &rec.filename[strlen(rec.filename) - 1];
                 stream[0] = '\0';
             } else {
                 // Copy the extension in temp buffer
                 strcpy(stream, p);
             }
             // Check if there is already a incremental number to increase it, otherwise starts with zero
-            if ((b = strrchr(Lfname, '(')) != NULL) {
+            if ((b = strrchr(rec.filename, '(')) != NULL) {
                 rec.read = atoi(b + 1);
             } else {
                 rec.read = 0;
                 b = p;
             }
-            // Copy in Lfname the incremental number and previous extension
+            // Copy in rec.lfname the incremental number and previous extension
             sprintf(b, "(%d)%s", ++rec.read, stream);
 
             rec.sm = SM_REC_OPEN_FILE;
@@ -259,7 +242,7 @@ int RecordTaskHandler() {
 
 
         case SM_REC_OPENED_FAILED:
-            verbosePrintf(VER_MIN, "Cannot open: %s", Lfname);
+            verbosePrintf(VER_MIN, "Cannot open: %s", rec.filename);
             GpioUpdateOutputState(GPIO_BIT_FILE_NOT_FOUND);
             FlashLight(100, 10, FALSE);
             rec.sm = SM_REC_HOME;
@@ -330,8 +313,8 @@ int RecordTaskHandler() {
                         case SM_REC_SUB_OPEN_DIR:
                             if ((rec.fres = f_opendir(&rec.dir, "/")) == FR_OK) {
                                 rec.smSub++;
-                                //rec.fno.lfname = Lfname;
-                                //rec.fno.lfsize = sizeof (Lfname);
+                                //rec.fno.lfname = rec.lfname;
+                                //rec.fno.lfsize = sizeof (rec.lfname);
                                 rec.ffind = FALSE;
                             } else {
                                 rec.smSub = SM_REC_PUT_ERROR;
@@ -347,10 +330,10 @@ int RecordTaskHandler() {
                                         // Current directory is empty
                                         rec.smSub = SM_REC_SUB_CLOSE_DIR;
                                 } else {
-                                    // Check dircetory entry
+                                    // Check directory entry
                                     if (rec.fno.fattrib & AM_DIR) {
                                         if (rec.ffind == FALSE) {
-                                            strcpy(rec.lfname, GetFileNamePointer(&rec.fno));
+                                            strcpy(rec.filename, GetFileNamePointer(&rec.fno));
                                             rec.fat_time.word.data = rec.fno.fdate;
                                             rec.fat_time.word.time = rec.fno.ftime;
                                             rec.ffind = TRUE;
@@ -358,7 +341,7 @@ int RecordTaskHandler() {
                                             fat_time.word.data = rec.fno.fdate;
                                             fat_time.word.time = rec.fno.ftime;
                                             if (fat_time.val < rec.fat_time.val) {
-                                                strcpy(rec.lfname, GetFileNamePointer(&rec.fno));
+                                                strcpy(rec.filename, GetFileNamePointer(&rec.fno));
                                                 fat_time.word.data = rec.fno.fdate;
                                                 fat_time.word.time = rec.fno.ftime;
                                             }
@@ -372,7 +355,7 @@ int RecordTaskHandler() {
                         case SM_REC_SUB_DELETE_DIR:
                             // Inviare il comando per la cancellazione di una directory
                             argv[0] = "rec";
-                            argv[1] = rec.lfname;
+                            argv[1] = rec.filename;
                             argv[2] = "-not-empty"; //(char*) notEmpty;
                             argc = 3;
                             commandToCall = DeleteDir;
@@ -388,8 +371,8 @@ int RecordTaskHandler() {
                         case SM_REC_SUB_MKDIR:
                             rtccGetDateAndTime(&rec.year, &rec.mon, &rec.day, &rec.hour, &rec.mins, &rec.sec);
                             rtccIncDateAndTime(&rec.year, &rec.mon, &rec.day, &rec.hour, &rec.mins, &rec.sec, rec.intervalRec);
-                            sprintf(Lfname, "/%04d%02d%02d", rec.year, rec.mon, rec.day);
-                            rec.fres = f_mkdir(Lfname);
+                            sprintf(rec.filename, "/%04d%02d%02d", rec.year, rec.mon, rec.day);
+                            rec.fres = f_mkdir(rec.filename);
                             if (rec.fres == FR_OK || rec.fres == FR_EXIST) {
                                 rec.smSub++;
                             } else {
@@ -400,9 +383,9 @@ int RecordTaskHandler() {
 
                         case SM_REC_SUB_OPEN_FILE:
                             //rtccGetTime(&hour, &mins, &sec);
-                            sprintf(Lfname, "/%04d%02d%02d/%02d%02d%02d.mp3", rec.year, rec.mon, rec.day, rec.hour, rec.mins, rec.sec);
+                            sprintf(rec.filename, "/%04d%02d%02d/%02d%02d%02d.mp3", rec.year, rec.mon, rec.day, rec.hour, rec.mins, rec.sec);
                             index = (rec.alt + 1) % 2;
-                            rec.fres = f_open(rec.fp[index], Lfname, FA_WRITE | FA_CREATE_ALWAYS);
+                            rec.fres = f_open(rec.fp[index], rec.filename, FA_WRITE | FA_CREATE_ALWAYS);
                             if (rec.fres != FR_OK) {
                                 rec.sm = SM_REC_OPENED_FAILED;
                                 break;
@@ -573,8 +556,8 @@ int RecordTaskHandler() {
                 if (f_close(rec.fp[0]) != FR_OK || f_close(rec.fp[1]) != FR_OK) {
                     rec.sm = SM_REC_CLOSED_FAILED;
                 } else {
-                    sprintf(Lfname, "/%04d%02d%02d/%02d%02d%02d.mp3", rec.year, rec.mon, rec.day, rec.hour, rec.mins, rec.sec);
-                    rec.fres = f_unlink(Lfname);
+                    sprintf(rec.filename, "/%04d%02d%02d/%02d%02d%02d.mp3", rec.year, rec.mon, rec.day, rec.hour, rec.mins, rec.sec);
+                    rec.fres = f_unlink(rec.filename);
                     if (rec.fres == FR_OK)
                         rec.sm = SM_REC_CLOSED_SUCCESSFUL;
                     else
@@ -596,7 +579,7 @@ int RecordTaskHandler() {
             break;
 
         case SM_REC_CLOSED_FAILED:
-            verbosePrintf(VER_DBG, "File: %s not closed", Lfname);
+            verbosePrintf(VER_DBG, "File: %s not closed", rec.filename);
             FlashLight(100, 100, FALSE);
             //            rec.sm = SM_REC_PUT_ERROR;
             //            break;
@@ -766,8 +749,8 @@ int Record(int argc, char **argv) {
     }
 
     if (argc == 1) {
-        // Copy in Lfname gloabal variable the name of the default file
-        strncpy(Lfname, config.record.r_name, _MAX_LFN);
+        // Copy in rec.lfname gloabal variable the name of the default file
+        strncpy(rec.filename, config.record.r_name, _MAX_LFN);
         // Struct recording information
         SetBitRate(config.record.samplerate, config.record.bitrate, config.record.gain, config.record.max_gain, INPUT_LINE, config.record.bitrate_mode, config.record.format, config.record.adcMode, BIT_RESERVOIR_ON);
         // Disable intervals recording
@@ -777,7 +760,7 @@ int Record(int argc, char **argv) {
         config.record.prog_over = 2;
     } else if (argc == 2) {
         // Extract the name of the recording file
-        strncpy(Lfname, argv[1], _MAX_LFN);
+        strncpy(rec.filename, argv[1], _MAX_LFN);
         // Struct recording information
         SetBitRate(config.record.samplerate, config.record.bitrate, config.record.gain, config.record.max_gain, INPUT_LINE, config.record.bitrate_mode, config.record.format, config.record.adcMode, BIT_RESERVOIR_ON);
         // Disable intervals recording
@@ -786,7 +769,7 @@ int Record(int argc, char **argv) {
         rec.sm = SM_REC_OPEN_FILE;
     } else if (argc == 10) {
         // Extract the name of the recording file
-        strncpy(Lfname, argv[1], _MAX_LFN);
+        strncpy(rec.filename, argv[1], _MAX_LFN);
         // Extract the samplerate
         samplerate = atoimm(argv[2], SAMPLERATE_8000, SAMPLERATE_48000, SAMPLERATE_44100);
         // Extract the bitrate
@@ -894,7 +877,7 @@ BOOL InfoRecord(int argc, char **argv) {
             // First update the _REC_PRESET registers
             VLSI_GetRecordingInfo(&recPreSet);
             // Then prints all updatetd info
-            printf("Filename: %s;\r\n", Lfname);
+            printf("Filename: %s;\r\n", rec.filename);
             if (recPreSet.sci_wramaddr.bits.bitrateMode == 0)
                 printf("%s: %d;\r\n", str_bitrate_mode[recPreSet.sci_wramaddr.bits.bitrateMode], recPreSet.sci_wramaddr.bits.bitrateBase);
             else

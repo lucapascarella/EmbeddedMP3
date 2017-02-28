@@ -43,46 +43,22 @@
 
 #include "Utilities/printer.h"
 #include "Utilities/GPIO.h"
-#include "FatFS/ff.h"
+
 #include "Utilities/Config.h"
 #include "Utilities/Optlist.h"
 #include <math.h>
 
-static enum {
-    MP3_PLAY_HOME = 0,
+PLAY_CONFIG play;
 
-    MP3_PLAY_OPEN_PLAYLIST,
-    MP3_PLAY_PL_OPENED_SUCCESSFUL,
-    MP3_PLAY_PL_OPENED_FAILED,
-
-    MP3_PLAY_OPEN_FILE,
-    MP3_PLAY_OPENED_SUCCESSFUL,
-    MP3_PLAY_OPENED_FAILED,
-
-    MP3_PLAY_PL_GET_NEXT_TRACK,
-
-    MP3_PLAY_READ_BUFFER,
-    MP3_PLAY_WRITE_BUFFER,
-
-    MP3_PLAY_PAUSE_WAIT_ENTERING,
-    MP3_PLAY_PAUSE_WAIT,
-    MP3_PLAY_PAUSE_DELAY_ENTERING,
-    MP3_PLAY_PAUSE_DELAY,
-    MP3_PLAY_PAUSE_EXIT,
-
-    MP3_PLAY_FINISH_PLAING,
-    MP3_PLAY_CLOSE_FILE,
-    MP3_PLAY_CLOSED_SUCCESSFUL,
-    MP3_PLAY_CLOSED_FAILED,
-
-    MP3_PLAY_PL_NEXT,
-
-} mp3PlaySM = MP3_PLAY_HOME;
+void PlayTaskInit(void) {
+    play.sm = MP3_PLAY_HOME;
+    memset(play.filename, sizeof (play.filename), '\0');
+}
 
 BOOL playIndicator, playlistIndicator, stopIndicator;
 DWORD tick_delay, tick_max;
 // See ffconf.h for dimension of LFN
-extern TCHAR Lfname[];
+//TCHAR Lfname[_MAX_LFN + 1];
 // See MP3.h for dimension of stream
 extern char stream[];
 
@@ -95,7 +71,7 @@ int PlayTaskHandler(void) {
     static WORD playlistNumber = 0;
     static DWORD t = 0;
 
-    switch (mp3PlaySM) {
+    switch (play.sm) {
 
         case MP3_PLAY_HOME:
             // Do nothing, wait a play command
@@ -105,60 +81,60 @@ int PlayTaskHandler(void) {
 
 
         case MP3_PLAY_OPEN_PLAYLIST:
-            verbosePrintf(VER_DBG, "Try to open playlist: %s", Lfname);
+            verbosePrintf(VER_DBG, "Try to open playlist: %s", play.filename);
             // Open a playlist in read mode
-            fres = f_open(fplaylist, Lfname, FA_READ);
+            fres = f_open(fplaylist, play.filename, FA_READ);
             if (fres != FR_OK)
-                mp3PlaySM = MP3_PLAY_PL_OPENED_FAILED;
+                play.sm = MP3_PLAY_PL_OPENED_FAILED;
             else
-                mp3PlaySM = MP3_PLAY_PL_OPENED_SUCCESSFUL;
+                play.sm = MP3_PLAY_PL_OPENED_SUCCESSFUL;
             break;
 
         case MP3_PLAY_PL_OPENED_SUCCESSFUL:
             verbosePrintf(VER_DBG, "Playlist opened successful");
             playlistNumber = 0;
             playlistIndicator = TRUE;
-            mp3PlaySM = MP3_PLAY_PL_GET_NEXT_TRACK;
+            play.sm = MP3_PLAY_PL_GET_NEXT_TRACK;
             break;
 
         case MP3_PLAY_PL_OPENED_FAILED:
             // Signal and handler the error
-            verbosePrintf(VER_MIN, "Playlist: %s not found", Lfname);
+            verbosePrintf(VER_MIN, "Playlist: %s not found", play.filename);
             GpioUpdateOutputState(GPIO_BIT_FILE_NOT_FOUND);
             FlashLight(100, 10, FALSE);
             // Return to idle state
-            mp3PlaySM = MP3_PLAY_HOME;
+            play.sm = MP3_PLAY_HOME;
             break;
 
 
         case MP3_PLAY_PL_GET_NEXT_TRACK:
 
-            if (playlistIndicator && f_gets(Lfname, _MAX_LFN, fplaylist) != NULL) {
+            if (playlistIndicator && f_gets(play.filename, _MAX_LFN, fplaylist) != NULL) {
                 playlistNumber++;
-                verbosePrintf(VER_DBG, "Playlist execute: %s", Lfname);
+                verbosePrintf(VER_DBG, "Playlist execute: %s", play.filename);
                 // Goto next stage
-                mp3PlaySM = MP3_PLAY_OPEN_FILE;
+                play.sm = MP3_PLAY_OPEN_FILE;
             } else {
                 playlistNumber = 0;
                 playlistIndicator = FALSE;
                 verbosePrintf(VER_DBG, "Playlist ended");
                 if (f_close(fplaylist) != FR_OK)
                     FlashLight(100, 10, FALSE);
-                mp3PlaySM = MP3_PLAY_HOME;
+                play.sm = MP3_PLAY_HOME;
             }
             break;
 
 
 
         case MP3_PLAY_OPEN_FILE:
-            verbosePrintf(VER_DBG, "Try to open: %s", Lfname);
+            verbosePrintf(VER_DBG, "Try to open: %s", play.filename);
             // Open a file in read mode
             //fp = fopen(fileName, FS_READ);
-            fres = f_open(&fstream, Lfname, FA_READ);
+            fres = f_open(&fstream, play.filename, FA_READ);
             if (fres != FR_OK)
-                mp3PlaySM = MP3_PLAY_OPENED_FAILED;
+                play.sm = MP3_PLAY_OPENED_FAILED;
             else
-                mp3PlaySM = MP3_PLAY_OPENED_SUCCESSFUL;
+                play.sm = MP3_PLAY_OPENED_SUCCESSFUL;
             break;
 
 
@@ -176,18 +152,18 @@ int PlayTaskHandler(void) {
             GpioUpdateOutputState(GPIO_BIT_STARTS_PLAY);
 
             // Goto next stage
-            mp3PlaySM = MP3_PLAY_READ_BUFFER;
+            play.sm = MP3_PLAY_READ_BUFFER;
             break;
 
 
 
         case MP3_PLAY_OPENED_FAILED:
             // Signal and handler the error
-            verbosePrintf(VER_MIN, "File: %s not found", Lfname);
+            verbosePrintf(VER_MIN, "File: %s not found", play.filename);
             GpioUpdateOutputState(GPIO_BIT_FILE_NOT_FOUND);
             FlashLight(100, 10, FALSE);
             // Return to idle state
-            mp3PlaySM = MP3_PLAY_HOME;
+            play.sm = MP3_PLAY_HOME;
             break;
 
 
@@ -200,9 +176,9 @@ int PlayTaskHandler(void) {
             LEDs_OFF();
 
             if (read <= 0) {
-                mp3PlaySM = MP3_PLAY_FINISH_PLAING;
+                play.sm = MP3_PLAY_FINISH_PLAING;
             } else {
-                mp3PlaySM = MP3_PLAY_WRITE_BUFFER;
+                play.sm = MP3_PLAY_WRITE_BUFFER;
             }
             break;
 
@@ -213,7 +189,7 @@ int PlayTaskHandler(void) {
             write += VLSIPutArray(&stream[write], read - write);
             if (write == read) {
                 write = 0;
-                mp3PlaySM = MP3_PLAY_READ_BUFFER;
+                play.sm = MP3_PLAY_READ_BUFFER;
             }
             break;
 
@@ -224,7 +200,7 @@ int PlayTaskHandler(void) {
             GpioUpdateOutputState(GPIO_BIT_PAUSE_PLAY);
             // Put the decoder in pause mode
             VLSI_SetBitPlayMode(PLAYMODE_PAUSE_ON);
-            mp3PlaySM = MP3_PLAY_PAUSE_WAIT;
+            play.sm = MP3_PLAY_PAUSE_WAIT;
             break;
 
         case MP3_PLAY_PAUSE_WAIT:
@@ -237,19 +213,19 @@ int PlayTaskHandler(void) {
             GpioUpdateOutputState(GPIO_BIT_PAUSE_PLAY);
             // Put the decoder in pause mode
             VLSI_SetBitPlayMode(PLAYMODE_PAUSE_ON);
-            mp3PlaySM = MP3_PLAY_PAUSE_DELAY;
+            play.sm = MP3_PLAY_PAUSE_DELAY;
             break;
 
         case MP3_PLAY_PAUSE_DELAY:
             if (TickGet() - tick_delay >= tick_max)
-                mp3PlaySM = MP3_PLAY_PAUSE_EXIT;
+                play.sm = MP3_PLAY_PAUSE_EXIT;
             Toggle1Second();
             break;
 
         case MP3_PLAY_PAUSE_EXIT:
             GpioUpdateOutputState(GPIO_BIT_PAUSE_PLAY);
             VLSI_ClearBitPlayMode(PLAYMODE_PAUSE_OFF);
-            mp3PlaySM = MP3_PLAY_WRITE_BUFFER;
+            play.sm = MP3_PLAY_WRITE_BUFFER;
             break;
 
 
@@ -262,7 +238,7 @@ int PlayTaskHandler(void) {
             // Finish to plaing the current song
             VLSI_FinishPlaying();
             playIndicator = FALSE;
-            mp3PlaySM = MP3_PLAY_CLOSE_FILE;
+            play.sm = MP3_PLAY_CLOSE_FILE;
             break;
 
 
@@ -271,9 +247,9 @@ int PlayTaskHandler(void) {
             verbosePrintf(VER_DBG, "Try to close file");
             // Close the current file pointer
             if (f_close(&fstream) != FR_OK)
-                mp3PlaySM = MP3_PLAY_CLOSED_FAILED;
+                play.sm = MP3_PLAY_CLOSED_FAILED;
             else
-                mp3PlaySM = MP3_PLAY_CLOSED_SUCCESSFUL;
+                play.sm = MP3_PLAY_CLOSED_SUCCESSFUL;
             break;
 
 
@@ -281,17 +257,17 @@ int PlayTaskHandler(void) {
         case MP3_PLAY_CLOSED_SUCCESSFUL:
             verbosePrintf(VER_DBG, "File closed successful");
             // Goto idle state machine
-            mp3PlaySM = MP3_PLAY_PL_NEXT;
+            play.sm = MP3_PLAY_PL_NEXT;
             break;
 
 
 
         case MP3_PLAY_CLOSED_FAILED:
             // Signal and handler the error
-            verbosePrintf(VER_DBG, "File: %s not closed", Lfname);
+            verbosePrintf(VER_DBG, "File: %s not closed", play.filename);
             FlashLight(100, 100, FALSE);
             // Goto idle state machine
-            mp3PlaySM = MP3_PLAY_PL_NEXT;
+            play.sm = MP3_PLAY_PL_NEXT;
             break;
 
 
@@ -299,13 +275,13 @@ int PlayTaskHandler(void) {
             // Manage the next track in execution into the playlist
             if (playlistNumber) {
                 // Goto the handler of next stage of playlist
-                mp3PlaySM = MP3_PLAY_PL_GET_NEXT_TRACK;
+                play.sm = MP3_PLAY_PL_GET_NEXT_TRACK;
             } else if (config.play.repeat == 1 && stopIndicator == FALSE) {
                 verbosePrintf(VER_DBG, "Repeat enabled");
-                mp3PlaySM = MP3_PLAY_OPEN_FILE;
+                play.sm = MP3_PLAY_OPEN_FILE;
             } else {
                 // Goto idle state machine
-                mp3PlaySM = MP3_PLAY_HOME;
+                play.sm = MP3_PLAY_HOME;
             }
 
             break;
@@ -315,11 +291,11 @@ int PlayTaskHandler(void) {
         default:
             verbosePrintf(VER_DBG, "Return to idle state");
             // Goto idle state machine
-            mp3PlaySM = MP3_PLAY_HOME;
+            play.sm = MP3_PLAY_HOME;
             break;
     }
 
-    return mp3PlaySM;
+    return play.sm;
 }
 
 int Play(int argc, char **argv) {
@@ -360,9 +336,9 @@ int Play(int argc, char **argv) {
         CliTooFewArgumnets(argv[0]);
     } else if (argc == 2) {
         // Copy in fileName gloabal variable the name of the passed file
-        strncpy(Lfname, argv[1], _MAX_LFN);
+        strncpy(play.filename, argv[1], _MAX_LFN);
         // Turn on the player
-        mp3PlaySM = MP3_PLAY_OPEN_FILE;
+        play.sm = MP3_PLAY_OPEN_FILE;
     } else {
         CliTooManyArgumnets(argv[0]);
     }
@@ -375,29 +351,29 @@ BOOL PausePlay(int argc, char **argv) {
 
     if (argc == 1) {
 
-        if (mp3PlaySM >= MP3_PLAY_READ_BUFFER && mp3PlaySM <= MP3_PLAY_WRITE_BUFFER) {
+        if (play.sm >= MP3_PLAY_READ_BUFFER && play.sm <= MP3_PLAY_WRITE_BUFFER) {
             // Enter in pause
-            mp3PlaySM = MP3_PLAY_PAUSE_WAIT_ENTERING;
+            play.sm = MP3_PLAY_PAUSE_WAIT_ENTERING;
             printf("Pause: ON\r\n");
             return TRUE;
-        } else if (mp3PlaySM >= MP3_PLAY_PAUSE_WAIT && mp3PlaySM <= MP3_PLAY_PAUSE_DELAY) {
+        } else if (play.sm >= MP3_PLAY_PAUSE_WAIT && play.sm <= MP3_PLAY_PAUSE_DELAY) {
             // Exit from pause
-            mp3PlaySM = MP3_PLAY_PAUSE_EXIT;
+            play.sm = MP3_PLAY_PAUSE_EXIT;
             printf("Pause: OFF\r\n");
             return TRUE;
         }
 
     } else if (argc == 2) {
 
-        if (mp3PlaySM >= MP3_PLAY_READ_BUFFER && mp3PlaySM <= MP3_PLAY_WRITE_BUFFER) {
+        if (play.sm >= MP3_PLAY_READ_BUFFER && play.sm <= MP3_PLAY_WRITE_BUFFER) {
             delay = atoimm(argv[1], 0, 10000000, 1000);
 
             tick_delay = TickGet();
             tick_max = TICK_SECOND / 1000 * delay;
 
-            mp3PlaySM = MP3_PLAY_PAUSE_DELAY_ENTERING;
+            play.sm = MP3_PLAY_PAUSE_DELAY_ENTERING;
             //            VLSI_SetBitPlayMode(PLAYMODE_PAUSE_ON);
-            //            mp3PlaySM = MP3_PLAY_PAUSE_DELAY;
+            //            play.sm = MP3_PLAY_PAUSE_DELAY;
             //            GpioUpdateState(GPIO_BIT_PAUSE_PLAY);
 
             printf("Pause for %ld ms\r\n", delay);
@@ -416,18 +392,18 @@ BOOL StopPlay(int argc, char **argv) {
     // posso aggiungere un ritardo ricopiando la struttura di Pause
     // anche kill
     if (argc == 1) {
-        if (mp3PlaySM >= MP3_PLAY_OPEN_FILE && mp3PlaySM < MP3_PLAY_FINISH_PLAING) {
-            if (mp3PlaySM == MP3_PLAY_PAUSE_WAIT)
+        if (play.sm >= MP3_PLAY_OPEN_FILE && play.sm < MP3_PLAY_FINISH_PLAING) {
+            if (play.sm == MP3_PLAY_PAUSE_WAIT)
                 VLSI_ClearBitPlayMode(PLAYMODE_PAUSE_OFF);
-            mp3PlaySM = MP3_PLAY_FINISH_PLAING;
+            play.sm = MP3_PLAY_FINISH_PLAING;
             return TRUE;
         }
     } else if (argc == 2) {
         if (strcmp(argv[1], "-all") == 0) {
-            if (mp3PlaySM >= MP3_PLAY_OPEN_FILE && mp3PlaySM < MP3_PLAY_FINISH_PLAING) {
-                if (mp3PlaySM == MP3_PLAY_PAUSE_WAIT)
+            if (play.sm >= MP3_PLAY_OPEN_FILE && play.sm < MP3_PLAY_FINISH_PLAING) {
+                if (play.sm == MP3_PLAY_PAUSE_WAIT)
                     VLSI_ClearBitPlayMode(PLAYMODE_PAUSE_OFF);
-                mp3PlaySM = MP3_PLAY_FINISH_PLAING;
+                play.sm = MP3_PLAY_FINISH_PLAING;
                 // Also, and playlist execution
                 playlistIndicator = FALSE;
                 stopIndicator = TRUE;
@@ -448,10 +424,10 @@ BOOL InfoPlay(int argc, char **argv) {
 
     if (argc == 1) {
         // Print the track name in play otherwise print no track in execution
-        if (mp3PlaySM > MP3_PLAY_OPENED_SUCCESSFUL && mp3PlaySM <= MP3_PLAY_FINISH_PLAING) {
+        if (play.sm > MP3_PLAY_OPENED_SUCCESSFUL && play.sm <= MP3_PLAY_FINISH_PLAING) {
             // First uUpdate the HDAT
 
-            printf("File: %s;\r\n", Lfname);
+            printf("File: %s;\r\n", play.filename);
             VLSI_GetHDAT();
             printf("Encodig format: %s\r\n", VLSI_GetBitrateOthersFormat(&bitrate));
 
@@ -491,7 +467,7 @@ int FPlay(int argc, char **argv) {
             speed++;
         printf("Fast speed: %dx\r\n", speed);
     } else if (argc == 2) {
-        if (mp3PlaySM >= MP3_PLAY_OPENED_SUCCESSFUL && mp3PlaySM <= MP3_PLAY_FINISH_PLAING) {
+        if (play.sm >= MP3_PLAY_OPENED_SUCCESSFUL && play.sm <= MP3_PLAY_FINISH_PLAING) {
             speed = atoimm(argv[1], 0, 10, 0);
             VLSI_SetFastSpeed(speed);
         }
@@ -524,7 +500,7 @@ int SpeedShifter(int argc, char **argv) {
         f = rtn / 16384.0;
         printf("Speed Shifter: [%d] (0x%X) %.3fx\r\n", rtn, rtn, f);
     } else if (argc == 2) {
-        if (mp3PlaySM >= MP3_PLAY_OPENED_SUCCESSFUL && mp3PlaySM <= MP3_PLAY_FINISH_PLAING) {
+        if (play.sm >= MP3_PLAY_OPENED_SUCCESSFUL && play.sm <= MP3_PLAY_FINISH_PLAING) {
             speed = atoimm(argv[1], 680, 1640, 1000);
             speed = speed * 16384 / 1000;
             VLSI_SetSpeedShifter(speed);
@@ -550,7 +526,7 @@ int RateTune(int argc, char **argv) {
         f = speed / 10000.0;
         printf("Rate finetune: [%d] (0x%X) %.2f%%\r\n", speed, speed, f);
     } else if (argc == 2) {
-        if (mp3PlaySM >= MP3_PLAY_OPENED_SUCCESSFUL && mp3PlaySM <= MP3_PLAY_FINISH_PLAING) {
+        if (play.sm >= MP3_PLAY_OPENED_SUCCESSFUL && play.sm <= MP3_PLAY_FINISH_PLAING) {
             speed = atoimm(argv[1], -1000000, 1000000, 0);
             VLSI_SetRateTune(speed);
         }
@@ -571,7 +547,7 @@ int Semitone(int argc, char **argv) {
         SpeedShifter(1, NULL);
         RateTune(1, NULL);
     } else if (argc == 2) {
-        if (mp3PlaySM >= MP3_PLAY_OPENED_SUCCESSFUL && mp3PlaySM <= MP3_PLAY_FINISH_PLAING) {
+        if (play.sm >= MP3_PLAY_OPENED_SUCCESSFUL && play.sm <= MP3_PLAY_FINISH_PLAING) {
 
             semitone = atoimm(argv[1], -24, 24, 0);
 
@@ -600,7 +576,7 @@ int EarSpeaker(int argc, char **argv) {
         ear = VLSI_GetEarSpeaker();
         printf("Ear Speaker: [%d] (0x%X)\r\n", ear, ear);
     } else if (argc == 2) {
-        if (mp3PlaySM >= MP3_PLAY_OPENED_SUCCESSFUL && mp3PlaySM <= MP3_PLAY_FINISH_PLAING) {
+        if (play.sm >= MP3_PLAY_OPENED_SUCCESSFUL && play.sm <= MP3_PLAY_FINISH_PLAING) {
             ear = atoimm(argv[1], 0, 50000, 0);
             VLSI_SetEarSpeaker(ear);
         }
@@ -613,15 +589,15 @@ int EarSpeaker(int argc, char **argv) {
 int Playlist(int argc, char **argv) {
 
     if (argc == 1) {
-        // Copy in Lfname gloabal variable the name of the default file
-        strncpy(Lfname, config.play.playlist, _MAX_LFN);
+        // Copy in play.filename gloabal variable the name of the default file
+        strncpy(play.filename, config.play.playlist, _MAX_LFN);
         // Turn on the playlist
-        mp3PlaySM = MP3_PLAY_OPEN_PLAYLIST;
+        play.sm = MP3_PLAY_OPEN_PLAYLIST;
     } else if (argc == 2) {
-        // Copy in Lfname gloabal variable the name of the passed file
-        strncpy(Lfname, argv[1], _MAX_LFN);
+        // Copy in play.filename gloabal variable the name of the passed file
+        strncpy(play.filename, argv[1], _MAX_LFN);
         // Turn on the playlist
-        mp3PlaySM = MP3_PLAY_OPEN_PLAYLIST;
+        play.sm = MP3_PLAY_OPEN_PLAYLIST;
     } else {
         CliTooManyArgumnets(argv[0]);
     }

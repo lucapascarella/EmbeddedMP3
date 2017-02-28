@@ -42,10 +42,74 @@
 #include "Compiler.h"
 #include "GenericTypeDefs.h"
 #include "HardwareProfile.h"
+#include "FatFS/ff.h"
 
 #define PLAY_IDLE               0
 
+typedef enum {
+    MP3_PLAY_HOME = 0,
 
+    MP3_PLAY_OPEN_PLAYLIST,
+    MP3_PLAY_PL_OPENED_SUCCESSFUL,
+    MP3_PLAY_PL_OPENED_FAILED,
+
+    MP3_PLAY_OPEN_FILE,
+    MP3_PLAY_OPENED_SUCCESSFUL,
+    MP3_PLAY_OPENED_FAILED,
+
+    MP3_PLAY_PL_GET_NEXT_TRACK,
+
+    MP3_PLAY_READ_BUFFER,
+    MP3_PLAY_WRITE_BUFFER,
+
+    MP3_PLAY_PAUSE_WAIT_ENTERING,
+    MP3_PLAY_PAUSE_WAIT,
+    MP3_PLAY_PAUSE_DELAY_ENTERING,
+    MP3_PLAY_PAUSE_DELAY,
+    MP3_PLAY_PAUSE_EXIT,
+
+    MP3_PLAY_FINISH_PLAING,
+    MP3_PLAY_CLOSE_FILE,
+    MP3_PLAY_CLOSED_SUCCESSFUL,
+    MP3_PLAY_CLOSED_FAILED,
+
+    MP3_PLAY_PL_NEXT,
+            
+} PLAY_STATE_MACHINE;
+
+typedef struct __attribute__((__packed__)) {
+
+    DWORD reconnectionDelayTick;        // Reconnection delay multiply by TICK_SECOND
+    DWORD reconnectionDelay;            // Reconnection delay
+    DWORD connectionTimeoutTick;        // Connection timeout multiply by TICK_SECOND
+    DWORD connectionTimeout;            // Connection timeout
+    
+    UINT read;
+    UINT write;
+    UINT offset;
+    DWORD timeout;                      // Timeout indicator
+    DWORD tled;                         // Timeout led indicator
+    
+    BYTE *buffer;                       // Buffer pointer
+    FIL *fil;                           // File pointer
+    
+    PLAY_STATE_MACHINE sm;              // Play state machine indicator
+    BYTE filename[_MAX_LFN + 1];        // USB Filename
+    
+    union {
+        DWORD allFlags;                         // 32 bits reserved for flags field
+        struct __PACKED {
+            // LSB
+            DWORD boolConnectionState : 1;      // Web Radio connection state: True = Connected and False = Disconnected
+            DWORD bConnIsLost : 1;              // Connection is lost, try ricconection
+            // Expand here
+            // MSB
+        } bits;
+    } flags;
+    
+} PLAY_CONFIG;
+
+void PlayTaskInit(void);
 int PlayTaskHandler(void);
 
 int Play(int, char **);
