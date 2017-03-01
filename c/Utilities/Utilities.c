@@ -63,6 +63,7 @@
 #include "FatFS/ff.h"
 #include "Compiler.h"
 
+
 #include <p32xxxx.h>
 
 
@@ -204,7 +205,7 @@ void PrintRebootStatus(void) {
      */
 }
 
-void FlashLight(int speed, int loops, BOOL reboot) {
+void FlashLight(int speed, int loops, bool reboot) {
 
     int i;
 
@@ -234,44 +235,44 @@ void Toggle1Second(void) {
     }
 }
 
-void printOptionsAndArguments(return_t *rtn) {
-
-    option_t *optList, *thisOpt;
-    argument_t *argList, *thisArg, *argument;
-    char buf[1024];
-    BOOL comma;
-
-    optList = rtn->opt;
-    while (optList != NULL) {
-        thisOpt = optList;
-        optList = optList->next;
-
-        printf("Option: -%c;", thisOpt->option);
-
-        // Prints all arguments
-        argument = thisOpt->nextArgument;
-        comma = FALSE;
-        while (argument != NULL) {
-            if (comma) {
-                sprintf(buf, ", %s", argument->argument);
-            } else {
-                if (thisOpt->argNumber == 1)
-                    sprintf(buf, " Argument (1): %s", argument->argument);
-                else
-                    sprintf(buf, " Arguments (%d): %s", thisOpt->argNumber, argument->argument);
-                comma = TRUE;
-            }
-            printf(buf);
-            argument = argument->nextArgument;
-        }
-    }
-
-    printf("Other: ");
-    argList = rtn->arg;
-    while (argList != NULL) {
-        thisArg = argList;
-        argList = argList->nextArgument;
-        sprintf(buf, "%s ", thisArg->argument);
-        printf(buf);
-    }
-}
+//void printOptionsAndArguments(return_t *rtn) {
+//
+//    option_t *optList, *thisOpt;
+//    argument_t *argList, *thisArg, *argument;
+//    char buf[1024];
+//    BOOL comma;
+//
+//    optList = rtn->opt;
+//    while (optList != NULL) {
+//        thisOpt = optList;
+//        optList = optList->next;
+//
+//        printf("Option: -%c;", thisOpt->option);
+//
+//        // Prints all arguments
+//        argument = thisOpt->nextArgument;
+//        comma = FALSE;
+//        while (argument != NULL) {
+//            if (comma) {
+//                sprintf(buf, ", %s", argument->argument);
+//            } else {
+//                if (thisOpt->argNumber == 1)
+//                    sprintf(buf, " Argument (1): %s", argument->argument);
+//                else
+//                    sprintf(buf, " Arguments (%d): %s", thisOpt->argNumber, argument->argument);
+//                comma = TRUE;
+//            }
+//            printf(buf);
+//            argument = argument->nextArgument;
+//        }
+//    }
+//
+//    printf("Other: ");
+//    argList = rtn->arg;
+//    while (argList != NULL) {
+//        thisArg = argList;
+//        argList = argList->nextArgument;
+//        sprintf(buf, "%s ", thisArg->argument);
+//        printf(buf);
+//    }
+//}

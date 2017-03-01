@@ -42,7 +42,9 @@
 #include "GenericTypeDefs.h"
 #include "MDD File System/Wrapper.h"
 
-
+#ifndef min
+#define min(a,b)        (((a) < (b)) ? (a) : (b))
+#endif
 
 #define VLSI_STATUS_VER     0x00F0u
 #define VER_VS1001          (0u<<4)

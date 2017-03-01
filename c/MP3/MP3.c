@@ -40,6 +40,8 @@
 #include "MP3/MP3.h"
 #include "Utilities/printer.h"
 #include "MP3/VS1063.h"
+#include <stdlib.h>
+#include <math.h>
 
 int Pause(int argc, char **argv) {
 

@@ -30,10 +30,10 @@ int assign_drives (int, int);
 DSTATUS disk_initialize (BYTE);
 DSTATUS disk_status (BYTE);
 DRESULT disk_read (BYTE, BYTE*, DWORD, BYTE);
-static BYTE send_cmd (BYTE cmd, DWORD arg);
+BYTE send_cmd (BYTE cmd, DWORD arg);
 #if	_READONLY == 0
 DRESULT disk_write (BYTE, const BYTE*, DWORD, BYTE);
-static int xmit_datablock (const BYTE *buff,BYTE token);
+//static int xmit_datablock (const BYTE *buff,BYTE token);
 #endif
 DRESULT disk_ioctl (BYTE, BYTE, void*);
 

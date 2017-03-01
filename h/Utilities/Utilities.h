@@ -56,9 +56,8 @@
 #include "GenericTypeDefs.h"
 #include "Compiler.h"
 #include "HardwareProfile.h"
-
-#include "Optlist.h"
-//#include "TCPIP Stack/TCPIP.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 #ifndef INPUT
 #define INPUT       1
@@ -93,9 +92,9 @@ typedef union{
 
 void InitializeSystem(void);
 void PrintRebootStatus(void);
-void FlashLight(int speed, int loops, BOOL reboot);
+void FlashLight(int speed, int loops, bool reboot);
 void Toggle1Second(void);
 
-void printOptionsAndArguments(return_t *rtnList);
+//void printOptionsAndArguments(return_t *rtnList);
 
 #endif

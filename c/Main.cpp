@@ -88,21 +88,18 @@
 #endif
 
 
-
-#include "usb_config.h"
-#include "USB/usb.h"
-#include "USB/usb_function_msd.h"
-#include "USB/usb_function_cdc.h"
-
+extern "C" {
 #include "Delay/Tick.h"
-
+#include "USB/usb.h"
 #include "HardwareProfile.h"
-
+#include "usb_config.h"
 #include <p32xxxx.h>
 #include <stdio.h>
+#include "USB/usb_function_msd.h"
+#include "USB/usb_function_cdc.h"
+#include "Utilities/USB.h"
 
-
-// Include functions specific to this stack application
+    // Include functions specific to this stack application
 #include "Main.h"
 #include "Utilities/Utilities.h"
 #include "Utilities/Logging.h"
@@ -121,12 +118,21 @@
 #include "I2CSlave.h"
 #include "Utilities/ADC.h"
 #include "Utilities/RTCC.h"
+#include "Utilities/ADC.h"
+#include "MP3/VS1063.h"
+#include "Commands.h"
+}
+
+#include "test.h"
+#include <cstdlib>
+
+using namespace std;
 
 // C32 Exception Handlers
 // If your code gets here, you either tried to read or write
 // a NULL pointer, or your application overflowed the stack
 // by having too many local variables or parameters declared.
-static Exception exception;
+Exception exception;
 static unsigned int address;
 
 void __attribute__((nomips16)) _general_exception_handler(unsigned cause, unsigned status) {
@@ -134,7 +140,7 @@ void __attribute__((nomips16)) _general_exception_handler(unsigned cause, unsign
     asm volatile("mfc0 %0,$13" : "=r" (exception));
     asm volatile("mfc0 %0,$14" : "=r" (address));
 
-    exception = (exception & 0x0000007C) >> 2;
+    ////exception = (Exception)(exception & 0x0000007C) >> 2;
 
 
     Nop();
@@ -154,17 +160,8 @@ void __attribute__((nomips16)) _general_exception_handler(unsigned cause, unsign
 
 
 
-
-
-
 /** PRIVATE PROTOTYPES *********************************************/
-////static void InitializeSystem(void);
 void USBDeviceTasks(void);
-void ProcessIO(void);
-//WORD_VAL ReadPOT(void);
-void YourHighPriorityISRCode(void);
-void YourLowPriorityISRCode(void);
-void USBCBSendResume(void);
 
 
 
@@ -183,7 +180,10 @@ FIL fstream, ftmp1, ftmp2;
 //char stream[STREAM_BUF_SIZE];
 char * MyScratchPad = (char *) (0xA0000000 + (0x10000 - 0x0040));
 
-int main(void) {
+/*
+ * 
+ */
+int main(int argc, char** argv) {
 
     int play = FALSE, rec = FALSE;
     BOOL logResults;

@@ -48,6 +48,10 @@
 
 #define STREAM_BUF_SIZE                 max(STREAM_BUF_SIZE_PLAY , STREAM_BUF_SIZE_RECORD)
 
+#ifndef min
+#define min(a,b)        (((a) < (b)) ? (a) : (b))
+#endif
+
 int Play(int argc, char **argv);
 int Record(int argc, char **argv);
 

@@ -187,7 +187,8 @@
 // Definitions that apply to all 16-bit and 32-bit products
 // (PIC24F, PIC24H, dsPIC30F, dsPIC33F, and PIC32)
 #else
-	#define	ROM						const
+	//#define	ROM						const
+	#define	ROM						
 
 	// 16-bit specific defines (PIC24F, PIC24H, dsPIC30F, dsPIC33F)
 	#if defined(__C30__)

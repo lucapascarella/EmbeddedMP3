@@ -56,9 +56,9 @@
 
 _REC_PRESET recPreSet;
 // See MP3.h for dimension of stream
-extern char stream[];
 
 
+static char stream[4096];
 
 REC_CONFIG rec;
 
@@ -73,7 +73,7 @@ int RecordTaskHandler(void) {
     extern int argc;
     extern char *argv[];
     extern FIL fstream, ftmp2;
-    
+
     BYTE index;
     DWORD nextFrame, frameLength;
     UINT written, size;

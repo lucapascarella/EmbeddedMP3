@@ -63,6 +63,7 @@
       <itemPath>h/Main.h</itemPath>
       <itemPath>h/SingleCharacterCommands.h</itemPath>
       <itemPath>h/I2CSlave.h</itemPath>
+      <itemPath>h/test.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LibraryFiles"
                    displayName="Library Files"
@@ -129,6 +130,9 @@
       <itemPath>c/Commands.c</itemPath>
       <itemPath>c/SingleCharacterCommands.c</itemPath>
       <itemPath>c/I2CSlave.c</itemPath>
+      <itemPath>c/test.cpp</itemPath>
+      <itemPath>c/Main.cpp</itemPath>
+      <itemPath>c/USBHandler.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -266,7 +270,7 @@
         <property key="warn-section-align" value="false"/>
       </C32-LD>
       <C32CPP>
-        <property key="additional-warnings" value="false"/>
+        <property key="additional-warnings" value="true"/>
         <property key="addresss-attribute-use" value="false"/>
         <property key="check-new" value="false"/>
         <property key="eh-specs" value="true"/>
@@ -276,7 +280,7 @@
         <property key="enable-unroll-loops" value="false"/>
         <property key="exceptions" value="true"/>
         <property key="exclude-floating-point" value="false"/>
-        <property key="extra-include-directories" value=""/>
+        <property key="extra-include-directories" value="h"/>
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
         <property key="isolate-each-function" value="false"/>
@@ -285,7 +289,8 @@
         <property key="place-data-into-section" value="false"/>
         <property key="post-instruction-scheduling" value="default"/>
         <property key="pre-instruction-scheduling" value="default"/>
-        <property key="preprocessor-macros" value=""/>
+        <property key="preprocessor-macros"
+                  value="_SUPPRESS_PLIB_WARNING;_DISABLE_OPENADC10_CONFIGPORT_WARNING"/>
         <property key="rtti" value="true"/>
         <property key="strict-ansi" value="false"/>
         <property key="toplevel-reordering" value=""/>
@@ -1053,7 +1058,7 @@
           <property key="wpo-lto" value="false"/>
         </C32Global>
       </item>
-      <item path="c/Main.c" ex="false" overriding="false">
+      <item path="c/Main.c" ex="true" overriding="false">
         <C32>
           <property key="additional-warnings" value="false"/>
           <property key="enable-app-io" value="false"/>

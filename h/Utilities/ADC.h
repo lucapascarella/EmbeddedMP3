@@ -43,6 +43,7 @@
 
 #define isADCEnabled()      (config.gpio[GPIO_2_AN0].mode == GPIO_S_ANALOG && config.gpio[GPIO_3_AN1].mode == GPIO_S_ANALOG)
 
+BOOL InitADC(void);
 int Adc(int argc, char **argv);
 
 

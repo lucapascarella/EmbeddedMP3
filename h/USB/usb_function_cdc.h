@@ -857,7 +857,7 @@ void putsUSBUSART(char *data);
                             will be transferred to the host.
                                                                            
   **************************************************************************/
-void putrsUSBUSART(const ROM char *data);
+void putrsUSBUSART(const char *data);
 
 /************************************************************************
   Function:

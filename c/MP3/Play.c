@@ -57,13 +57,10 @@ void PlayTaskInit(void) {
 
 BOOL playIndicator, playlistIndicator, stopIndicator;
 DWORD tick_delay, tick_max;
-// See ffconf.h for dimension of LFN
-//TCHAR Lfname[_MAX_LFN + 1];
-// See MP3.h for dimension of stream
-extern char stream[];
 
 int PlayTaskHandler(void) {
 
+    static char stream[4096];
     extern FIL fstream, ftmp2;
     static FIL *fplaylist = &ftmp2;
     FRESULT fres;

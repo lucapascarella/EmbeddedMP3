@@ -400,7 +400,6 @@ int xmit_datablock(/* 1:OK, 0:Failed */
 
 /*-----------------------------------------------------------------------*/
 
-static
 BYTE send_cmd(
         BYTE cmd, /* Command byte */
         DWORD arg /* Argument */

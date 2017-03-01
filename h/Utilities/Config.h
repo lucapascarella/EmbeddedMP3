@@ -38,6 +38,10 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #define CONFIG_VERSION          "v0.1"		// Config.h stack version
 
 #include <string.h>
@@ -126,6 +130,10 @@ typedef struct {
 
 extern configuration config;
 
-static int handler(void* user, const char* section, const char* name, const char* value);
+//static int handler(void* user, const char* section, const char* name, const char* value);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif

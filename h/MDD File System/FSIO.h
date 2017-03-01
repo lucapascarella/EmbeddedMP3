@@ -283,7 +283,7 @@ typedef struct
         DWORD   curcls;
         DWORD   EndClusterLimit;
         DWORD   ClusterFailValue;
-    } private;      /* intermediate values used to continue searches.  This
+    } private_;      /* intermediate values used to continue searches.  This
                          member should be used only by the FSGetDiskProperties()
                          function */
 
