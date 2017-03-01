@@ -215,6 +215,9 @@ int main(int argc, char** argv) {
         FlashLight(350, 50, FALSE);
 
 
+    Test *t = new Test(1, 2);
+    t->testIt();
+
     // Initialize the INI file
     if (ConfigInit() == FALSE)
         FlashLight(150, 50, TRUE);
