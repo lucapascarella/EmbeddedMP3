@@ -15,7 +15,11 @@ private:
 
 public:
     Test(int x, int y);
-    int testIt();
+    int testIt(void);
+    void callException(int b);
+    
+private:
+    void testThrow(int a);
 
 };
 

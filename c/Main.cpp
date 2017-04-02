@@ -194,6 +194,14 @@ int main(int argc, char** argv) {
     // Initialize application specific hardware
     InitializeSystem();
 
+    int a;
+    Test *t = new Test(1, 2);
+    a = t->testIt();
+    t->callException(12);
+
+    Test tt(3, 4);
+    a = tt.testIt();
+
     // Initialize Disk IO
     if (disk_initialize(0) != RES_OK)
         FlashLight(250, 50, TRUE);
@@ -202,7 +210,7 @@ int main(int argc, char** argv) {
     if (f_mount(&Fatfs, "0", 1) != FR_OK)
         FlashLight(250, 50, TRUE);
 
-    // Add referement to buffer of Long File Name
+    // Add reference to buffer of Long File Name
     //finfo.lfname = Lfname;
     //finfo.lfsize = sizeof (Lfname);
 
@@ -215,8 +223,6 @@ int main(int argc, char** argv) {
         FlashLight(350, 50, FALSE);
 
 
-    Test *t = new Test(1, 2);
-    t->testIt();
 
     // Initialize the INI file
     if (ConfigInit() == FALSE)
