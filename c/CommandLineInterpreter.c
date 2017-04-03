@@ -52,7 +52,7 @@
 #include "Utilities/ADC.h"
 
 // Declaration of initialized global variables
-const _command commands[] = {
+const COMMAND_SELECTOR commands[] = {
     "adc ", Adc, // Do a ADC conversion
     "bass ", Bass, // Sets or returns the value of the low tones
     "bookmark ", Bookmark, // Manages bookmarks
@@ -117,8 +117,8 @@ const char escape_clear_screen[] = {0x1B, 0x5B, 0x48, 0x1B, 0x5B, 0x4A, 0x00};
 const char escape_clear_end_row[] = {0x1B, 0x5B, 0x4A, 0x00};
 
 // Declaration of global variables
-_command_line cl;
-_command_iterator cmd_iterator[NUMBER_OF_COMMANDS];
+COMMAND_BUFFER cl;
+COMMAND_ITERATOR cmd_iterator[NUMBER_OF_COMMANDS];
 FIL fileLastCommands;
 
 BOOL InitCli() {

@@ -50,8 +50,8 @@
 #include "Delay/Delay.h"
 #include "Utilities/RTCC.h"
 
-extern _command_line cl;
-extern const _command commands[];
+extern COMMAND_BUFFER cl;
+extern const COMMAND_SELECTOR commands[];
 extern int number_of_commands;
 
 DWORD AccSize; /* Work register for fs command */

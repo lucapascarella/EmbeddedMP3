@@ -332,7 +332,7 @@ int Play(int argc, char **argv) {
         // Too few arguments passed
         CliTooFewArgumnets(argv[0]);
     } else if (argc == 2) {
-        // Copy in fileName gloabal variable the name of the passed file
+        // Copy in fileName global variable the name of the passed file
         strncpy(play.filename, argv[1], _MAX_LFN);
         // Turn on the player
         play.sm = MP3_PLAY_OPEN_FILE;

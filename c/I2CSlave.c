@@ -132,7 +132,7 @@ void __ISR(_I2C_1_VECTOR, IPL3AUTO) _SlaveI2CHandler(void) {
                 temp = i2c.txBuf[i2c.txHead];
                 i2c.txHead = (i2c.txHead + 1) & (I2C_DATA_SIZE - 1);
             } else {
-                // Buffer empty, the user asks more bytes than the availables
+                // Buffer empty, the user asks more bytes than the available
                 temp = 0;
             }
         }

@@ -52,7 +52,7 @@
 #include "MP3/VS1063.h"
 
 BYTE SCCmode;
-extern _command_line cl;
+extern COMMAND_BUFFER cl;
 
 BOOL InitSCC(BYTE mode) {
     SCCmode = mode;
@@ -72,8 +72,11 @@ void SCCHandler() {
             putc(c);
 
         // Reset all previous commands
-        if (c == '\n')
+        if (c == '\n') {
             number = FALSE;
+            cl.cmdi = 0;
+            cl.cmd[cl.cmdi] = '\0';
+        }
 
         if (!number)
             command = c;
@@ -84,7 +87,7 @@ void SCCHandler() {
                 // t = treble
                 // f = fast play
                 // t = rate tune
-                // e = reboot (soft rate)
+                // e = reboot (soft reboot)
                 // m = bookmark
 
             case 'k':
@@ -99,10 +102,13 @@ void SCCHandler() {
                 if (number) {
                     if (c != '#') {
                         cl.cmd[cl.cmdi++] = c;
+                        cl.cmd[cl.cmdi] = '\0';
                     } else {
                         cl.cmd[cl.cmdi] = '\0';
                         argv[1] = cl.cmd;
                         Play(2, argv);
+                        cl.cmdi = 0;
+                        cl.cmd[cl.cmdi] = '\0';
                         number = FALSE;
                     }
                 } else {
@@ -118,6 +124,7 @@ void SCCHandler() {
                 if (number) {
                     if (c != '#') {
                         cl.cmd[cl.cmdi++] = c;
+                        cl.cmd[cl.cmdi] = '\0';
                     } else {
                         if (cl.cmdi == 0) {
                             Playlist(1, NULL);
@@ -125,6 +132,8 @@ void SCCHandler() {
                             cl.cmd[cl.cmdi] = '\0';
                             argv[1] = cl.cmd;
                             Playlist(2, argv);
+                            cl.cmdi = 0;
+                            cl.cmd[cl.cmdi] = '\0';
                         }
                         number = FALSE;
                     }
@@ -141,14 +150,22 @@ void SCCHandler() {
                 if (number) {
                     if (c != '#') {
                         cl.cmd[cl.cmdi++] = c;
-                    } else {
                         cl.cmd[cl.cmdi] = '\0';
-                        argv[1] = cl.cmd;
-                        Record(2, argv);
+                    } else {
+                        if (cl.cmdi == 0) {
+                            Record(1, NULL);
+                        } else {
+                            cl.cmd[cl.cmdi] = '\0';
+                            argv[1] = cl.cmd;
+                            Record(2, argv);
+                            cl.cmdi = 0;
+                            cl.cmd[cl.cmdi] = '\0';
+                        }
                         number = FALSE;
                     }
                 } else {
                     cl.cmdi = 0;
+                    cl.cmd[cl.cmdi] = '\0';
                     number = TRUE;
                 }
                 break;
@@ -189,6 +206,8 @@ void SCCHandler() {
                         cl.cmd[cl.cmdi] = '\0';
                         vol = atoimm(cl.cmd, 0, 255, 10);
                         VLSI_SetVolume(vol, vol);
+                        cl.cmdi = 0;
+                        cl.cmd[cl.cmdi] = '\0';
                         number = FALSE;
                     }
                 } else {
@@ -203,6 +222,10 @@ void SCCHandler() {
                 printf("%d", min(VLSI_GetLeft(), VLSI_GetRight()));
                 //Volume();
                 break;
+
+            default:
+                // E.g. '\n' used to reset all previous command
+                Nop();
 
         }
     }

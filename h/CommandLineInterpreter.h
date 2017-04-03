@@ -55,12 +55,12 @@
 typedef struct {
     char *name;
     int (*cmd)(int, char**);
-} _command;
+} COMMAND_SELECTOR;
 
 typedef struct {
     BOOL cmd_match;
     int cmd_len;
-} _command_iterator;
+} COMMAND_ITERATOR;
 
 #define CLI_MAX_DIR_SIZE    128
 #define CLI_MAX_BUF_SIZE    1024 * 4
@@ -77,7 +77,7 @@ typedef struct {
     int lastCmd;
     int nCmd;
 
-} _command_line;
+} COMMAND_BUFFER;
 
 
 #define ESCAPE                  0x1B
