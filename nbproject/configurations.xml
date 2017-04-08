@@ -7,9 +7,15 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <logicalFolder name="f3" displayName="Commands" projectFiles="true">
+        <itemPath>h/Commands/Playback.h</itemPath>
+        <itemPath>h/Commands/CommandBase.h</itemPath>
+      </logicalFolder>
       <logicalFolder name="f2" displayName="Common" projectFiles="true">
         <itemPath>h/Compiler.h</itemPath>
         <itemPath>h/GenericTypeDefs.h</itemPath>
+        <itemPath>h/CommandAbstract.h</itemPath>
+        <itemPath>h/Playback.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f5" displayName="Delay" projectFiles="true">
         <itemPath>h/Delay/Tick.h</itemPath>
@@ -85,6 +91,8 @@
         <itemPath>c/Commands/Cat.c</itemPath>
         <itemPath>c/Commands/DeleteDir.c</itemPath>
         <itemPath>c/Commands/List.c</itemPath>
+        <itemPath>c/Commands/Playback.cpp</itemPath>
+        <itemPath>c/Commands/CommandBase.cpp</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="Delay" projectFiles="true">
         <itemPath>c/Delay/Delay.c</itemPath>
@@ -155,8 +163,8 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>RealICEPlatformTool</platformTool>
         <languageToolchain>XC32</languageToolchain>
-        <languageToolchainVersion>1.42</languageToolchainVersion>
-        <platform>3</platform>
+        <languageToolchainVersion>1.43</languageToolchainVersion>
+        <platform>4</platform>
       </toolsSet>
       <compileType>
         <linkerTool>

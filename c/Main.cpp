@@ -1,55 +1,20 @@
-/*********************************************************************
- *
- *  MP3 Encoder and Decoder Main Application
- *
- *********************************************************************
- * FileName:        Main.c
- * Dependencies:    Main.h
- * Processor:       PIC32MX270F256B
- * Compiler:        Microchip XC32 v1.33 or higher
- * Company:         LP Systems
- * Author:          Luca Pascarella luca.pascarella@gmail.com
- * Web Site:        www.lucapascarella.it
- *
- * Software License Agreement
- *
- * Copyright (C) 2012-2013 LP Systems  All rights reserved.
- *
- * THE SOFTWARE AND DOCUMENTATION ARE PROVIDED "AS IS" WITHOUT
- * WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT
- * LIMITATION, ANY WARRANTY OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT SHALL
- * MICROCHIP BE LIABLE FOR ANY INCIDENTAL, SPECIAL, INDIRECT OR
- * CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF
- * PROCUREMENT OF SUBSTITUTE GOODS, TECHNOLOGY OR SERVICES, ANY CLAIMS
- * BY THIRD PARTIES (INCLUDING BUT NOT LIMITED TO ANY DEFENSE
- * THEREOF), ANY CLAIMS FOR INDEMNITY OR CONTRIBUTION, OR OTHER
- * SIMILAR COSTS, WHETHER ASSERTED ON THE BASIS OF CONTRACT, TORT
- * (INCLUDING NEGLIGENCE), BREACH OF WARRANTY, OR OTHERWISE.
- *
- * File Description: Encoder and Decoder state finite machine
- * Change History: In progress
- * Rev   Description
- * ----  -----------------------------------------
- * 1.0   Initial release (1 September 2013, 16.00)
- *
- ********************************************************************/
-
 /*
- * This macro uniquely defines this file as the main entry point.
- * There should only be one such definition in the entire project,
- * and this file must define the AppConfig variable as described below.
+ * Copyright (C) 2017 LP Systems
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ * 
+ * Author: Luca Pascarella www.lucapascarella.it
  */
-#define THIS_IS_STACK_APPLICATION
 
-// Set configuration fuses (but only in MainDemo.c where THIS_IS_STACK_APPLICATION is defined)
-#if defined(THIS_IS_STACK_APPLICATION)
 
-// *****************************************************************************
-// *****************************************************************************
-// Device Configuration Bits (Runs from Aux Flash)
-// *****************************************************************************
-// *****************************************************************************
 // Configuring the Device Configuration Registers
 // DEVCFG3
 // USERID = No Setting
@@ -85,9 +50,10 @@
 #pragma config BWP = OFF                // Boot Flash Write Protect bit (Protection Disabled)
 #pragma config CP = OFF                 // Code Protect (Protection Disabled)
 
-#endif
 
-
+/*
+ * Header section declaration in accord to C++ standard
+ */
 extern "C" {
 #include "Delay/Tick.h"
 #include "USB/usb.h"
@@ -98,8 +64,6 @@ extern "C" {
 #include "USB/usb_function_msd.h"
 #include "USB/usb_function_cdc.h"
 #include "Utilities/USB.h"
-
-    // Include functions specific to this stack application
 #include "Main.h"
 #include "Utilities/Utilities.h"
 #include "Utilities/Logging.h"
@@ -128,10 +92,9 @@ extern "C" {
 
 using namespace std;
 
-// C32 Exception Handlers
-// If your code gets here, you either tried to read or write
-// a NULL pointer, or your application overflowed the stack
-// by having too many local variables or parameters declared.
+// MIPS C32 Exception Handlers
+// If your code gets here, you either tried to read or write a NULL pointer,
+// or your application overflowed the stack by having too many local variables or parameters declared.
 Exception exception;
 static unsigned int address;
 
@@ -139,19 +102,14 @@ void __attribute__((nomips16)) _general_exception_handler(unsigned cause, unsign
 
     asm volatile("mfc0 %0,$13" : "=r" (exception));
     asm volatile("mfc0 %0,$14" : "=r" (address));
-
-    ////exception = (Exception)(exception & 0x0000007C) >> 2;
-
-
-    Nop();
+    
     Nop();
     FlashLight(50, 50, TRUE);
     Nop();
-    Nop();
 
-    //    // to return from the exception, the EPC register must be incremented by 4 to
-    //    // point to the next instruction.  Since the EPC register cannot be manipulated
-    //    // directly, the following code peforms the addition
+    // To return from the exception, the EPC register must be incremented by 4 to
+    // point to the next instruction.  Since the EPC register cannot be manipulated
+    // directly, the following code peforms the addition
     Nop(); // trap here for debug
     asm("mfc0 $v0, $14"); // $v0 = EPC (=> $14 means EPC)
     asm("addiu $v0, $v0, 4"); // $v0 += 4
@@ -163,25 +121,17 @@ void __attribute__((nomips16)) _general_exception_handler(unsigned cause, unsign
 /** PRIVATE PROTOTYPES *********************************************/
 void USBDeviceTasks(void);
 
-
-
-
-// Fat File Systesm structure
+// FAT File System global structure
 FATFS Fatfs;
-// Informazioni file struttura riutilizzabile globale
+// Global structures to manipulate files, candidate to removal
 FILINFO finfo;
 DIR dir;
 FIL fstream, ftmp1, ftmp2;
-// fstream: used to play and recording
-// ftmp1: used to CLI
-// ftmp2: used to Playlist
-
-//TCHAR Lfname[_MAX_LFN + 1];
-//char stream[STREAM_BUF_SIZE];
+// Scratch pad used to share information with bootloader
 char * MyScratchPad = (char *) (0xA0000000 + (0x10000 - 0x0040));
 
 /*
- * 
+ * Main entry application
  */
 int main(int argc, char** argv) {
 
@@ -210,10 +160,6 @@ int main(int argc, char** argv) {
     if (f_mount(&Fatfs, "0", 1) != FR_OK)
         FlashLight(250, 50, TRUE);
 
-    // Add reference to buffer of Long File Name
-    //finfo.lfname = Lfname;
-    //finfo.lfsize = sizeof (Lfname);
-
     // Initialize virtual Real Time Clock Calendar
     InitRtcc();
 
@@ -222,14 +168,12 @@ int main(int argc, char** argv) {
     if (logResults == FALSE)
         FlashLight(350, 50, FALSE);
 
-
-
     // Initialize the INI file
     if (ConfigInit() == FALSE)
         FlashLight(150, 50, TRUE);
 
 
-    // Initializes USB module SFRs and firmware variables to known states.
+    // Initializes USB module SFRs and firmware variables to known state
     if (isUSBEnabled())
         USBDeviceInit(); //usb_device.c.
 
@@ -265,13 +209,13 @@ int main(int argc, char** argv) {
     // Initialize GPIO
     GPIOInit();
 
-    // Intialize commands interpreter
+    // Initialize commands interpreter
     if (config.console.console == CLI_MODE) {
-        // Init Command Line Interpreter
+        // Initialize Command Line Interpreter
         if (InitCli() == FALSE)
             FlashLight(150, 50, TRUE);
     } else {
-        // Init Single Character Commands
+        // Initialize Single Character Commands Interpreter
         if (InitSCC(config.console.console) == FALSE)
             FlashLight(150, 50, TRUE);
     }
