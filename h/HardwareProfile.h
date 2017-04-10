@@ -51,8 +51,6 @@
 #ifndef HARDWARE_PROFILE_H
 #define HARDWARE_PROFILE_H
 
-#include "Compiler.h"
-
 
 // Clock frequency values
 // These directly influence timed events using the Tick module.  They also are used for UART and SPI baud rate generation.

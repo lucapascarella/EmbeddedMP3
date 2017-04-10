@@ -35,6 +35,7 @@
         <itemPath>h/MP3/VS1063.h</itemPath>
         <itemPath>h/MP3/VS1063Patches.h</itemPath>
         <itemPath>h/MP3/MP3Frame.h</itemPath>
+        <itemPath>h/MP3/CCPlay.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f4" displayName="Properties" projectFiles="true">
         <itemPath>h/Properties/ini.h</itemPath>
@@ -70,6 +71,7 @@
       <itemPath>h/SingleCharacterCommands.h</itemPath>
       <itemPath>h/I2CSlave.h</itemPath>
       <itemPath>h/test.h</itemPath>
+      <itemPath>test_header.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LibraryFiles"
                    displayName="Library Files"
@@ -111,6 +113,7 @@
         <itemPath>c/MP3/VS1063.c</itemPath>
         <itemPath>c/MP3/VS1063Patches.c</itemPath>
         <itemPath>c/MP3/MP3Frame.c</itemPath>
+        <itemPath>c/MP3/CCPlay.cpp</itemPath>
       </logicalFolder>
       <logicalFolder name="f4" displayName="Properties" projectFiles="true">
         <itemPath>c/Properties/ini.c</itemPath>

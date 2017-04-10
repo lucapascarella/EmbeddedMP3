@@ -20,16 +20,12 @@
 #include "CommandBase.h"
 
 class Playback: public CommandBase {
-private:
-    int gx;
-    int gy;
 
 public:
-    Playback();
-    Playback(int x, int y);
-    
+    Playback(void);
     int playback(int argc, char **argv);
-    
+    int stopPlayback(int argc, char **argv);
+    int pausePlayback(int argc, char **argv);
 };
 
 

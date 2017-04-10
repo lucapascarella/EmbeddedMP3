@@ -44,6 +44,10 @@
 #include "HardwareProfile.h"
 #include "FatFS/ff.h"
 
+#include <stdint.h>
+#include <stdbool.h>
+
+
 #define PLAY_IDLE               0
 
 typedef enum {
@@ -111,6 +115,9 @@ typedef struct __attribute__((__packed__)) {
 
 void PlayTaskInit(void);
 int PlayTaskHandler(void);
+
+void startPlay(char *ptr);
+bool isPlaying(void);
 
 int Play(int, char **);
 BOOL PausePlay(int, char **);

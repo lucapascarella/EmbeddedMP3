@@ -38,8 +38,8 @@
 #ifndef MP3_H
 #define	MP3_H
 
-#include <string.h>
-#include "Compiler.h"
+//#include <string.h>
+//#include "Compiler.h"
 #include "GenericTypeDefs.h"
 #include "HardwareProfile.h"
 

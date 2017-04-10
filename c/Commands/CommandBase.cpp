@@ -16,24 +16,35 @@
 
 #include <lega-c/string.h>
 #include "Commands/CommandBase.h"
-//#include "CommandLineInterpreter.h"
+#include "CommandLineInterpreter.h"
 
 CommandBase::CommandBase(void) {
+    this->initializeStatistics();
+}
+
+void CommandBase::initializeStatistics(void) {
+    // Initialize statistical information
     tooFewArgsCounter = 0;
     tooManyArgsCounter = 0;
+    correctArgsCounter = 0;
+    lastCommandArgsCounter = 0;
 }
 
 bool CommandBase::checkParameters(int argc, char **argv, int lowLimit, int upperLimit) {
-    
+
+    lastCommandArgsCounter = argc;
     if (argc < lowLimit) {
         // Too few arguments passed
-        //CliTooFewArgumnets(argv[0]);
+        CliTooFewArgumnets(argv[0]);
+        tooFewArgsCounter++;
         return false;
     } else if (argc > upperLimit) {
         // Too many arguments passed
-        //CliTooManyArgumnets(argv[0]);
+        CliTooManyArgumnets(argv[0]);
+        tooManyArgsCounter++;
         return false;
     } else {
+        correctArgsCounter++;
         return true;
     }
 }

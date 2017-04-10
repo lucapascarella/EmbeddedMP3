@@ -24,11 +24,14 @@ class CommandBase {
 private:
     long tooFewArgsCounter;
     long tooManyArgsCounter;
+    long correctArgsCounter;
+    long lastCommandArgsCounter;
 
 public:
     CommandBase();
 
 protected:
+    void initializeStatistics(void);
     bool checkParameters(int argc, char **argv, int lowLimit, int upperLimit);
 };
 

@@ -275,47 +275,24 @@ int PlayTaskHandler(void) {
     return play.sm;
 }
 
+void startPlay(char *ptr) {
+    strncpy(play.filename, ptr, _MAX_LFN);
+    // Turn on the player
+    play.sm = MP3_PLAY_OPEN_FILE;
+}
+
+bool isPlaying(void) {
+    if (play.sm >= MP3_PLAY_READ_BUFFER && play.sm <= MP3_PLAY_WRITE_BUFFER)
+        return true;
+    return false;
+}
+
 int Play(int argc, char **argv) {
 
-    //    return_t *rtn;
-    //    option_t *optList, *thisOpt;
-    //    argument_t *argList, *thisArg;
-    //
-    //    // Get list of command line options and their arguments
-    //    rtn = GetOptList(argc, argv, "l;");
-    //    optList = rtn->opt;
-    //    argList = rtn->arg;
-    //
-    //    // Print for debug only the options and their arguments
-    //    printOptionsAndArguments(rtn);
-    //
-    //    while (optList != NULL) {
-    //	thisOpt = optList;
-    //	optList = optList->next;
-    //
-    //	switch (thisOpt->option) {
-    //	    case 'l':
-    //		break;
-    //	}
-    //    }
-    //
-    //    while (argList != NULL) {
-    //	thisArg = argList;
-    //	argList = argList->nextArgument;
-    //
-    //	//strcpy(p, thisArg->argument);
-    //    }
-    //
-    //    FreeRtnList(rtn);
-
     if (argc == 1) {
-        // Too few arguments passed
         CliTooFewArgumnets(argv[0]);
     } else if (argc == 2) {
-        // Copy in fileName gloabal variable the name of the passed file
-        strncpy(play.filename, argv[1], _MAX_LFN);
-        // Turn on the player
-        play.sm = MP3_PLAY_OPEN_FILE;
+        startPlay(argv[1]);
     } else {
         CliTooManyArgumnets(argv[0]);
     }
@@ -328,7 +305,7 @@ BOOL PausePlay(int argc, char **argv) {
 
     if (argc == 1) {
 
-        if (play.sm >= MP3_PLAY_READ_BUFFER && play.sm <= MP3_PLAY_WRITE_BUFFER) {
+        if (isPlaying()) {
             // Enter in pause
             play.sm = MP3_PLAY_PAUSE_WAIT_ENTERING;
             printf("Pause: ON\r\n");
@@ -342,7 +319,7 @@ BOOL PausePlay(int argc, char **argv) {
 
     } else if (argc == 2) {
 
-        if (play.sm >= MP3_PLAY_READ_BUFFER && play.sm <= MP3_PLAY_WRITE_BUFFER) {
+        if (isPlaying()) {
             delay = atoimm(argv[1], 0, 10000000, 1000);
 
             tick_delay = TickGet();
