@@ -87,6 +87,7 @@ extern "C" {
 #include "Commands.h"
 }
 
+#include "MP3/CCPlay.h"
 #include "test.h"
 #include <cstdlib>
 
@@ -135,6 +136,8 @@ char * MyScratchPad = (char *) (0xA0000000 + (0x10000 - 0x0040));
  */
 int main(int argc, char** argv) {
 
+    CCPlay *ccp;
+    
     int play = FALSE, rec = FALSE;
     BOOL logResults;
 
@@ -225,6 +228,9 @@ int main(int argc, char** argv) {
         USBDeviceAttach();
 #endif
 
+    // New C++ initialization of Playback class
+    ccp = new CCPlay();
+    
     // Initialize play and record tasks
     PlayTaskInit();
     RecordTaskInit();
@@ -264,8 +270,10 @@ int main(int argc, char** argv) {
             rec = RecordTaskHandler();
 
         // Manager of the player routine
-        if (rec == REC_IDLE)
+        if (rec == REC_IDLE){
+            ccp->playTaskHandler();
             play = PlayTaskHandler();
+        }
 
         // BlinkLed
         if (play == REC_IDLE && rec == PLAY_IDLE)

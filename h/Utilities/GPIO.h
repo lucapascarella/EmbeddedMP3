@@ -1,8 +1,26 @@
+/*
+ * Copyright (C) 2017 LP Systems
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ * 
+ * Author: Luca Pascarella www.lucapascarella.it
+ */
 
 #ifndef __GPIO_H
 #define __GPIO_H
 
-#define CONFIG_VERSION          "v0.1"		// Config.h stack version
+/* Provide C++ Compatibility */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <string.h>
 #include <stdlib.h>
@@ -11,10 +29,10 @@
 #include "HardwareProfile.h"
 #include "FatFS/ff.h"
 
-// Mode of operations associated with each pin:
+    // Mode of operations associated with each pin:
 #define GPIO_NOTHING                                0
 
-// Input features
+    // Input features
 #define GPIO_I_STARTS_PLAYLIST                      1
 #define GPIO_I_STOP                                 2
 #define GPIO_I_STARTS_STOP                          3
@@ -23,7 +41,7 @@
 #define GPIO_I_STARTS_STOP_RECORDING                6
 #define GPIO_I_RESET                                7
 
-// Output signals when
+    // Output signals when
 #define GPIO_O_STARTS_PLAY                          20
 #define GPIO_O_STOP_PLAY                            21
 #define GPIO_O_PAUSE_PLAY                           22
@@ -48,7 +66,7 @@
 #define GPIO_O_COMMAND_ERROR                        37
 #define GPIO_O_MICRO_SD_OK                          38
 
-// Gpio Special functions:
+    // Gpio Special functions:
 #define GPIO_S_I2C                                  60
 #define GPIO_S_ANALOG                               70
 #define GPIO_S_UART                                 80
@@ -79,20 +97,25 @@
 #endif
 
 
-void GPIOInit();
+    void GPIOInit();
 
-void GPIOOutputTaskHandler();
-void GPIOInputTaskHandler();
-void GpioUpdateOutputState(int state);
+    void GPIOOutputTaskHandler();
+    void GPIOInputTaskHandler();
+    void GpioUpdateOutputState(int state);
 
-int Gpio(int, char **);
-BOOL GpioGetInputState(BYTE);
-BOOL GpioCheckSpecialFunction(BYTE, BYTE);
-void GpioSetTris(BYTE, BYTE);
-void GpioSetPullUp(BYTE gpio, BYTE state);
-void GpioSetPullDown(BYTE gpio, BYTE state);
-void GpioSetOutputState(BYTE gpio, BYTE state);
-void GpioToggleState(BYTE gpio);
-void GpioSetChangeNoticeState(BYTE gpio, BYTE state);
+    int Gpio(int, char **);
+    BOOL GpioGetInputState(BYTE);
+    BOOL GpioCheckSpecialFunction(BYTE, BYTE);
+    void GpioSetTris(BYTE, BYTE);
+    void GpioSetPullUp(BYTE gpio, BYTE state);
+    void GpioSetPullDown(BYTE gpio, BYTE state);
+    void GpioSetOutputState(BYTE gpio, BYTE state);
+    void GpioToggleState(BYTE gpio);
+    void GpioSetChangeNoticeState(BYTE gpio, BYTE state);
+
+    /* Provide C++ Compatibility */
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __GPIO_H

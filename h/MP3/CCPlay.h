@@ -1,8 +1,17 @@
-/* 
- * File:   CCPlay.h
- * Author: luca
+/*
+ * Copyright (C) 2017 LP Systems
  *
- * Created on April 10, 2017, 11:49 AM
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ * 
+ * Author: Luca Pascarella www.lucapascarella.it
  */
 
 #ifndef CCPLAY_H
@@ -13,19 +22,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define CCPLAY_BUF_SIZE_PLAY        1024u
 
 typedef enum {
     MP3_CCPLAY_HOME = 0,
 
     MP3_CCPLAY_OPEN_PLAYLIST,
-    MP3_CCPLAY_PL_OPENED_SUCCESSFUL,
-    MP3_CCPLAY_PL_OPENED_FAILED,
+    MP3_CCPLAY_PL_GET_NEXT_TRACK,
 
     MP3_CCPLAY_OPEN_FILE,
-    MP3_CCPLAY_OPENED_SUCCESSFUL,
-    MP3_CCPLAY_OPENED_FAILED,
-
-    MP3_CCPLAY_PL_GET_NEXT_TRACK,
 
     MP3_CCPLAY_READ_BUFFER,
     MP3_CCPLAY_WRITE_BUFFER,
@@ -43,43 +48,53 @@ typedef enum {
 
     MP3_CCPLAY_PL_NEXT,
 
+    MP3_CCPLAY_FINISH
+
 } CCPLAY_STATE_MACHINE;
 
 class CCPlay {
-    
 private:
-    DWORD reconnectionDelayTick;        // Reconnection delay multiply by TICK_SECOND
-    DWORD reconnectionDelay;            // Reconnection delay
-    DWORD connectionTimeoutTick;        // Connection timeout multiply by TICK_SECOND
-    DWORD connectionTimeout;            // Connection timeout
-    
-    UINT read;
-    UINT write;
-    UINT offset;
-    DWORD timeout;                      // Timeout indicator
-    DWORD tled;                         // Timeout led indicator
-    
-    BYTE *buffer;                       // Buffer pointer
-    FIL *fil;                           // File pointer
-    
-    CCPLAY_STATE_MACHINE sm;              // Play state machine indicator
-    BYTE filename[_MAX_LFN + 1];        // USB Filename
-    
+    uint16_t read;
+    uint16_t write;
+
+    uint8_t buffer[CCPLAY_BUF_SIZE_PLAY]; // Buffer pointer
+
+    FIL *pfil; // File pointer
+    FIL *pfilPlaylist; // Pointer for play-list file
+
+    char filename[_MAX_LFN + 1]; // File name
+    char playlistFilename[_MAX_LFN + 1]; // Play-list File name
+
+    uint32_t tick_delay;
+    uint32_t tick_max;
+    long playlistNumber;
+
+    CCPLAY_STATE_MACHINE sm; // Play state machine indicator
+
     union {
-        DWORD allFlags;                         // 32 bits reserved for flags field
+        uint32_t allFlags; // 32 bits reserved for flags field
+
         struct __PACKED {
             // LSB
-            DWORD boolConnectionState : 1;      // Web Radio connection state: True = Connected and False = Disconnected
-            DWORD bConnIsLost : 1;              // Connection is lost, try reconnection
+            uint32_t boolConnectionState : 1; // Web Radio connection state: True = Connected and False = Disconnected
+            uint32_t bConnIsLost : 1; // Connection is lost, try reconnection
+            uint32_t playlistIndicator : 1; // True if playlist is correctly opened
+            uint32_t playIndicator : 1; // True if playback
+            uint32_t stopIndicator : 1; // True if stopped
             // Expand here
             // MSB
         } bits;
     } flags;
-    
+
 public:
-    CCPlay();
-    CCPlay(const CCPlay& orig);
-    virtual ~CCPlay();
+    CCPlay(void);
+    
+    int playTaskHandler(void);
+    void startPlayback(char *ptr);
+    void stopPlayback(void);
+    bool isPlaying(void);
+
+    virtual ~CCPlay(void);
 private:
 
 };

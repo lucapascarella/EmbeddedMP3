@@ -1,69 +1,27 @@
-/*********************************************************************
+/*
+ * Copyright (C) 2017 LP Systems
  *
- *                  Tick Manager for Timekeeping
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *********************************************************************
- * FileName:        Tick.c
- * Dependencies:    Timer 0 (PIC18) or Timer 1 (PIC24F, PIC24H,
- *					dsPIC30F, dsPIC33F, PIC32)
- * Processor:       PIC18, PIC24F, PIC24H, dsPIC30F, dsPIC33F, PIC32
- * Compiler:        Microchip C32 v1.10b or higher
- *					Microchip C30 v3.12 or higher
- *					Microchip C18 v3.30 or higher
- *					HI-TECH PICC-18 PRO 9.63PL2 or higher
- * Company:         Microchip Technology, Inc.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Software License Agreement
- *
- * Copyright (C) 2002-2010 Microchip Technology Inc.  All rights
- * reserved.
- *
- * Microchip licenses to you the right to use, modify, copy, and
- * distribute:
- * (i)  the Software when embedded on a Microchip microcontroller or
- *      digital signal controller product ("Device") which is
- *      integrated into Licensee's product; or
- * (ii) ONLY the Software driver source files ENC28J60.c, ENC28J60.h,
- *		ENCX24J600.c and ENCX24J600.h ported to a non-Microchip device
- *		used in conjunction with a Microchip ethernet controller for
- *		the sole purpose of interfacing with the ethernet controller.
- *
- * You should refer to the license agreement accompanying this
- * Software for additional information regarding your rights and
- * obligations.
- *
- * THE SOFTWARE AND DOCUMENTATION ARE PROVIDED "AS IS" WITHOUT
- * WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT
- * LIMITATION, ANY WARRANTY OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT SHALL
- * MICROCHIP BE LIABLE FOR ANY INCIDENTAL, SPECIAL, INDIRECT OR
- * CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF
- * PROCUREMENT OF SUBSTITUTE GOODS, TECHNOLOGY OR SERVICES, ANY CLAIMS
- * BY THIRD PARTIES (INCLUDING BUT NOT LIMITED TO ANY DEFENSE
- * THEREOF), ANY CLAIMS FOR INDEMNITY OR CONTRIBUTION, OR OTHER
- * SIMILAR COSTS, WHETHER ASSERTED ON THE BASIS OF CONTRACT, TORT
- * (INCLUDING NEGLIGENCE), BREACH OF WARRANTY, OR OTHERWISE.
- *
- *
- * Author               Date        Comment
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Nilesh Rajbharti     6/28/01     Original        (Rev 1.0)
- * Nilesh Rajbharti     2/9/02      Cleanup
- * Nilesh Rajbharti     5/22/02     Rev 2.0 (See version.log for detail)
- * Howard Schlunder		6/13/07		Changed to use timer without
- *									writing for perfect accuracy.
- ********************************************************************/
-#define __POWER_C
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ * 
+ * Author: Luca Pascarella www.lucapascarella.it
+ */
+
+#define __UTILITIES_C
 
 #include "Utilities/Utilities.h"
 #include "Delay/Tick.h"
 #include "Delay/Delay.h"
 #include "Utilities/printer.h"
 #include "BootloaderInfo.h"
-#include "FatFS/ff.h"
 #include "Compiler.h"
-
-
 #include <p32xxxx.h>
 
 
@@ -101,35 +59,35 @@ void InitializeSystem(void) {
     LEDs_OFF();
 
     // Reset all reset indicator
-    reboot.Val = FALSE;
+    reboot.Val = false;
     if (mGetPORFlag()) {
         mClearPORFlag();
-        reboot.bits.POR = TRUE;
+        reboot.bits.POR = true;
         // execute power on reset handler
         // ...
     } else if (mGetBORFlag()) {
         mClearBORFlag();
-        reboot.bits.BOR = TRUE;
+        reboot.bits.BOR = true;
         // execute brown out on reset handler
         // ...
     } else if (mGetMCLRFlag()) {
         mClearMCLRFlag();
-        reboot.bits.MCLR = TRUE;
+        reboot.bits.MCLR = true;
         // execute master clear reset handler
         // ...
     } else if (mGetSWRFlag()) {
         mClearSWRFlag();
-        reboot.bits.SWR = TRUE;
+        reboot.bits.SWR = true;
         // execute software reset handler
         // ...
     } else if (mGetCMRFlag()) {
         mClearCMRFlag();
-        reboot.bits.CMR = TRUE;
+        reboot.bits.CMR = true;
         // execute configuration mismatch reset handler
         // ...
     } else if (mGetWDTOFlag()) {
         mClearWDTOFlag();
-        reboot.bits.WDTO = TRUE;
+        reboot.bits.WDTO = true;
         // execute watchdog timeout reset handler
         // ...
     }
@@ -152,7 +110,7 @@ void InitializeSystem(void) {
     // JTAG, you'll still have a tiny window before JTAG goes away.
     // The PIC32 Starter Kit debuggers use JTAG and therefore must not
     // disable JTAG.
-//    DelayMs(50);
+    //    DelayMs(50);
     mJTAGPortEnable(DEBUG_JTAGPORT_OFF);
 
 
@@ -235,6 +193,24 @@ void Toggle1Second(void) {
     }
 }
 
+const char * string_rc(FRESULT rc) {
+
+    FRESULT i;
+    const char *str =
+            "OK\0" "DISK_ERR\0" "INT_ERR\0" "NOT_READY\0" "NO_FILE\0" "NO_PATH\0"
+            "INVALID_NAME\0" "DENIED\0" "EXIST\0" "INVALID_OBJECT\0" "WRITE_PROTECTED\0"
+            "INVALID_DRIVE\0" "NOT_ENABLED\0" "NO_FILE_SYSTEM\0" "MKFS_ABORTED\0" "TIMEOUT\0"
+            "LOCKED\0" "NOT_ENOUGH_CORE\0" "TOO_MANY_OPEN_FILES\0";
+
+    if (rc != FR_OK) {
+        for (i = 0; i != rc && *str; i++) {
+            while (*str++);
+        }
+        return str;
+    }
+    return NULL;
+}
+
 //void printOptionsAndArguments(return_t *rtn) {
 //
 //    option_t *optList, *thisOpt;
@@ -251,7 +227,7 @@ void Toggle1Second(void) {
 //
 //        // Prints all arguments
 //        argument = thisOpt->nextArgument;
-//        comma = FALSE;
+//        comma = false;
 //        while (argument != NULL) {
 //            if (comma) {
 //                sprintf(buf, ", %s", argument->argument);
@@ -260,7 +236,7 @@ void Toggle1Second(void) {
 //                    sprintf(buf, " Argument (1): %s", argument->argument);
 //                else
 //                    sprintf(buf, " Arguments (%d): %s", thisOpt->argNumber, argument->argument);
-//                comma = TRUE;
+//                comma = true;
 //            }
 //            printf(buf);
 //            argument = argument->nextArgument;
@@ -276,3 +252,92 @@ void Toggle1Second(void) {
 //        printf(buf);
 //    }
 //}
+
+static malloc_count_check = 0;
+
+void * custom_malloc2(void **ptr, uint16_t size) {
+    if (*ptr != NULL)
+        while (1); // Catch here with debugger, this must never happen
+    if ((*ptr = malloc(size)) == NULL)
+        while (1); // Catch here with debugger, this must never happen
+    custom_memset(*ptr, 0x00, size);
+    malloc_count_check++;
+    return *ptr;
+}
+
+void * custom_malloc(void *ptr, uint16_t size) {
+    if (ptr != NULL)
+        while (1); // Catch here with debugger, this must never happen
+    if ((ptr = malloc(size)) == NULL)
+        while (1); // Catch here with debugger, this must never happen
+    custom_memset(ptr, 0x00, size);
+    malloc_count_check++;
+    return ptr;
+}
+
+void custom_free(void **ptr) {
+    if (ptr == NULL)
+        while (1); // Catch here with debugger, this must never happen
+    if (*ptr != NULL) {
+        free(*ptr);
+        *ptr = NULL;
+        malloc_count_check--;
+    }
+}
+
+void * custom_memcpy(void * dst, const void * src, size_t size) {
+
+    if (dst != NULL && src != NULL && size != 0x0000) {
+        // TODO improve with DMA RAM to RAM fast copy
+        memcpy(dst, src, size);
+
+        //while (MEM_TO_MEM_DMA_WORKING());
+        //MEM_TO_MEM_DMA_CLR_BTC();
+        DmaChnSetTxfer(MEM_TO_MEM_DMA_CHANNEL, src, dst, size, size, size);
+        DmaChnStartTxfer(MEM_TO_MEM_DMA_CHANNEL, DMA_WAIT_BLOCK, 0);
+        //while (MEM_TO_MEM_DMA_WORKING());
+    }
+    return dst;
+}
+
+void * custom_memset(void * dst, int value, size_t size) {
+    // TODO improve with DMA RAM to RAM fast copy
+    if (dst != NULL && size != 0x0000) {
+        memset(dst, value, size);
+        //while (MEM_TO_MEM_DMA_WORKING());
+        //MEM_TO_MEM_DMA_CLR_BTC();
+        DmaChnSetTxfer(MEM_TO_MEM_DMA_CHANNEL, &value, dst, 1, size, size);
+        DmaChnStartTxfer(MEM_TO_MEM_DMA_CHANNEL, DMA_WAIT_BLOCK, 0);
+        //while (MEM_TO_MEM_DMA_WORKING());
+    }
+    return dst;
+}
+
+int custom_strlen(char *str) {
+
+    //    int size;
+    //    char value;
+    if (str != NULL) {
+        // TODO improve with DMA match pattern
+        // To get the size you have to subtract the address of the src DMA pointer to with base address of "str"
+        // Or you can just use DCHxSPTR
+        // However a new reopen is required to configure the pattern matching system. After the use you have to restore the previous conditions
+        return strlen(str);
+
+        //        size = 65355;
+        //        DmaChnSetTxfer(MEM_TO_MEM_DMA_CHANNEL, str, &value, size, size, 1);
+        //        DmaChnSetMatchPattern(MEM_TO_MEM_DMA_CHANNEL, '\0');
+        //        DmaChnStartTxfer(MEM_TO_MEM_DMA_CHANNEL, DMA_WAIT_BLOCK, 0);
+        //        Nop();
+    }
+    return 0;
+}
+
+void * custom_memchr(const void * src, int match, size_t size) {
+    // TODO improve with DMA pattern match
+    return memchr(src, match, size);
+}
+
+void * custom_memrchr(const void * src, int match, size_t size) {
+
+}
