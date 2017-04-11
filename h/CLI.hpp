@@ -10,6 +10,7 @@
 
 
 #include "Commands/CommandBase.h"
+#include "FatFS/ff.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <list>
@@ -37,16 +38,13 @@
 class CLI {
 private:
     // Some useful constants
-    //const char temporaryFileEntryList[] = "/lst.tmp";
-    //const char temporaryFileCommands[] = "/cmd.tmp";
 
-    char inputLine[CLI_MAX_LINE_INPUT_SIZE];
     uint16_t countEscape;
     char escapeSequence[10];
 
-    char cmd2[CLI_MAX_BUF_SIZE];
-    int cmdi;
-    int cmdlen;
+    char inputLine[CLI_MAX_BUF_SIZE];
+    int inputLineIndex;
+    int inputLineLength;
 
     char tmp[CLI_MAX_BUF_SIZE];
     int tmpi;
@@ -61,6 +59,8 @@ private:
     // Commands
     std::list<CommandBase> commandList;
     CommandBase *cmd;
+    
+    FIL fileLastCommands;
 
     // State Machine for task handler
 
@@ -87,16 +87,16 @@ private:
     bool copyInputs(uint8_t *p);
     uint8_t completeCommand(void);
     void addCharAndUpdateConsole(uint8_t c);
-    //    bool CLI::CliCreateFileListOfCommands(void);
-    //    bool CLI::CliCreateFileListOfFilesEntry(void);    
-
-    void CliClearCommand(void);
+    void clearCommand(void);
     void CliReprintConsole(void);
     bool CliAddStringAndUpdateConsole(char *str);
     void CliPrintEscape(const char *p, int i);
     void CliPrintBackspace(void);
     void CliPrintFor(char *p, int i, int len);
     bool searchCommand(char *name);
+    bool CliCreateFileListOfCommands(void);
+    bool createFileListOfFilesEntry(void);
+    uint8_t CliCompleteCommandSearchInFile(char *fileName, char *p);
     void getLastCommandFromFile(int pos);
     void putLastCommandInFile(void);
 };
