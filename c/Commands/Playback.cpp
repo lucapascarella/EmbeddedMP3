@@ -16,6 +16,7 @@
 
 #include "Commands/Playback.h"
 #include "MP3/Play.h"
+#include "Utilities/ArgsParser.h"
 
 Playback::Playback(void) : CommandBase((char*) "play", (char*) "") {
 
@@ -31,7 +32,12 @@ int Playback::playback(int argc, char **argv) {
     }
 }
 
-int Playback::taskCommand(void) {
+int Playback::taskCommand(ArgsParser *args) {
+    int argc;
+    char **argv;
+    argc = args->getArgc();
+    argv = args->getArgv();
+    
     return -1;
 }
 

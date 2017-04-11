@@ -26,7 +26,7 @@ public:
     int playback(int argc, char **argv);
     int stopPlayback(int argc, char **argv);
     int pausePlayback(int argc, char **argv);
-    virtual int taskCommand(void);
+    virtual int taskCommand(ArgsParser *args);
 };
 
 

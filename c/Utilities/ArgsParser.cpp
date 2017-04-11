@@ -120,6 +120,10 @@ int ArgsParser::getArgc(void) {
     return argc;
 }
 
+char **ArgsParser::getArgv(void) {
+    return argv;
+}
+
 char * ArgsParser::getLastArgPointer(void) {
     return this->getArgPointer(argc - 1);
 }

@@ -27,12 +27,13 @@ private:
     int argc;
     char * argv[_MAX_CMD_LINE_ARGS + 1];
     char *cmdLineCopy;
-    
+
 public:
     ArgsParser(void);
     int extractArgs(char *input);
     char * getArgPointer(int pos);
     int getArgc(void);
+    char ** getArgv(void);
     char * getLastArgPointer(void);
     ~ArgsParser(void);
 

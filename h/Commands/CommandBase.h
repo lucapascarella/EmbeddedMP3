@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "Utilities/ArgsParser.h"
 
 class CommandBase {
 private:
@@ -37,7 +38,7 @@ public:
     char* getCommandName(void);
     int getCommandNameLength(void);
     char* getCommandOptions(void);
-    virtual int taskCommand(void); // pure specifier
+    virtual int taskCommand(ArgsParser *args); // pure specifier
 
 protected:
     void initializeStatistics(void);

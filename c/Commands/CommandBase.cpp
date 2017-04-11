@@ -18,6 +18,7 @@
 #include "Commands/CommandBase.h"
 #include "CommandLineInterpreter.h"
 #include "Utilities/Utilities.h"
+#include "Utilities/ArgsParser.h"
 
 CommandBase::CommandBase(char *name, char *options) {
     int length;
@@ -77,7 +78,7 @@ bool CommandBase::checkParameters(int argc, char **argv, int lowLimit, int upper
     }
 }
 
-int CommandBase::taskCommand(void) {
+int CommandBase::taskCommand(ArgsParser *args) {
     return 0;
 }
 
