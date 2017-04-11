@@ -87,8 +87,11 @@ extern "C" {
 #include "Commands.h"
 }
 
+#include "CLI.hpp"
 #include "MP3/CCPlay.h"
+#include "Commands/Playback.h"
 #include "test.h"
+#include "Commands/CCCommands.h"
 #include <cstdlib>
 
 using namespace std;
@@ -96,14 +99,14 @@ using namespace std;
 // MIPS C32 Exception Handlers
 // If your code gets here, you either tried to read or write a NULL pointer,
 // or your application overflowed the stack by having too many local variables or parameters declared.
-Exception exception;
+Exception except;
 static unsigned int address;
 
 void __attribute__((nomips16)) _general_exception_handler(unsigned cause, unsigned status) {
 
-    asm volatile("mfc0 %0,$13" : "=r" (exception));
+    asm volatile("mfc0 %0,$13" : "=r" (except));
     asm volatile("mfc0 %0,$14" : "=r" (address));
-    
+
     Nop();
     FlashLight(50, 50, TRUE);
     Nop();
@@ -127,7 +130,7 @@ FATFS Fatfs;
 // Global structures to manipulate files, candidate to removal
 FILINFO finfo;
 DIR dir;
-FIL fstream, ftmp1, ftmp2;
+FIL fstream2, ftmp1, ftmp2;
 // Scratch pad used to share information with bootloader
 char * MyScratchPad = (char *) (0xA0000000 + (0x10000 - 0x0040));
 
@@ -137,7 +140,14 @@ char * MyScratchPad = (char *) (0xA0000000 + (0x10000 - 0x0040));
 int main(int argc, char** argv) {
 
     CCPlay *ccp;
-    
+    CLI *cli;
+    CCCommands *cmds;
+
+    //    CommandBase *pb;
+    //    pb = new Playback();
+    //    pb->getStatistics();
+    //    pb->playback(argc, argv);
+
     int play = FALSE, rec = FALSE;
     BOOL logResults;
 
@@ -147,13 +157,13 @@ int main(int argc, char** argv) {
     // Initialize application specific hardware
     InitializeSystem();
 
-    int a;
-    Test *t = new Test(1, 2);
-    a = t->testIt();
-    t->callException(12);
-
-    Test tt(3, 4);
-    a = tt.testIt();
+    //    int a;
+    //    Test *t = new Test(1, 2);
+    //    a = t->testIt();
+    //    t->callException(12);
+    //
+    //    Test tt(3, 4);
+    //    a = tt.testIt();
 
     // Initialize Disk IO
     if (disk_initialize(0) != RES_OK)
@@ -180,9 +190,9 @@ int main(int argc, char** argv) {
     if (isUSBEnabled())
         USBDeviceInit(); //usb_device.c.
 
-    // Initialize Uart
+    // Initialize UART
     if (isUARTEnabled())
-        UartInit(config.console.baudrate);
+        UartInit();
 
     // Initialize I2C bus if gpio are correctly selected
     if (isI2CEnabled())
@@ -213,6 +223,7 @@ int main(int argc, char** argv) {
     GPIOInit();
 
     // Initialize commands interpreter
+            cli = new CLI();
     if (config.console.console == CLI_MODE) {
         // Initialize Command Line Interpreter
         if (InitCli() == FALSE)
@@ -223,6 +234,8 @@ int main(int argc, char** argv) {
             FlashLight(150, 50, TRUE);
     }
 
+    cmds = new CCCommands();
+
 #if defined(USB_INTERRUPT)
     if (isUSBEnabled())
         USBDeviceAttach();
@@ -230,7 +243,7 @@ int main(int argc, char** argv) {
 
     // New C++ initialization of Playback class
     ccp = new CCPlay();
-    
+
     // Initialize play and record tasks
     PlayTaskInit();
     RecordTaskInit();
@@ -255,11 +268,13 @@ int main(int argc, char** argv) {
         ClearWDT();
 
         // Manager of the console routine
-        if (config.console.console == CLI_MODE)
+        if (config.console.console == CLI_MODE){
+            cli->cliTaskHadler();
             CliHandler();
-        else
+        }else{
             SCCHandler();
-
+        }
+        cmds->commandsTaskHandler();
         commandsTask();
 
         // Manager of I2C commander receiver
@@ -270,7 +285,7 @@ int main(int argc, char** argv) {
             rec = RecordTaskHandler();
 
         // Manager of the player routine
-        if (rec == REC_IDLE){
+        if (rec == REC_IDLE) {
             ccp->playTaskHandler();
             play = PlayTaskHandler();
         }

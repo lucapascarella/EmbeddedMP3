@@ -1,39 +1,18 @@
-/*********************************************************************
+/*
+ * Copyright (C) 2017 LP Systems
  *
- *  MP3 Encoder and Decoder Application Entry Point
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *********************************************************************
- * FileName:        Uart.c
- * Dependencies:    Uart.h
- * Processor:       PIC32MX250F128B
- * Compiler:        Microchip XC32 v1.11a or higher
- * Company:         LP Systems
- * Author:	    Luca Pascarella luca.pascarella@gmail.com
- * Web Site:        www.lucapascarella.it
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Software License Agreement
- *
- * Copyright (C) 2012-2013 LP Systems  All rights reserved.
- *
- * THE SOFTWARE AND DOCUMENTATION ARE PROVIDED "AS IS" WITHOUT
- * WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT
- * LIMITATION, ANY WARRANTY OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT SHALL
- * MICROCHIP BE LIABLE FOR ANY INCIDENTAL, SPECIAL, INDIRECT OR
- * CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF
- * PROCUREMENT OF SUBSTITUTE GOODS, TECHNOLOGY OR SERVICES, ANY CLAIMS
- * BY THIRD PARTIES (INCLUDING BUT NOT LIMITED TO ANY DEFENSE
- * THEREOF), ANY CLAIMS FOR INDEMNITY OR CONTRIBUTION, OR OTHER
- * SIMILAR COSTS, WHETHER ASSERTED ON THE BASIS OF CONTRACT, TORT
- * (INCLUDING NEGLIGENCE), BREACH OF WARRANTY, OR OTHERWISE.
- *
- * File Description: Encoder and Decoder state finite machine
- * Change History: In progress
- * Rev   Description
- * ----  -----------------------------------------
- * 1.0   Initial release (1 September 2013, 16.00)
- *
- ********************************************************************/
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ * 
+ * Author: Luca Pascarella www.lucapascarella.it
+ */
 
 #include "Utilities/Uart.h"
 #include "Utilities/Config.h"
@@ -134,7 +113,7 @@ void __ISR(_UART2_VECTOR, IPL5AUTO) IntUart2Handler(void) {
 //    uart.rxTail = (uart.rxTail + 1) & (UART_BUFFER_SIZE - 1);
 //}
 
-WORD UartWrite(CHAR8 *buffer, WORD count) {
+uint16_t UartWrite(uint8_t *buffer, uint16_t count) {
 
     while (UART_DMA_WORKING());
 
@@ -151,7 +130,7 @@ WORD UartWrite(CHAR8 *buffer, WORD count) {
     return count;
 }
 
-WORD UartWriteDirectly(CHAR8 *buffer, WORD count) {
+uint16_t UartWriteDirectly(uint8_t *buffer, uint16_t count) {
 
     if (UART_DMA_WORKING())
         return 0;
@@ -161,7 +140,7 @@ WORD UartWriteDirectly(CHAR8 *buffer, WORD count) {
     return count;
 }
 
-WORD UartRead(CHAR8 *buffer, WORD count) {
+uint16_t UartRead(uint8_t *buffer, uint16_t count) {
     int i = 0;
     while (uart.rxHead != uart.rxTail && i < count) {
         // If buffer is not empty take the first byte in it
@@ -171,7 +150,7 @@ WORD UartRead(CHAR8 *buffer, WORD count) {
     return i;
 }
 
-void UartInit(DWORD BPS) {
+void UartInit(void) {
 
     // Configure Serial Port
     UART_TX_TRIS = OUTPUT;
@@ -185,7 +164,7 @@ void UartInit(DWORD BPS) {
     UARTConfigure(UART2, UART_ENABLE_PINS_TX_RX_ONLY | UART_ENABLE_HIGH_SPEED);
     UARTSetFifoMode(UART2, UART_INTERRUPT_ON_TX_DONE | UART_INTERRUPT_ON_RX_NOT_EMPTY);
     UARTSetLineControl(UART2, UART_DATA_SIZE_8_BITS | UART_PARITY_NONE | UART_STOP_BITS_1);
-    UARTSetDataRate(UART2, GetPeripheralClock(), BPS);
+    UARTSetDataRate(UART2, GetPeripheralClock(), config.console.baudrate);
     UARTEnable(UART2, UART_ENABLE_FLAGS(UART_PERIPHERAL | UART_RX | UART_TX));
 
     // Configure the interrupt priority, level 5

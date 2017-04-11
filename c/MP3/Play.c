@@ -41,7 +41,7 @@ DWORD tick_delay, tick_max;
 int PlayTaskHandler(void) {
 
     static char stream[4096];
-    extern FIL fstream, ftmp2;
+    extern FIL fstream2, ftmp2;
     static FIL *fplaylist = &ftmp2;
     FRESULT fres;
     static UINT read, write;
@@ -107,7 +107,7 @@ int PlayTaskHandler(void) {
             verbosePrintf(VER_DBG, "Try to open: %s", play.filename);
             // Open a file in read mode
             //fp = fopen(fileName, FS_READ);
-            fres = f_open(&fstream, play.filename, FA_READ);
+            fres = f_open(&fstream2, play.filename, FA_READ);
             if (fres != FR_OK)
                 play.sm = MP3_PLAY_OPENED_FAILED;
             else
@@ -149,7 +149,7 @@ int PlayTaskHandler(void) {
             // Reads buffer bytes and trasfer to VS1063 decoder
             LED_BLUE_ON();
             //read = fread(stream, sizeof (char), STREAM_BUF_SIZE_PLAY, fp);
-            fres = f_read(&fstream, stream, STREAM_BUF_SIZE_PLAY, &read);
+            fres = f_read(&fstream2, stream, STREAM_BUF_SIZE_PLAY, &read);
             LEDs_OFF();
 
             if (read <= 0) {
@@ -223,7 +223,7 @@ int PlayTaskHandler(void) {
         case MP3_PLAY_CLOSE_FILE:
             verbosePrintf(VER_DBG, "Try to close file");
             // Close the current file pointer
-            if (f_close(&fstream) != FR_OK)
+            if (f_close(&fstream2) != FR_OK)
                 play.sm = MP3_PLAY_CLOSED_FAILED;
             else
                 play.sm = MP3_PLAY_CLOSED_SUCCESSFUL;

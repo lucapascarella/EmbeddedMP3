@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2017 LP Systems
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ * 
+ * Author: Luca Pascarella www.lucapascarella.it
+ */
 
 #include "Utilities/printer.h"
 #include "Compiler.h"
@@ -20,7 +35,7 @@ void InitPinter(void) {
 
 int __putc(char c) {
     // print a single character
-    ConsolWrite(&c, 1);
+    consoleWrite(&c, 1);
 }
 
 //int __puts(const char *p) {
@@ -48,7 +63,7 @@ int __printf(const char * fmt, ...) {
 
         // Print on UART, USB or I2C port
         do {
-            sent += ConsolWrite(&p[sent], len - sent);
+            sent += consoleWrite(&p[sent], len - sent);
         } while (sent < len && retry--);
     }
     return sent;
@@ -70,9 +85,8 @@ int verbosePrintf(int level, const char * fmt, ...) {
             va_end(ap);
 
             // Print on UART, USB or I2C port
-            ConsolWrite(buf, n);
-            ConsolWrite(returnLineVerbose, sizeof (returnLineVerbose));
-
+            consoleWrite(buf, n);
+            consoleWrite(returnLineVerbose, sizeof (returnLineVerbose));
             return n;
         }
     }
@@ -80,7 +94,7 @@ int verbosePrintf(int level, const char * fmt, ...) {
     return 0;
 }
 
-WORD ConsolWrite(CHAR8 *buffer, WORD count) {
+uint16_t consoleWrite(uint8_t *buffer, uint16_t count) {
 
     if (config.console.port == 0) {
         // Print on UART port
@@ -94,18 +108,15 @@ WORD ConsolWrite(CHAR8 *buffer, WORD count) {
     }
 }
 
-WORD ConsolRead(CHAR8 *buffer, WORD count) {
-
-    WORD read;
+uint16_t consoleRead(uint8_t *buffer, uint16_t count) {
 
     if (config.console.port == 0) {
-        read = UartRead(buffer, count);
+        return UartRead(buffer, count);
     } else if (config.console.port == 1) {
-        read = USBRead(buffer, count);
+        return USBRead(buffer, count);
     } else {
-        read = I2CRead(buffer, count);
+        return I2CRead(buffer, count);
     }
-    return read;
 }
 
 int Config(int argc, char **argv) {

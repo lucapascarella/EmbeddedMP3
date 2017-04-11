@@ -14,21 +14,15 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#ifndef PLAYBACK_HPP
-#define	PLAYBACK_HPP
 
-#include "CommandBase.h"
+#include "Commands/CCCommands.h"
 
-class Playback: public CommandBase {
+CCCommands::CCCommands(void) {
+    
+}
 
-public:
-    Playback(void);
-    int playback(int argc, char **argv);
-    int stopPlayback(int argc, char **argv);
-    int pausePlayback(int argc, char **argv);
-    virtual int taskCommand(void);
-};
+void CCCommands::commandsTaskHandler(void) {
 
+    
 
-#endif	/* PLAYBACK_HPP */
-
+}

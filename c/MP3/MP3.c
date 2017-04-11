@@ -38,6 +38,7 @@
 #ifdef __MP3_C
 
 #include "MP3/MP3.h"
+#include "Compiler.h"
 #include "Utilities/printer.h"
 #include "MP3/VS1063.h"
 #include <stdlib.h>

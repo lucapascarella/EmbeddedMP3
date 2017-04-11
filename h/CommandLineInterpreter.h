@@ -1,43 +1,18 @@
-/*********************************************************************
+/*
+ * Copyright (C) 2017 LP Systems
  *
- *  Command Line Interpreter
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *********************************************************************
- * FileName:        CommandLineInterpreter.h
- * Dependencies:    string.h
- *                  HardwareProfile.h
- *                  Compiler.h
- *                  GenericTypeDefs.h
- * Processor:       PIC32MX250F128B
- * Compiler:        Microchip XC32 v1.21 or higher
- * Company:         LP Systems
- * Author:          Luca Pascarella www.lucapascarella.it
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Software License Agreement
- *
- * Copyright (C) 2012-2013 All rights reserved.
- *
- * THE SOFTWARE AND DOCUMENTATION ARE PROVIDED "AS IS" WITHOUT
- * WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT
- * LIMITATION, ANY WARRANTY OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT SHALL
- * MICROCHIP BE LIABLE FOR ANY INCIDENTAL, SPECIAL, INDIRECT OR
- * CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF
- * PROCUREMENT OF SUBSTITUTE GOODS, TECHNOLOGY OR SERVICES, ANY CLAIMS
- * BY THIRD PARTIES (INCLUDING BUT NOT LIMITED TO ANY DEFENSE
- * THEREOF), ANY CLAIMS FOR INDEMNITY OR CONTRIBUTION, OR OTHER
- * SIMILAR COSTS, WHETHER ASSERTED ON THE BASIS OF CONTRACT, TORT
- * (INCLUDING NEGLIGENCE), BREACH OF WARRANTY, OR OTHERWISE.
- *
- * File Description:
- * This file contains the header routines to manage a command line interpeter
- *
- * Change History:
- * Rev   Description
- * ----  -----------------------------------------
- * 1.0   Initial release 16 novembre 2012, 18.27
- *
- ********************************************************************/
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ * 
+ * Author: Luca Pascarella www.lucapascarella.it
+ */
 
 #ifndef _COMMANDLINEINTERPRETER_H
 #define	_COMMANDLINEINTERPRETER_H

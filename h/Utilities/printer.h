@@ -1,39 +1,18 @@
-/*********************************************************************
+/*
+ * Copyright (C) 2017 LP Systems
  *
- *  MP3 Encoder and Decoder Application Entry Point
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *********************************************************************
- * FileName:        Uart.h
- * Dependencies:    Compiler.h GenericTypeDefs.h HardwareProfile.h
- * Processor:       PIC32MX250F128B
- * Compiler:        Microchip XC32 v1.11a or higher
- * Company:         LP Systems
- * Author:	    Luca Pascarella luca.pascarella@gmail.com
- * Web Site:        www.lucapascarella.it
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Software License Agreement
- *
- * Copyright (C) 2012-2013 LP Systems  All rights reserved.
- *
- * THE SOFTWARE AND DOCUMENTATION ARE PROVIDED "AS IS" WITHOUT
- * WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT
- * LIMITATION, ANY WARRANTY OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT SHALL
- * MICROCHIP BE LIABLE FOR ANY INCIDENTAL, SPECIAL, INDIRECT OR
- * CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF
- * PROCUREMENT OF SUBSTITUTE GOODS, TECHNOLOGY OR SERVICES, ANY CLAIMS
- * BY THIRD PARTIES (INCLUDING BUT NOT LIMITED TO ANY DEFENSE
- * THEREOF), ANY CLAIMS FOR INDEMNITY OR CONTRIBUTION, OR OTHER
- * SIMILAR COSTS, WHETHER ASSERTED ON THE BASIS OF CONTRACT, TORT
- * (INCLUDING NEGLIGENCE), BREACH OF WARRANTY, OR OTHERWISE.
- *
- * File Description: Encoder and Decoder state finite machine
- * Change History: In progress
- * Rev   Description
- * ----  -----------------------------------------
- * 1.0   Initial release (1 September 2013, 16.00)
- *
- ********************************************************************/
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ * 
+ * Author: Luca Pascarella www.lucapascarella.it
+ */
 
 #ifndef PRINTER_H
 #define	PRINTER_H
@@ -45,13 +24,15 @@ extern "C" {
 
 #include <stdarg.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "Compiler.h"
 
 #define PRINTER_BUFFER_SIZE         1024
 #define PRI_BUF_ALT_DIM             2u
 
     typedef struct __attribute__((__packed__)) {
-        DWORD alt;
+        uint32_t alt;
         char txBuf[PRI_BUF_ALT_DIM][PRINTER_BUFFER_SIZE];
     }
     PRINTER_CONFIG;
@@ -88,10 +69,11 @@ extern "C" {
 #define VER_DBG             2
     int verbosePrintf(int level, const char * fmt, ...);
 
+    uint16_t consoleWrite(uint8_t *buffer, uint16_t count);
+    uint16_t consoleRead(uint8_t *buffer, uint16_t count);
 
-    WORD ConsolWrite(CHAR8 *buffer, WORD count);
-    WORD ConsolRead(CHAR8 *buffer, WORD count);
-
+    void InitPinter(void);
+    
     int Config(int, char **);
     int Verbose(int, char **);
 

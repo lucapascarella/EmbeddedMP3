@@ -17,7 +17,7 @@
 #include "Commands/Playback.h"
 #include "MP3/Play.h"
 
-Playback::Playback(void) {
+Playback::Playback(void) : CommandBase((char*) "play", (char*) "") {
 
 }
 
@@ -29,6 +29,10 @@ int Playback::playback(int argc, char **argv) {
     } else {
         return -1;
     }
+}
+
+int Playback::taskCommand(void) {
+    return -1;
 }
 
 int Playback::stopPlayback(int argc, char **argv) {
@@ -43,40 +47,40 @@ int Playback::stopPlayback(int argc, char **argv) {
 
 int Playback::pausePlayback(int argc, char **argv) {
 
-//    LONG delay;
-//
-//    if (argc == 1) {
-//        if (isPlaying()) {
-//            // Enter in pause
-//            play.sm = MP3_PLAY_PAUSE_WAIT_ENTERING;
-//            printf("Pause: ON\r\n");
-//            return TRUE;
-//        } else if (play.sm >= MP3_PLAY_PAUSE_WAIT && play.sm <= MP3_PLAY_PAUSE_DELAY) {
-//            // Exit from pause
-//            play.sm = MP3_PLAY_PAUSE_EXIT;
-//            printf("Pause: OFF\r\n");
-//            return TRUE;
-//        }
-//
-//    } else if (argc == 2) {
-//        if (isPlaying()) {
-//            delay = atoimm(argv[1], 0, 10000000, 1000);
-//
-//            tick_delay = TickGet();
-//            tick_max = TICK_SECOND / 1000 * delay;
-//
-//            play.sm = MP3_PLAY_PAUSE_DELAY_ENTERING;
-//            //            VLSI_SetBitPlayMode(PLAYMODE_PAUSE_ON);
-//            //            play.sm = MP3_PLAY_PAUSE_DELAY;
-//            //            GpioUpdateState(GPIO_BIT_PAUSE_PLAY);
-//
-//            printf("Pause for %ld ms\r\n", delay);
-//            return TRUE;
-//        }
-//
-//    } else {
-//        CliTooManyArgumnets(argv[0]);
-//    }
+    //    LONG delay;
+    //
+    //    if (argc == 1) {
+    //        if (isPlaying()) {
+    //            // Enter in pause
+    //            play.sm = MP3_PLAY_PAUSE_WAIT_ENTERING;
+    //            printf("Pause: ON\r\n");
+    //            return TRUE;
+    //        } else if (play.sm >= MP3_PLAY_PAUSE_WAIT && play.sm <= MP3_PLAY_PAUSE_DELAY) {
+    //            // Exit from pause
+    //            play.sm = MP3_PLAY_PAUSE_EXIT;
+    //            printf("Pause: OFF\r\n");
+    //            return TRUE;
+    //        }
+    //
+    //    } else if (argc == 2) {
+    //        if (isPlaying()) {
+    //            delay = atoimm(argv[1], 0, 10000000, 1000);
+    //
+    //            tick_delay = TickGet();
+    //            tick_max = TICK_SECOND / 1000 * delay;
+    //
+    //            play.sm = MP3_PLAY_PAUSE_DELAY_ENTERING;
+    //            //            VLSI_SetBitPlayMode(PLAYMODE_PAUSE_ON);
+    //            //            play.sm = MP3_PLAY_PAUSE_DELAY;
+    //            //            GpioUpdateState(GPIO_BIT_PAUSE_PLAY);
+    //
+    //            printf("Pause for %ld ms\r\n", delay);
+    //            return TRUE;
+    //        }
+    //
+    //    } else {
+    //        CliTooManyArgumnets(argv[0]);
+    //    }
 
     return -1;
 }

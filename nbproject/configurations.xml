@@ -10,12 +10,11 @@
       <logicalFolder name="f3" displayName="Commands" projectFiles="true">
         <itemPath>h/Commands/Playback.h</itemPath>
         <itemPath>h/Commands/CommandBase.h</itemPath>
+        <itemPath>h/Commands/CCCommands.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="Common" projectFiles="true">
         <itemPath>h/Compiler.h</itemPath>
         <itemPath>h/GenericTypeDefs.h</itemPath>
-        <itemPath>h/CommandAbstract.h</itemPath>
-        <itemPath>h/Playback.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f5" displayName="Delay" projectFiles="true">
         <itemPath>h/Delay/Tick.h</itemPath>
@@ -62,6 +61,8 @@
         <itemPath>h/Utilities/Optlist.h</itemPath>
         <itemPath>h/Utilities/Logging.h</itemPath>
         <itemPath>h/Utilities/USB.h</itemPath>
+        <itemPath>h/Utilities/AsyncTimer.h</itemPath>
+        <itemPath>h/Utilities/ArgsParser.h</itemPath>
       </logicalFolder>
       <itemPath>h/HardwareProfile.h</itemPath>
       <itemPath>h/usb_config.h</itemPath>
@@ -72,6 +73,7 @@
       <itemPath>h/I2CSlave.h</itemPath>
       <itemPath>h/test.h</itemPath>
       <itemPath>test_header.h</itemPath>
+      <itemPath>h/CLI.hpp</itemPath>
     </logicalFolder>
     <logicalFolder name="LibraryFiles"
                    displayName="Library Files"
@@ -95,6 +97,7 @@
         <itemPath>c/Commands/List.c</itemPath>
         <itemPath>c/Commands/Playback.cpp</itemPath>
         <itemPath>c/Commands/CommandBase.cpp</itemPath>
+        <itemPath>c/Commands/CCCommands.cpp</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="Delay" projectFiles="true">
         <itemPath>c/Delay/Delay.c</itemPath>
@@ -134,6 +137,8 @@
         <itemPath>c/Utilities/Optlist.c</itemPath>
         <itemPath>c/Utilities/Logging.c</itemPath>
         <itemPath>c/Utilities/USB.c</itemPath>
+        <itemPath>c/Utilities/AsyncTimer.c</itemPath>
+        <itemPath>c/Utilities/ArgsParser.cpp</itemPath>
       </logicalFolder>
       <itemPath>c/usb_descriptors.c</itemPath>
       <itemPath>c/Main.c</itemPath>
@@ -144,6 +149,7 @@
       <itemPath>c/test.cpp</itemPath>
       <itemPath>c/Main.cpp</itemPath>
       <itemPath>c/USBHandler.c</itemPath>
+      <itemPath>c/CLI.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -289,14 +295,14 @@
         <property key="enable-omit-frame-pointer" value="false"/>
         <property key="enable-symbols" value="true"/>
         <property key="enable-unroll-loops" value="false"/>
-        <property key="exceptions" value="false"/>
+        <property key="exceptions" value="true"/>
         <property key="exclude-floating-point" value="false"/>
         <property key="extra-include-directories" value="h"/>
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
         <property key="isolate-each-function" value="false"/>
         <property key="make-warnings-into-errors" value="false"/>
-        <property key="optimization-level" value=""/>
+        <property key="optimization-level" value="-O1"/>
         <property key="place-data-into-section" value="false"/>
         <property key="post-instruction-scheduling" value="default"/>
         <property key="pre-instruction-scheduling" value="default"/>

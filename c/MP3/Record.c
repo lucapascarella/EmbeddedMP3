@@ -72,7 +72,7 @@ int RecordTaskHandler(void) {
     extern int (*commandToCall)(int, char**);
     extern int argc;
     extern char *argv[];
-    extern FIL fstream, ftmp2;
+    extern FIL fstream2, ftmp2;
 
     BYTE index;
     DWORD nextFrame, frameLength;
@@ -151,7 +151,7 @@ int RecordTaskHandler(void) {
             //                    while (1);
 
             // Save the global file ponter in a local pointer
-            rec.fp[0] = &fstream;
+            rec.fp[0] = &fstream2;
             if (rec.intervalRec) {
                 rec.sm = SM_REC_OPENED_SUCCESSFUL;
                 // Do samething for the second file pointer

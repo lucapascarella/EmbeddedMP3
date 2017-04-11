@@ -1048,7 +1048,7 @@ void commandsTask(void) {
     extern char *argv[];
     extern int (*commandToCall)(int, char**);
 
-    // Call a new command or continue to call the same command to compleate a task
+    // Call a new command or continue to call the same command to complete a task
     if (commandToCall != NULL) {
         if (commandToCall(argc, argv) == 0) {
             // Command function return with 0 => command ended

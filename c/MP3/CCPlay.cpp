@@ -22,9 +22,6 @@
 #include "Utilities/Config.h"
 #include "Delay/Tick.h"
 
-//#include "Compiler.h"
-
-
 CCPlay::CCPlay(void) {
     sm = MP3_CCPLAY_HOME;
 

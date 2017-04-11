@@ -47,6 +47,7 @@
  ***************************************************************************/
 #include "Utilities/Optlist.h"
 #include "Utilities/printer.h"
+#include "Compiler.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -372,10 +373,10 @@ void FreeArgList(argument_t *list) {
 
 /****************************************************************************
  *   Function   : MatchOpt
- *   Description: This function searches for an arguement in an option list.
+ *   Description: This function searches for an argument in an option list.
  *                It will return the index to the option matching the
- *                arguement or the index to the NULL if none is found.
- *   Parameters : arguement - character arguement to be matched to an
+ *                argument or the index to the NULL if none is found.
+ *   Parameters : argument - character argument to be matched to an
  *                            option in the option list
  *                options - getopt style option list.  A NULL terminated
  *                          string of single character options.  Follow an
@@ -383,7 +384,7 @@ void FreeArgList(argument_t *list) {
  *                          an argument.
  *   Effects    : None
  *   Returned   : Index of argument in option list.  Index of end of string
- *                if arguement does not appear in the option list.
+ *                if argument does not appear in the option list.
  ****************************************************************************/
 int MatchOpt(const char argument, char *const options) {
     int optIndex = 0;

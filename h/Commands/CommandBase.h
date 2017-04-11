@@ -26,13 +26,24 @@ private:
     long tooManyArgsCounter;
     long correctArgsCounter;
     long lastCommandArgsCounter;
+    char *commandName;
+    int commandNameLength;
+    char *commandOptions;
 
 public:
-    CommandBase();
+    CommandBase(char *name, char *options);
+    void getStatistics(void);
+    ~CommandBase(void);
+    char* getCommandName(void);
+    int getCommandNameLength(void);
+    char* getCommandOptions(void);
+    virtual int taskCommand(void); // pure specifier
 
 protected:
     void initializeStatistics(void);
     bool checkParameters(int argc, char **argv, int lowLimit, int upperLimit);
+
+
 };
 
 

@@ -1,6 +1,18 @@
-/***********************************************************************
- * PIC32 I2C Slave Code
- ***********************************************************************/
+/*
+ * Copyright (C) 2017 LP Systems
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ * 
+ * Author: Luca Pascarella www.lucapascarella.it
+ */
 
 #include "GenericTypeDefs.h"
 #include "Compiler.h"
@@ -21,7 +33,7 @@ I2C_SPECIAL_BUFFER i2c;
 //
 //	InitI2C
 //
-// 	Perform initialisation of the I2C module to operate as a slave
+// 	Perform initialization of the I2C module to operate as a slave
 //
 ///////////////////////////////////////////////////////////////////
 
@@ -58,9 +70,9 @@ void InitI2C(void) {
 //
 ///////////////////////////////////////////////////////////////////
 
-void __ISR(_I2C_1_VECTOR, IPL3AUTO) _SlaveI2CHandler(void) {
+void __ISR(_I2C_1_VECTOR, IPL3AUTO) slaveI2CHandler(void) {
     //	mLED_1_On();
-    volatile BYTE temp;
+    volatile uint8_t temp;
     //static unsigned int dIndex;
 
     // check for MASTER and Bus events and respond accordingly
@@ -83,7 +95,7 @@ void __ISR(_I2C_1_VECTOR, IPL3AUTO) _SlaveI2CHandler(void) {
         //        i2c.rxIndex = 0x00;
         //        i2c.uni.rxBuffer[i2c.rxIndex++] = SlaveReadI2C1();
 
-        i2c.regFlag = TRUE;
+        i2c.regFlag = true;
         i2c.address = SlaveReadI2C1();
 
         // release the clock to restart I2C
@@ -99,7 +111,7 @@ void __ISR(_I2C_1_VECTOR, IPL3AUTO) _SlaveI2CHandler(void) {
         // The nth byte represents the optional data of the command
         //i2c.uni.rxBuffer[i2c.rxIndex++] = SlaveReadI2C1();
         if (i2c.regFlag) {
-            i2c.regFlag = FALSE;
+            i2c.regFlag = false;
             i2c.regLen = SlaveReadI2C1();
         } else {
             if (((i2c.rxTail + 1) & (I2C_DATA_SIZE - 1)) == i2c.rxHead) {
@@ -174,7 +186,7 @@ void __ISR(_I2C_1_VECTOR, IPL3AUTO) _SlaveI2CHandler(void) {
 //    Nop();
 //}
 
-WORD I2CWrite(CHAR8 *buffer, WORD count) {
+uint16_t I2CWrite(uint8_t *buffer, uint16_t count) {
 
     int i;
 
@@ -192,7 +204,7 @@ WORD I2CWrite(CHAR8 *buffer, WORD count) {
     return i;
 }
 
-WORD I2CRead(CHAR8 *buffer, WORD count) {
+uint16_t I2CRead(uint8_t *buffer, uint16_t count) {
 
     int i = 0;
 
@@ -203,57 +215,3 @@ WORD I2CRead(CHAR8 *buffer, WORD count) {
     }
     return i;
 }
-
-//// true - if queue if full
-//
-//BOOL isFull(void) {
-//    return ( ((i2c.txTail + 1) & (I2C_DATA_SIZE - 1)) == i2c.txHead);
-//}
-//
-//// Count elements
-//
-//int getBusy(void) {
-//    return ((i2c.txHead > i2c.txTail) ? I2C_DATA_SIZE : 0) +i2c.txTail - i2c.txHead;
-//}
-//
-//// true - if queue if empty
-//
-//BOOL isEmpty(void) {
-//    return (i2c.txHead == i2c.txTail);
-//}
-//
-//void clear(void) {
-//    i2c.txHead = i2c.txTail = 0;
-//}
-//
-//int getCapacity(void) {
-//    return (I2C_DATA_SIZE - 1);
-//}
-//
-//// Retrieve the item from the queue
-//
-//void dequeue(BYTE *byte) {
-//    *byte = i2c.txBuf[i2c.txHead];
-//    i2c.txHead = (i2c.txHead + 1) & (I2C_DATA_SIZE - 1);
-//}
-//
-//// Get i-element with not delete
-//
-//int peek(const int i, BYTE *byte) {
-//    int j = 0;
-//    int k = i2c.txHead;
-//    while (k != i2c.txTail) {
-//        if (j == i)
-//            break;
-//        j++;
-//        k = (k + 1) & (I2C_DATA_SIZE - 1);
-//    }
-//    if (k == i2c.txTail)
-//        return;
-//    *byte = i2c.txBuf[k];
-//}
-//
-//void enqueue(BYTE *byte) {
-//    i2c.txBuf[i2c.txTail] = *byte;
-//    i2c.txTail = (i2c.txTail + 1) & (I2C_DATA_SIZE - 1);
-//}

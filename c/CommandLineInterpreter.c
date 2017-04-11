@@ -1,44 +1,18 @@
-/*********************************************************************
+/*
+ * Copyright (C) 2017 LP Systems
  *
- *  Command Line Interpreter
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *********************************************************************
- * FileName:        CommandLineInterpreter.c
- * Dependencies:    CommandLineInterpreter.h
- *                  HardwareProfile.h
- *                  Compiler.h
- *                  GenericTypeDefs.h
- * Processor:       PIC32MX250F128B
- * Compiler:        Microchip XC32 v1.21 or higher
- * Company:         LP Systems
- * Author:          Luca Pascarella www.lucapascarella.it
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Software License Agreement
- *
- * Copyright (C) 2012-2013 All rights reserved.
- *
- * THE SOFTWARE AND DOCUMENTATION ARE PROVIDED "AS IS" WITHOUT
- * WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT
- * LIMITATION, ANY WARRANTY OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT SHALL
- * MICROCHIP BE LIABLE FOR ANY INCIDENTAL, SPECIAL, INDIRECT OR
- * CONSEQUENTIAL DAMAGES, LOST PROFITS OR LOST DATA, COST OF
- * PROCUREMENT OF SUBSTITUTE GOODS, TECHNOLOGY OR SERVICES, ANY CLAIMS
- * BY THIRD PARTIES (INCLUDING BUT NOT LIMITED TO ANY DEFENSE
- * THEREOF), ANY CLAIMS FOR INDEMNITY OR CONTRIBUTION, OR OTHER
- * SIMILAR COSTS, WHETHER ASSERTED ON THE BASIS OF CONTRACT, TORT
- * (INCLUDING NEGLIGENCE), BREACH OF WARRANTY, OR OTHERWISE.
- *
- * File Description:
- * This file contains the routines to manage a command line interpeter
- *
- * Change History:
- * Rev   Description
- * ----  -----------------------------------------
- * 1.0   Initial release
- *
- ********************************************************************/
-
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ * 
+ * Author: Luca Pascarella www.lucapascarella.it
+ */
 
 #include "CommandLineInterpreter.h"
 #include "Utilities/Uart.h"
@@ -121,7 +95,7 @@ _command_line cl;
 _command_iterator cmd_iterator[NUMBER_OF_COMMANDS];
 FIL fileLastCommands;
 
-BOOL InitCli() {
+BOOL InitCli(void) {
 
     int i;
 
@@ -132,7 +106,7 @@ BOOL InitCli() {
     // Reset other command line variables
     cl.cmdlen = cl.cmdi = cl.tmpi = cl.tmplen = 0;
 
-    // Reset the commands iteretor
+    // Reset the commands iterator
     for (i = 0; i < NUMBER_OF_COMMANDS; i++)
         cmd_iterator[i].cmd_len = strlen(commands[i].name) - 1;
 
@@ -223,7 +197,7 @@ BOOL CliGetCharFromConsole(char *p) {
     static int countEscape;
     int i;
 
-    while (ConsolRead(p, 1) != 0) {
+    while (consoleRead(p, 1) != 0) {
 
         if (countEscape == 0 && *p != ESCAPE) {
             return TRUE;

@@ -38,6 +38,11 @@
 #ifndef PLAY_H
 #define	PLAY_H
 
+/* Provide C++ Compatibility */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <string.h>
 #include "Compiler.h"
 #include "GenericTypeDefs.h"
@@ -50,78 +55,85 @@
 
 #define PLAY_IDLE               0
 
-typedef enum {
-    MP3_PLAY_HOME = 0,
+    typedef enum {
+        MP3_PLAY_HOME = 0,
 
-    MP3_PLAY_OPEN_PLAYLIST,
-    MP3_PLAY_PL_OPENED_SUCCESSFUL,
-    MP3_PLAY_PL_OPENED_FAILED,
+        MP3_PLAY_OPEN_PLAYLIST,
+        MP3_PLAY_PL_OPENED_SUCCESSFUL,
+        MP3_PLAY_PL_OPENED_FAILED,
 
-    MP3_PLAY_OPEN_FILE,
-    MP3_PLAY_OPENED_SUCCESSFUL,
-    MP3_PLAY_OPENED_FAILED,
+        MP3_PLAY_OPEN_FILE,
+        MP3_PLAY_OPENED_SUCCESSFUL,
+        MP3_PLAY_OPENED_FAILED,
 
-    MP3_PLAY_PL_GET_NEXT_TRACK,
+        MP3_PLAY_PL_GET_NEXT_TRACK,
 
-    MP3_PLAY_READ_BUFFER,
-    MP3_PLAY_WRITE_BUFFER,
+        MP3_PLAY_READ_BUFFER,
+        MP3_PLAY_WRITE_BUFFER,
 
-    MP3_PLAY_PAUSE_WAIT_ENTERING,
-    MP3_PLAY_PAUSE_WAIT,
-    MP3_PLAY_PAUSE_DELAY_ENTERING,
-    MP3_PLAY_PAUSE_DELAY,
-    MP3_PLAY_PAUSE_EXIT,
+        MP3_PLAY_PAUSE_WAIT_ENTERING,
+        MP3_PLAY_PAUSE_WAIT,
+        MP3_PLAY_PAUSE_DELAY_ENTERING,
+        MP3_PLAY_PAUSE_DELAY,
+        MP3_PLAY_PAUSE_EXIT,
 
-    MP3_PLAY_FINISH_PLAING,
-    MP3_PLAY_CLOSE_FILE,
-    MP3_PLAY_CLOSED_SUCCESSFUL,
-    MP3_PLAY_CLOSED_FAILED,
+        MP3_PLAY_FINISH_PLAING,
+        MP3_PLAY_CLOSE_FILE,
+        MP3_PLAY_CLOSED_SUCCESSFUL,
+        MP3_PLAY_CLOSED_FAILED,
 
-    MP3_PLAY_PL_NEXT,
-            
-} PLAY_STATE_MACHINE;
+        MP3_PLAY_PL_NEXT,
 
-typedef struct __attribute__((__packed__)) {
+    } PLAY_STATE_MACHINE;
 
-    DWORD reconnectionDelayTick;        // Reconnection delay multiply by TICK_SECOND
-    DWORD reconnectionDelay;            // Reconnection delay
-    DWORD connectionTimeoutTick;        // Connection timeout multiply by TICK_SECOND
-    DWORD connectionTimeout;            // Connection timeout
-    
-    UINT read;
-    UINT write;
-    UINT offset;
-    DWORD timeout;                      // Timeout indicator
-    DWORD tled;                         // Timeout led indicator
-    
-    BYTE *buffer;                       // Buffer pointer
-    FIL *fil;                           // File pointer
-    
-    PLAY_STATE_MACHINE sm;              // Play state machine indicator
-    BYTE filename[_MAX_LFN + 1];        // USB Filename
-    
-    union {
-        DWORD allFlags;                         // 32 bits reserved for flags field
-        struct __PACKED {
-            // LSB
-            DWORD boolConnectionState : 1;      // Web Radio connection state: True = Connected and False = Disconnected
-            DWORD bConnIsLost : 1;              // Connection is lost, try ricconection
-            // Expand here
-            // MSB
-        } bits;
-    } flags;
-    
-} PLAY_CONFIG;
+    typedef struct __attribute__((__packed__)) {
 
-void PlayTaskInit(void);
-int PlayTaskHandler(void);
+        DWORD reconnectionDelayTick; // Reconnection delay multiply by TICK_SECOND
+        DWORD reconnectionDelay; // Reconnection delay
+        DWORD connectionTimeoutTick; // Connection timeout multiply by TICK_SECOND
+        DWORD connectionTimeout; // Connection timeout
 
-void startPlay(char *ptr);
-bool isPlaying(void);
+        UINT read;
+        UINT write;
+        UINT offset;
+        DWORD timeout; // Timeout indicator
+        DWORD tled; // Timeout led indicator
 
-int Play(int, char **);
-BOOL PausePlay(int, char **);
-BOOL StopPlay(int, char **);
-BOOL InfoPlay(int, char **);
+        BYTE *buffer; // Buffer pointer
+        FIL *fil; // File pointer
+
+        PLAY_STATE_MACHINE sm; // Play state machine indicator
+        BYTE filename[_MAX_LFN + 1]; // USB Filename
+
+        union {
+            DWORD allFlags; // 32 bits reserved for flags field
+
+            struct __PACKED {
+                // LSB
+                DWORD boolConnectionState : 1; // Web Radio connection state: True = Connected and False = Disconnected
+                DWORD bConnIsLost : 1; // Connection is lost, try ricconection
+                // Expand here
+                // MSB
+            } bits;
+        } flags;
+
+    }
+    PLAY_CONFIG;
+
+    void PlayTaskInit(void);
+    int PlayTaskHandler(void);
+
+    void startPlay(char *ptr);
+    bool isPlaying(void);
+
+    int Play(int, char **);
+    BOOL PausePlay(int, char **);
+    BOOL StopPlay(int, char **);
+    BOOL InfoPlay(int, char **);
+
+    /* Provide C++ Compatibility */
+#ifdef __cplusplus
+}
+#endif
 
 #endif // RECORD_H

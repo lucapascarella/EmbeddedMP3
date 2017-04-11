@@ -17,9 +17,37 @@
 #include <lega-c/string.h>
 #include "Commands/CommandBase.h"
 #include "CommandLineInterpreter.h"
+#include "Utilities/Utilities.h"
 
-CommandBase::CommandBase(void) {
+CommandBase::CommandBase(char *name, char *options) {
+    int length;
+
     this->initializeStatistics();
+
+    length = custom_strlen(name);
+    commandNameLength = length;
+    custom_malloc(commandName, length);
+    length = custom_strlen(options);
+    custom_malloc(commandOptions, length);
+}
+
+void CommandBase::getStatistics(void) {
+    // Initialize statistical information
+
+}
+
+char* CommandBase::getCommandName(void) {
+    // Initialize statistical information
+    return commandName;
+}
+
+int CommandBase::getCommandNameLength(void) {
+    return commandNameLength;
+}
+
+char* CommandBase::getCommandOptions(void) {
+    // Initialize statistical information
+    return commandOptions;
 }
 
 void CommandBase::initializeStatistics(void) {
@@ -47,4 +75,15 @@ bool CommandBase::checkParameters(int argc, char **argv, int lowLimit, int upper
         correctArgsCounter++;
         return true;
     }
+}
+
+int CommandBase::taskCommand(void) {
+    return 0;
+}
+
+CommandBase::~CommandBase(void) {
+    if (commandName != NULL)
+        custom_free((void**) &commandName);
+    if (commandOptions != NULL)
+        custom_free((void**) &commandOptions);
 }

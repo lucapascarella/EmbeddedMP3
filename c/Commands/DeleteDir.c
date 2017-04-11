@@ -1,6 +1,7 @@
 
 #include "FatFS/ff.h"
 #include "Commands.h"
+#include "Compiler.h"
 #include "CommandLineInterpreter.h"
 #include "Utilities/printer.h"
 
