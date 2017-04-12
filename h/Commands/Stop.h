@@ -14,20 +14,24 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#ifndef CCCOMMANDS_HPP
-#define	CCCOMMANDS_HPP
+#ifndef STOP_HPP
+#define	STOP_HPP
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "CommandBase.h"
 
-class CCCommands {
+class Stop : public CommandBase {
+private:
+    static constexpr const char* name = "stop";
+    static constexpr const char* options = "";
 
 public:
-    CCCommands(void);
-    void commandsTaskHandler(void);
-
+    Stop(void);
+    int stop(int argc, char **argv);
+    virtual const char * getCommandOptions(void);
+    virtual const char * getCommandName(void);
+    virtual int command(int argc, char **argv); // pure specifier
 };
 
 
-#endif	/* CCCOMMANDS_HPP */
+#endif	/* STOP_HPP */
 

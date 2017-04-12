@@ -91,7 +91,7 @@ extern "C" {
 #include "MP3/CCPlay.h"
 #include "Commands/Playback.h"
 #include "test.h"
-#include "Commands/CCCommands.h"
+#include "Commands/CommandsList.h"
 #include <cstdlib>
 
 using namespace std;
@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
 
     CCPlay *ccp;
     CLI *cli;
-    CCCommands *cmds;
+    CommandsList *cmds;
 
     //    CommandBase *pb;
     //    pb = new Playback();
@@ -223,8 +223,15 @@ int main(int argc, char** argv) {
     // Initialize GPIO
     GPIOInit();
 
-    // Initialize commands interpreter
+
+    
+    // Initialize command line interpreter
     cli = new CLI();
+    // Instantiate commands
+    cmds = new CommandsList(cli);
+    cli->createFileListOfCommands();
+    delete cmds;
+    
     if (config.console.console == CLI_MODE) {
         // Initialize Command Line Interpreter
         ////        if (InitCli() == FALSE)
@@ -234,8 +241,6 @@ int main(int argc, char** argv) {
         if (InitSCC(config.console.console) == FALSE)
             FlashLight(150, 50, TRUE);
     }
-
-    cmds = new CCCommands();
 
 #if defined(USB_INTERRUPT)
     if (isUSBEnabled())
@@ -275,7 +280,6 @@ int main(int argc, char** argv) {
         } else {
             SCCHandler();
         }
-        cmds->commandsTaskHandler();
         commandsTask();
 
         // Manager of I2C commander receiver

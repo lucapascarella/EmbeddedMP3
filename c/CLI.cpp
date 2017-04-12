@@ -12,8 +12,10 @@
 #include "Utilities/ArgsParser.h"
 #include "Utilities/GPIO.h"
 #include "Utilities/Config.h"
+#include "CommandLineInterpreter.h"
 #include <iterator>
 
+const char temporaryFileLatterCommands[] = "/cmds.tmp";
 const char temporaryFileEntryList[] = "/lst.tmp";
 const char temporaryFileCommands[] = "/cmd.tmp";
 
@@ -36,25 +38,36 @@ const char escape_clear_end_row[] = {0x1B, 0x5B, 0x4A, 0x00};
 CLI::CLI(void) {
 
     FRESULT fres;
-    
-    cmd = NULL;
-    custom_memset(inputLine, '\0', sizeof (inputLine));
-    args = new ArgsParser();
-    sm = CLI_SM_HOME;
 
-    custom_memset(escapeSequence, '0', countEscape);
-    countEscape = 0;
+    // Initialize global variables
+    cmd = NULL;
+    sm = CLI_SM_HOME;
+    // Reset the last command indicator
+    nCmd = lastCmd = 0;
+
+    custom_memset(inputLine, '\0', sizeof (inputLine));
+    inputLineLength = inputLineIndex = 0;
+    custom_memset(tmp, '\0', sizeof (tmp));
+    tmpLength = tmpIndex = 0;
+
+    // Create Arguments parser object
+    args = new ArgsParser();
+
+    // Create escape sequence counter
+    custom_memset(escapeSequence, '0', escapeCount);
+    escapeCount = 0;
 
     // Create two hidden files with the list of commands and entry list of current directory
-    this->CliCreateFileListOfCommands();
+    //this->createFileListOfCommands();
     this->createFileListOfFilesEntry();
 
-    // Creates a temporary file where it will put a list of last commands
-    if ((fres = f_open(&fileLastCommands, "last.cmd", FA_READ | FA_WRITE | FA_OPEN_ALWAYS)) == FR_OK) {
+    // Creates a temporary file where put a list of latter commands
+    custom_malloc(fileLastCommands, sizeof (FIL));
+    if ((fres = f_open(fileLastCommands, temporaryFileLatterCommands, FA_READ | FA_WRITE | FA_OPEN_ALWAYS)) == FR_OK) {
         // Changes the properties of the temporary file to hide it
-        if ((fres = f_chmod("last.cmd", AM_HID, AM_HID)) == FR_OK) {
-            // Flush HIDDEN property
-            if ((fres = f_sync(&fileLastCommands)) != FR_OK) {
+        if ((fres = f_chmod(temporaryFileLatterCommands, AM_HID, AM_HID)) == FR_OK) {
+            // Flush hidden property
+            if ((fres = f_sync(fileLastCommands)) != FR_OK) {
                 verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
             }
         } else {
@@ -64,14 +77,11 @@ CLI::CLI(void) {
         verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
     }
 
-    // Reset the last command indicator
-    nCmd = lastCmd = 0;
-
-    // CliPrintConsole
-    this->CliReprintConsole();
+    // Flush console content
+    this->reprintConsole();
 }
 
-void CLI::registerCommand(CommandBase &cb) {
+void CLI::registerCommand(CommandBase *cb) {
     commandList.push_back(cb);
 }
 
@@ -103,7 +113,7 @@ void CLI::cliTaskHadler(void) {
         case CLI_SM_FIND_COMMAND:
             // Find a command matching first argv
             name = args->getArgPointer(0);
-            if (this->searchCommand(name)) {
+            if (this->searchExecutableCommand(name)) {
                 // It is a command, print it
                 this->putLastCommandInFile();
                 GpioUpdateOutputState(GPIO_BIT_CMD_OK);
@@ -120,8 +130,17 @@ void CLI::cliTaskHadler(void) {
 
         case CLI_SM_COMMAND_TASK:
             // Execute the command until 0 is returned
-            if ((rtn = cmd->taskCommand(args)) == 0)
+            rtn = cmd->taskCommand(args);
+            if (rtn < 0) {
+                // Some error happened
+                printf("Command '%s' terminated with error code %d\r\n", cmd->getCommandName(), rtn);
                 sm = CLI_SM_DONE;
+            } else if (rtn > 0) {
+                // Still working
+            } else {
+                // Command finished successful
+                sm = CLI_SM_DONE;
+            }
             break;
 
         case CLI_SM_COMMAND_NOT_FOUND:
@@ -152,7 +171,7 @@ bool CLI::cliInputHadler(void) {
     rtn = false;
     // Check if commandsTask is free to manage another command
     // and if a character is available, otherwise wait to next cycle
-    if (this->copyInputs(&c)) {
+    if (this->copyInputInLocalBuffer(&c)) {
         if (c == '\t') {
             // Horizontal Tab. Completes command
             this->completeCommand();
@@ -174,23 +193,23 @@ bool CLI::cliInputHadler(void) {
     return rtn;
 }
 
-bool CLI::copyInputs(uint8_t *p) {
+bool CLI::copyInputInLocalBuffer(uint8_t *p) {
 
     // Read a normal character or the entire escape sequence
     while (consoleRead(p, 1) != 0) {
-        if (countEscape == 0 && *p != ESCAPE) {
+        if (escapeCount == 0 && *p != ESCAPE) {
             return true;
         } else {
-            escapeSequence[countEscape++] = *p;
-            if (countEscape > sizeof (escapeSequence)) {
-                custom_memset(escapeSequence, '0', countEscape);
-                countEscape = 0;
+            escapeSequence[escapeCount++] = *p;
+            if (escapeCount > sizeof (escapeSequence)) {
+                custom_memset(escapeSequence, '0', escapeCount);
+                escapeCount = 0;
                 return false;
             }
         }
     }
 
-    if (countEscape > 2) {
+    if (escapeCount > 2) {
         if (memcmp(escapeSequence, escape_arrow_left, sizeof (escape_arrow_left)) == 0) {
             *p = ESCAPE_ARROW_LEFT;
         } else if (memcmp(escapeSequence, escape_arrow_right, sizeof (escape_arrow_right)) == 0) {
@@ -212,8 +231,8 @@ bool CLI::copyInputs(uint8_t *p) {
         } else {
             return false;
         }
-        custom_memset(escapeSequence, '0', countEscape);
-        countEscape = 0;
+        custom_memset(escapeSequence, '0', escapeCount);
+        escapeCount = 0;
         return true;
     }
     return false;
@@ -246,12 +265,11 @@ void CLI::addCharAndUpdateConsole(uint8_t c) {
     int i;
 
     switch (c) {
-
         case ESCAPE_ARROW_LEFT:
             // Put the cursor to left; 0x1B 0x5B 0x44
             if (inputLineIndex > 0) {
                 inputLineIndex--;
-                this->CliPrintEscape(escape_arrow_left, 1);
+                this->printEscape(escape_arrow_left, 1);
             }
             break;
 
@@ -259,109 +277,101 @@ void CLI::addCharAndUpdateConsole(uint8_t c) {
             // Put the cursor to right; 0x1B 0x5B 0x43
             if (inputLineIndex < inputLineLength) {
                 inputLineIndex++;
-                this->CliPrintEscape(escape_arrow_right, 1);
+                this->printEscape(escape_arrow_right, 1);
             }
             break;
 
         case ESCAPE_HOME:
-
-            this->CliPrintEscape(escape_arrow_left, inputLineIndex);
+            this->printEscape(escape_arrow_left, inputLineIndex);
             inputLineIndex = 0;
             break;
 
         case ESCAPE_END:
-
-            this->CliPrintEscape(escape_arrow_right, inputLineLength - inputLineIndex);
+            this->printEscape(escape_arrow_right, inputLineLength - inputLineIndex);
             inputLineIndex = inputLineLength;
             break;
 
         case ESCAPE_DEL:
-
             if (inputLineIndex < inputLineLength) {
                 for (i = inputLineIndex; i < inputLineLength; i++) {
                     inputLine[i] = inputLine[i + 1];
                 }
                 // Sposto a destra di uno e cancello
-                this->CliPrintEscape(escape_arrow_right, 1);
-                this->CliPrintBackspace();
+                this->printEscape(escape_arrow_right, 1);
+                this->printBackspace();
 
                 // Decrementa la lunghezza del buffer in accordo al DEL
                 inputLineLength--;
 
                 // Stampa gli elementi che sono da i a len
-                this->CliPrintFor(inputLine, inputLineIndex, inputLineLength);
+                this->printFor(inputLine, inputLineIndex, inputLineLength);
 
                 // Sposto a destra di uno e cancello
-                this->CliPrintEscape(escape_arrow_right, 1);
-                CliPrintBackspace();
+                this->printEscape(escape_arrow_right, 1);
+                printBackspace();
 
                 // Torna il curso in dietro di len - i posizioni
-                this->CliPrintEscape(escape_arrow_left, inputLineLength - inputLineIndex);
+                this->printEscape(escape_arrow_left, inputLineLength - inputLineIndex);
             }
             break;
 
         case 0x7F:
-
-            // Rimuovd un elmento dal buffer
+            // Rimuove un elmento dal buffer
             if (inputLineIndex > 0) {
                 inputLineIndex--;
                 for (i = inputLineIndex; i < inputLineLength; i++) {
                     inputLine[i] = inputLine[i + 1];
                 }
-                CliPrintBackspace();
+                printBackspace();
                 inputLineLength--;
 
                 // Stampa gli elementi che sono da i a len
-                this->CliPrintFor(inputLine, inputLineIndex, inputLineLength);
+                this->printFor(inputLine, inputLineIndex, inputLineLength);
 
                 // Sposto a destra di uno e cancello
-                this->CliPrintEscape(escape_arrow_right, 1);
-                this->CliPrintBackspace();
+                this->printEscape(escape_arrow_right, 1);
+                this->printBackspace();
 
                 // Torna il curso in dietro di len - i posizioni
-                this->CliPrintEscape(escape_arrow_left, inputLineLength - inputLineIndex);
+                this->printEscape(escape_arrow_left, inputLineLength - inputLineIndex);
             }
 
             break;
 
         case ESCAPE_ARROW_UP:
-
             if (lastCmd < nCmd) {
                 lastCmd++;
                 this->getLastCommandFromFile(lastCmd);
                 if (config.console.echo)
                     printf("\r>%s", inputLine);
-                this->CliPrintEscape(escape_clear_end_row, 1);
+                this->printEscape(escape_clear_end_row, 1);
             }
             break;
 
         case ESCAPE_ARROW_DOWN:
-
             if (lastCmd > 1) {
                 lastCmd--;
                 this->getLastCommandFromFile(lastCmd);
                 if (config.console.echo)
                     printf("\r>%s", inputLine);
-                this->CliPrintEscape(escape_clear_end_row, 1);
+                this->printEscape(escape_clear_end_row, 1);
             } else if (lastCmd == 1) {
                 inputLine[0] = '\0';
                 lastCmd = inputLineIndex = inputLineLength = 0;
                 if (config.console.echo)
                     printf("\r>%s", inputLine);
-                this->CliPrintEscape(escape_clear_end_row, 1);
+                this->printEscape(escape_clear_end_row, 1);
             }
             break;
 
         default:
             // Other printable character
             if (inputLineLength < CLI_MAX_BUF_SIZE && inputLineIndex < CLI_MAX_BUF_SIZE) {
-
                 // Sposta gli elementi all'interno del buffer
                 if (inputLineIndex < inputLineLength) {
                     for (i = inputLineLength; i > inputLineIndex; i--)
                         inputLine[i] = inputLine[i - 1];
                 }
-
                 // Aggiunge il carattere ricevuto al buffer e lo stampa
                 inputLine[inputLineIndex++] = c;
                 inputLine[++inputLineLength] = '\0';
@@ -369,10 +379,9 @@ void CLI::addCharAndUpdateConsole(uint8_t c) {
                     putc(c);
 
                 // Stampa gli elementi che sono da i a len
-                this->CliPrintFor(inputLine, inputLineIndex, inputLineLength);
-
+                this->printFor(inputLine, inputLineIndex, inputLineLength);
                 // Torna il curso in dietro di len - i posizioni
-                this->CliPrintEscape(escape_arrow_left, inputLineLength - inputLineIndex);
+                this->printEscape(escape_arrow_left, inputLineLength - inputLineIndex);
             }
             break;
     }
@@ -383,8 +392,8 @@ void CLI::clearCommand(void) {
     inputLineLength = inputLineIndex = 0;
 }
 
-void CLI::CliReprintConsole(void) {
-    this->CliPrintEscape(escape_arrow_left, inputLineLength - inputLineIndex);
+void CLI::reprintConsole(void) {
+    this->printEscape(escape_arrow_left, inputLineLength - inputLineIndex);
     if (inputLineLength)
         printf(">%s", inputLine);
     else
@@ -396,42 +405,43 @@ void CLI::CliAddStringAndUpdateConsole(char *str) {
         this->addCharAndUpdateConsole(*str++);
 }
 
-void CLI::CliPrintEscape(const char *p, int i) {
+void CLI::printEscape(const char *p, int i) {
     while (i--)
         printf((char*) p);
 }
 
-void CLI::CliPrintBackspace(void) {
+void CLI::printBackspace(void) {
     char c = 0x7F;
     putc(c);
 }
 
-void CLI::CliPrintFor(char *p, int i, int len) {
+void CLI::printFor(char *p, int i, int len) {
     // Stampa gli elementi che sono da i a len
     while (i < len)
         putc(p[i++]);
 }
 
-bool CLI::searchCommand(char *name) {
+bool CLI::searchExecutableCommand(char *name) {
 
     int len;
-    std::list<CommandBase>::iterator it;
+    std::list<CommandBase*>::iterator it;
 
     len = strlen(name);
     for (it = commandList.begin(); it != commandList.end(); it++)
-        if (len == it->getCommandNameLength() && strcmp(name, it->getCommandName()) == 0) {
-            cmd = &(*it);
+        if (len == (*it)->getCommandNameLength() && strcmp(name, (*it)->getCommandName()) == 0) {
+            cmd = *it;
             return true;
         }
     return false;
 }
 
-bool CLI::CliCreateFileListOfCommands(void) {
+bool CLI::createFileListOfCommands(void) {
 
     FIL *fp;
     FRESULT fres;
     bool rtn;
-    std::list<CommandBase>::iterator it;
+    UINT len, written;
+    std::list<CommandBase*>::iterator it;
 
     // Allocate enough space for FIL structure
     fp = NULL;
@@ -443,21 +453,25 @@ bool CLI::CliCreateFileListOfCommands(void) {
         // Changes the properties of the temporary file to hide it
         if ((fres = f_chmod(temporaryFileCommands, AM_HID, AM_HID)) == FR_OK) {
             // Prints all commands in the file
-            for (it = commandList.begin(); it != commandList.end(); it++)
-                f_printf(fp, "%s\n", it->getCommandName());
+            for (it = commandList.begin(); it != commandList.end(); it++) {
+                len = custom_strlen((char*) (*it)->getCommandName());
+                fres = f_write(fp, (*it)->getCommandName(), len, &written);
+                fres = f_write(fp, "\n", 1, &written);
+                //f_printf(fp, "%s\n", it->getCommandName());
+            }
         } else {
-            verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+            verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileCommands);
             rtn = false;
         }
         // Close the temporary file
         if ((fres = f_close(fp)) != FR_OK) {
             // Unable to close the temporary file
-            verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+            verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileCommands);
             rtn = false;
         }
     } else {
         // Unable to create temporary file.
-        verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+        verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileCommands);
         rtn = false;
     }
 
@@ -473,6 +487,7 @@ bool CLI::createFileListOfFilesEntry(void) {
     FIL *fp;
     DIR *dir;
     FRESULT fres;
+    UINT len, written;
     bool rtn;
 
     // Allocate enough space for FILINFO, FIL, and DIR structures
@@ -496,7 +511,7 @@ bool CLI::createFileListOfFilesEntry(void) {
                         while (true) {
                             // Read a directory item
                             if ((fres = (f_readdir(dir, finfo))) != FR_OK) {
-                                verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+                                verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
                                 break;
                             }
                             // Break on end of directory
@@ -508,46 +523,48 @@ bool CLI::createFileListOfFilesEntry(void) {
 
                             if (!(finfo->fattrib & AM_HID)) {
                                 // It is a file print it in the hidden file
-                                f_printf(fp, "%s\n", finfo->fname);
+                                len = custom_strlen(finfo->fname);
+                                fres = f_write(fp, finfo->fname, len, &written);
+                                fres = f_write(fp, "\n", 1, &written);
+                                //f_printf(fp, "%s\n", finfo->fname);
                             }
                         }
                         if ((fres = f_closedir(dir)) != FR_OK) {
                             // Unable to close directory
-                            verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+                            verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
                             rtn = false;
                         }
                     } else {
                         // Unable to open directory
-                        verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+                        verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
                         rtn = false;
                     }
-
                     // Try to close temporary file
                     if ((fres = f_close(fp)) == FR_OK) {
                         rtn = true;
                     } else {
                         // Unable to close the temporary file
-                        verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+                        verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
                         rtn = false;
                     }
                 } else {
                     // Unable to get current directory
-                    verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+                    verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
                     rtn = false;
                 }
             } else {
                 // Unable to write property
-                verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+                verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
                 rtn = false;
             }
         } else {
             // Unable to change property
-            verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+            verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
             rtn = false;
         }
     } else {
         // Unable to create temporary file
-        verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+        verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
         rtn = false;
     }
 
@@ -603,7 +620,7 @@ uint8_t CLI::CliCompleteCommandSearchInFile(char *fileName, char *p) {
             if (found && occ > 0)
                 this->addCharAndUpdateConsole(match);
             if ((fres = f_lseek(fp, 0l)) != FR_OK)
-                verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+                verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), fileName);
         } while (found && occ != 0);
 
         if (occ != 0) {
@@ -616,14 +633,14 @@ uint8_t CLI::CliCompleteCommandSearchInFile(char *fileName, char *p) {
                 }
             }
             printf("\r\n");
-            CliReprintConsole();
+            reprintConsole();
         }
         if ((fres = f_close(fp)) != FR_OK)
-            verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+            verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), fileName);
         return occ;
     } else {
         // Unable to open file
-        verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+        verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), fileName);
         rtn = false;
     }
     if (fp != NULL)
@@ -638,20 +655,20 @@ bool CLI::getLastCommandFromFile(int pos) {
     FRESULT fres;
 
     // Place the file pointer at the end of the file
-    if ((fres = f_lseek(&fileLastCommands, f_size(&fileLastCommands) - (CLI_MAX_BUF_SIZE * pos))) == FR_OK) {
+    if ((fres = f_lseek(fileLastCommands, f_size(fileLastCommands) - (CLI_MAX_BUF_SIZE * pos))) == FR_OK) {
         // read last command
-        if ((fres = f_read(&fileLastCommands, inputLine, CLI_MAX_BUF_SIZE, &read)) == FR_OK) {
+        if ((fres = f_read(fileLastCommands, inputLine, CLI_MAX_BUF_SIZE, &read)) == FR_OK) {
             // Clear all indicator
-            inputLineLength = inputLineIndex = strlen(inputLine);
+            inputLineLength = inputLineIndex = custom_strlen(inputLine);
             rtn = true;
         } else {
             // Unable to read
-            verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+            verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
             rtn = false;
         }
     } else {
         // Unable to move pointer 
-        verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+        verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
         rtn = false;
     }
     return rtn;
@@ -659,28 +676,29 @@ bool CLI::getLastCommandFromFile(int pos) {
 
 void CLI::putLastCommandInFile(void) {
 
-    int i;
     UINT writed;
     FRESULT fres;
 
     // Place the file pointer at the end of the file
-    if ((fres = f_lseek(&fileLastCommands, f_size(&fileLastCommands))) != FR_OK)
-        verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
-
-    for (i = inputLineLength; i < CLI_MAX_BUF_SIZE; i++)
-        inputLine[i] = '\0';
-
-    // Write into the file last command
-    if ((fres = f_write(&fileLastCommands, inputLine, CLI_MAX_BUF_SIZE, &writed)) != FR_OK)
-        verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
-
-    // Synchronize the content of the file on the micro SD
-
-    if ((fres = f_sync(&fileLastCommands)) != FR_OK)
-        verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
-
-    nCmd++;
-    lastCmd = 0;
+    if ((fres = f_lseek(fileLastCommands, f_size(fileLastCommands))) == FR_OK) {
+        //for (i = inputLineLength; i < CLI_MAX_BUF_SIZE; i++)
+        //    inputLine[i] = '\0';
+        custom_memset(&inputLine[inputLineLength], '\0', CLI_MAX_BUF_SIZE - inputLineLength);
+        // Write into the file last command
+        if ((fres = f_write(fileLastCommands, inputLine, CLI_MAX_BUF_SIZE, &writed)) == FR_OK) {
+            // Synchronize the content of the file on the micro SD
+            if ((fres = f_sync(fileLastCommands)) == FR_OK) {
+                nCmd++;
+                lastCmd = 0;
+            } else {
+                verbosePrintf(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
+            }
+        } else {
+            verbosePrintf(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
+        }
+    } else {
+        verbosePrintf(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
+    }
 }
 
 CLI::~CLI(void) {

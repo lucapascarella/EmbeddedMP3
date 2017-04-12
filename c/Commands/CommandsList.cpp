@@ -15,14 +15,15 @@
  */
 
 
-#include "Commands/CCCommands.h"
+#include "Commands/CommandsList.h"
+#include "Commands/Playback.h"
+#include "Commands/Stop.h"
 
-CCCommands::CCCommands(void) {
+CommandsList::CommandsList(CLI *cli) {
+    Playback *playback = new Playback();
+    Stop *stop = new Stop();
     
+    cli->registerCommand(playback);
+    cli->registerCommand(stop);
 }
 
-void CCCommands::commandsTaskHandler(void) {
-
-    
-
-}

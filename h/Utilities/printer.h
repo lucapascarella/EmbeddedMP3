@@ -66,7 +66,8 @@ extern "C" {
 
 
 #define VER_MIN             1
-#define VER_DBG             2
+#define VER_ERR             2
+#define VER_DBG             3
     int verbosePrintf(int level, const char * fmt, ...);
 
     uint16_t consoleWrite(uint8_t *buffer, uint16_t count);

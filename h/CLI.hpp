@@ -37,18 +37,19 @@
 
 class CLI {
 private:
-    // Some useful constants
 
-    uint16_t countEscape;
+    // Escape sequence
+    uint16_t escapeCount;
     char escapeSequence[10];
 
+    // Received input
     char inputLine[CLI_MAX_BUF_SIZE];
     int inputLineIndex;
     int inputLineLength;
 
     char tmp[CLI_MAX_BUF_SIZE];
-    int tmpi;
-    int tmplen;
+    int tmpIndex;
+    int tmpLength;
 
     int lastCmd;
     int nCmd;
@@ -57,10 +58,11 @@ private:
     ArgsParser *args;
 
     // Commands
-    std::list<CommandBase> commandList;
+    std::list<CommandBase*> commandList;
     CommandBase *cmd;
-    
-    FIL fileLastCommands;
+
+    // Global file pointer for latter commands
+    FIL *fileLastCommands;
 
     // State Machine for task handler
 
@@ -76,7 +78,8 @@ private:
 
 public:
     CLI(void);
-    void registerCommand(CommandBase &cb);
+    void registerCommand(CommandBase *cb);
+    bool createFileListOfCommands(void);
     void cliTaskHadler(void);
     virtual ~CLI(void);
 
@@ -84,17 +87,16 @@ private:
     bool cliArgsParse(void);
     bool cliInputHadler(void);
 
-    bool copyInputs(uint8_t *p);
+    bool copyInputInLocalBuffer(uint8_t *p);
     uint8_t completeCommand(void);
     void addCharAndUpdateConsole(uint8_t c);
     void clearCommand(void);
-    void CliReprintConsole(void);
+    void reprintConsole(void);
     void CliAddStringAndUpdateConsole(char *str);
-    void CliPrintEscape(const char *p, int i);
-    void CliPrintBackspace(void);
-    void CliPrintFor(char *p, int i, int len);
-    bool searchCommand(char *name);
-    bool CliCreateFileListOfCommands(void);
+    void printEscape(const char *p, int i);
+    void printBackspace(void);
+    void printFor(char *p, int i, int len);
+    bool searchExecutableCommand(char *name);
     bool createFileListOfFilesEntry(void);
     uint8_t CliCompleteCommandSearchInFile(char *fileName, char *p);
     bool getLastCommandFromFile(int pos);

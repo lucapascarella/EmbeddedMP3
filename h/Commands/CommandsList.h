@@ -14,28 +14,20 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#include "Commands/Playback.h"
-#include "MP3/Play.h"
-#include "Utilities/ArgsParser.h"
+#ifndef COMMANDSLIST_HPP
+#define	COMMANDSLIST_HPP
 
-Playback::Playback(void) {
+#include <stdint.h>
+#include <stdbool.h>
+#include "CLI.hpp"
 
-}
+class CommandsList {
 
-int Playback::command(int argc, char **argv) {
+public:
+    CommandsList(CLI *cli);
+    
+};
 
-    if (checkParameters(argc, argv, 2, 2)) {
-        startPlay(argv[1]);
-        return 0;
-    } else {
-        return -1;
-    }
-}
 
-const char * Playback::getCommandOptions(void) {
-    return options;
-}
+#endif	/* COMMANDSLIST_HPP */
 
-const char * Playback::getCommandName(void) {
-    return name;
-}

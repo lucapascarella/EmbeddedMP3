@@ -103,8 +103,8 @@ console = 0\r\n\
 echo = 0\r\n\
 # Console port: <0> = UART, 1 = USB serial emulator and 2 = I2C\r\n\
 port = 0\r\n\
-# Verbose: 0 = none, <1> = minimal and 2 = debug\r\n\
-verbose = 1\r\n\
+# Verbose: 0 = none, <1> = minimal, 2 = error, and 3 = debug\r\n\
+verbose = 2\r\n\
 # Print boot info at startup: 0 = none, 1 = restricted or <2> = extended\r\n\
 boot = 2\r\n\
 # Log file: 0 = none, 1 = minimal, 2 = normal or <3> = debug\r\n\
@@ -391,7 +391,7 @@ BOOL ConfigInit(void) {
     config.console.console = 0;
     config.console.echo = 0;        // Console echo: 0 = off and 1 = on
     config.console.port = 0;
-    config.console.verbose = 1;
+    config.console.verbose = 2;
     config.console.versionMajor = 0;
     config.console.versionMinor = 2;
     config.console.bootInfo = 1;

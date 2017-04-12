@@ -19,14 +19,16 @@
 
 #include "CommandBase.h"
 
-class Playback: public CommandBase {
+class Playback : public CommandBase {
+private:
+    static constexpr const char* name = "play";
+    static constexpr const char* options = "";
 
 public:
     Playback(void);
-    int playback(int argc, char **argv);
-    int stopPlayback(int argc, char **argv);
-    int pausePlayback(int argc, char **argv);
-    virtual int taskCommand(ArgsParser *args);
+    virtual const char * getCommandOptions(void);
+    virtual const char * getCommandName(void);
+    virtual int command(int argc, char **argv); // pure specifier
 };
 
 

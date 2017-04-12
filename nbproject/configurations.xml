@@ -11,6 +11,7 @@
         <itemPath>h/Commands/Playback.h</itemPath>
         <itemPath>h/Commands/CommandBase.h</itemPath>
         <itemPath>h/Commands/CCCommands.h</itemPath>
+        <itemPath>h/Commands/Stop.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="Common" projectFiles="true">
         <itemPath>h/Compiler.h</itemPath>
@@ -98,6 +99,7 @@
         <itemPath>c/Commands/Playback.cpp</itemPath>
         <itemPath>c/Commands/CommandBase.cpp</itemPath>
         <itemPath>c/Commands/CCCommands.cpp</itemPath>
+        <itemPath>c/Commands/Stop.cpp</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="Delay" projectFiles="true">
         <itemPath>c/Delay/Delay.c</itemPath>
@@ -173,7 +175,7 @@
         <platformTool>RealICEPlatformTool</platformTool>
         <languageToolchain>XC32</languageToolchain>
         <languageToolchainVersion>1.43</languageToolchainVersion>
-        <platform>3</platform>
+        <platform>4</platform>
       </toolsSet>
       <compileType>
         <linkerTool>

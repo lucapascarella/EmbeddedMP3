@@ -14,15 +14,15 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#include "Commands/Playback.h"
+#include "Commands/Stop.h"
 #include "MP3/Play.h"
 #include "Utilities/ArgsParser.h"
 
-Playback::Playback(void) {
+Stop::Stop(void) {
 
 }
 
-int Playback::command(int argc, char **argv) {
+int Stop::command(int argc, char **argv) {
 
     if (checkParameters(argc, argv, 2, 2)) {
         startPlay(argv[1]);
@@ -32,10 +32,10 @@ int Playback::command(int argc, char **argv) {
     }
 }
 
-const char * Playback::getCommandOptions(void) {
+const char * Stop::getCommandOptions(void) {
     return options;
 }
 
-const char * Playback::getCommandName(void) {
+const char * Stop::getCommandName(void) {
     return name;
 }
