@@ -97,8 +97,8 @@
         <itemPath>c/Commands/List.c</itemPath>
         <itemPath>c/Commands/Playback.cpp</itemPath>
         <itemPath>c/Commands/CommandBase.cpp</itemPath>
-        <itemPath>c/Commands/CCCommands.cpp</itemPath>
         <itemPath>c/Commands/Stop.cpp</itemPath>
+        <itemPath>c/Commands/CommandsList.cpp</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="Delay" projectFiles="true">
         <itemPath>c/Delay/Delay.c</itemPath>
