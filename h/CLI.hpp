@@ -89,7 +89,7 @@ private:
     void addCharAndUpdateConsole(uint8_t c);
     void clearCommand(void);
     void CliReprintConsole(void);
-    bool CliAddStringAndUpdateConsole(char *str);
+    void CliAddStringAndUpdateConsole(char *str);
     void CliPrintEscape(const char *p, int i);
     void CliPrintBackspace(void);
     void CliPrintFor(char *p, int i, int len);
@@ -97,7 +97,7 @@ private:
     bool CliCreateFileListOfCommands(void);
     bool createFileListOfFilesEntry(void);
     uint8_t CliCompleteCommandSearchInFile(char *fileName, char *p);
-    void getLastCommandFromFile(int pos);
+    bool getLastCommandFromFile(int pos);
     void putLastCommandInFile(void);
 };
 

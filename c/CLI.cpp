@@ -36,7 +36,7 @@ const char escape_clear_end_row[] = {0x1B, 0x5B, 0x4A, 0x00};
 CLI::CLI(void) {
 
     FRESULT fres;
-
+    
     cmd = NULL;
     custom_memset(inputLine, '\0', sizeof (inputLine));
     args = new ArgsParser();
@@ -391,7 +391,7 @@ void CLI::CliReprintConsole(void) {
         putc('>');
 }
 
-bool CLI::CliAddStringAndUpdateConsole(char *str) {
+void CLI::CliAddStringAndUpdateConsole(char *str) {
     while (*str != '\0')
         this->addCharAndUpdateConsole(*str++);
 }
@@ -427,43 +427,44 @@ bool CLI::searchCommand(char *name) {
 }
 
 bool CLI::CliCreateFileListOfCommands(void) {
-    //
-    //    FIL *fp;
-    //    FRESULT fres;
-    //    int i;
-    //    bool rtn;
-    //
-    //    // Allocate enough space for FIL structure
-    //    custom_malloc((void**) fp, sizeof (FIL));
-    //
-    //    rtn = true;
-    //    // Create a temporary file where will create a list of commands
-    //    if ((fres = f_open(fp, temporaryFileCommands, FA_WRITE | FA_CREATE_ALWAYS)) == FR_OK) {
-    //        // Changes the properties of the temporary file to hide it
-    //        if ((fres = f_chmod(temporaryFileCommands, AM_HID, AM_HID)) == FR_OK) {
-    //            // Prints all commands in the file
-    //            for (i = 0; i < numberOfCommands; i++) {
-    //                f_printf(fp, "%s\n", commands[i].name);
-    //            }
-    //        } else {
-    //            verbosePrintf("Error: %s", string_rc(fres));
-    //            rtn = false;
-    //        }
-    //        // Close the temporary file
-    //        if ((fres = f_close(fp)) != FR_OK) {
-    //            // Unable to close the temporary file
-    //            verbosePrintf("Error: %s", string_rc(fres));
-    //            rtn = false;
-    //        }
-    //    } else {
-    //        // Unable to create temporary file.
-    //        verbosePrintf("Error: %s", string_rc(fres));
-    //        rtn = false;
-    //    }
-    //
-    //    custom_free((void**) &fp);
-    //
-    //    return rtn;
+
+    FIL *fp;
+    FRESULT fres;
+    bool rtn;
+    std::list<CommandBase>::iterator it;
+
+    // Allocate enough space for FIL structure
+    fp = NULL;
+    custom_malloc((void**) fp, sizeof (FIL));
+
+    rtn = true;
+    // Create a temporary file where will create a list of commands
+    if ((fres = f_open(fp, temporaryFileCommands, FA_WRITE | FA_CREATE_ALWAYS)) == FR_OK) {
+        // Changes the properties of the temporary file to hide it
+        if ((fres = f_chmod(temporaryFileCommands, AM_HID, AM_HID)) == FR_OK) {
+            // Prints all commands in the file
+            for (it = commandList.begin(); it != commandList.end(); it++)
+                f_printf(fp, "%s\n", it->getCommandName());
+        } else {
+            verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+            rtn = false;
+        }
+        // Close the temporary file
+        if ((fres = f_close(fp)) != FR_OK) {
+            // Unable to close the temporary file
+            verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+            rtn = false;
+        }
+    } else {
+        // Unable to create temporary file.
+        verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+        rtn = false;
+    }
+
+    if (fp != NULL)
+        custom_free((void**) &fp);
+
+    return rtn;
 }
 
 bool CLI::createFileListOfFilesEntry(void) {
@@ -562,82 +563,98 @@ bool CLI::createFileListOfFilesEntry(void) {
 
 uint8_t CLI::CliCompleteCommandSearchInFile(char *fileName, char *p) {
 
-    //    extern FIL ftmp1;
-    //    FIL *fp = &ftmp1;
-    //    BOOL found;
-    //    int len, occ, tmpLen;
-    //    char match;
-    //
-    //    // Search method (Files and Commands) unified
-    //    if (!put_rc(f_open(fp, fileName, FA_READ))) {
-    //        CliErrorOccurred("TAB");
-    //        return FALSE;
-    //    }
-    //
-    //    found = FALSE;
-    //    do {
-    //        occ = 0;
-    //        ////        len = strlen(p);
-    //        len = cl.cmdi - (p - cl.cmd);
-    //        while (f_gets(cl.tmp, sizeof (cl.tmp), fp) != NULL) {
-    //            tmpLen = strlen(cl.tmp) - 1;
-    //            if (cl.tmp[tmpLen] == '\n')
-    //                cl.tmp[tmpLen] = '\0';
-    //            if (tmpLen >= len && strncmp(p, cl.tmp, len) == 0) {
-    //                if (cl.tmp[len] == '\0') {
-    //                    occ = 0;
-    //                    found = FALSE;
-    //                    break;
-    //                }
-    //                if (occ == 0) {
-    //                    match = cl.tmp[len];
-    //                    occ++;
-    //                    found = TRUE;
-    //                } else {
-    //                    if (match != cl.tmp[len]) {
-    //                        found = FALSE;
-    //                    }
-    //                }
-    //            }
-    //        }
-    //
-    //        if (found && occ > 0)
-    //            CliAddCharAndUpdateConsole(match);
-    //
-    //        put_rc(f_lseek(fp, 0l));
-    //    } while (found && occ != 0);
-    //
-    //    if (occ != 0) {
-    //        while (f_gets(cl.tmp, sizeof (cl.tmp), fp) != NULL) {
-    //            if (strncmp(p, cl.tmp, len) == 0) {
-    //                tmpLen = strlen(cl.tmp) - 1;
-    //                if (cl.tmp[tmpLen] == '\n')
-    //                    cl.tmp[tmpLen] = '\0';
-    //                printf("\r\n%s", cl.tmp);
-    //            }
-    //        }
-    //        printf("\r\n");
-    //        CliReprintConsole();
-    //    }
-    //
-    //    put_rc(f_close(fp));
-    //
-    //    return occ;
+    FIL *fp;
+    bool found, rtn;
+    int len, occ, tmpLen;
+    char match;
+    FRESULT fres;
+
+    fp = NULL;
+    custom_malloc((void**) fp, sizeof (FIL));
+
+    // Search method (Files and Commands) unified
+    if ((fres = f_open(fp, fileName, FA_READ)) == FR_OK) {
+        found = FALSE;
+        do {
+            occ = 0;
+            ////        len = strlen(p);
+            len = inputLineIndex - (p - inputLine);
+            while (f_gets(tmp, sizeof (tmp), fp) != NULL) {
+                tmpLen = strlen(tmp) - 1;
+                if (tmp[tmpLen] == '\n')
+                    tmp[tmpLen] = '\0';
+                if (tmpLen >= len && strncmp(p, tmp, len) == 0) {
+                    if (tmp[len] == '\0') {
+                        occ = 0;
+                        found = FALSE;
+                        break;
+                    }
+                    if (occ == 0) {
+                        match = tmp[len];
+                        occ++;
+                        found = TRUE;
+                    } else {
+                        if (match != tmp[len]) {
+                            found = FALSE;
+                        }
+                    }
+                }
+            }
+            if (found && occ > 0)
+                this->addCharAndUpdateConsole(match);
+            if ((fres = f_lseek(fp, 0l)) != FR_OK)
+                verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+        } while (found && occ != 0);
+
+        if (occ != 0) {
+            while (f_gets(tmp, sizeof (tmp), fp) != NULL) {
+                if (strncmp(p, tmp, len) == 0) {
+                    tmpLen = strlen(tmp) - 1;
+                    if (tmp[tmpLen] == '\n')
+                        tmp[tmpLen] = '\0';
+                    printf("\r\n%s", tmp);
+                }
+            }
+            printf("\r\n");
+            CliReprintConsole();
+        }
+        if ((fres = f_close(fp)) != FR_OK)
+            verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+        return occ;
+    } else {
+        // Unable to open file
+        verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+        rtn = false;
+    }
+    if (fp != NULL)
+        custom_free((void**) &fp);
+    return rtn;
 }
 
-void CLI::getLastCommandFromFile(int pos) {
+bool CLI::getLastCommandFromFile(int pos) {
 
+    bool rtn;
     UINT read;
     FRESULT fres;
 
     // Place the file pointer at the end of the file
-    fres = f_lseek(&fileLastCommands, f_size(&fileLastCommands) - (CLI_MAX_BUF_SIZE * pos));
-
-    // read last command
-    fres = f_read(&fileLastCommands, inputLine, CLI_MAX_BUF_SIZE, &read);
-
-    // Clear all indicator
-    inputLineLength = inputLineIndex = strlen(inputLine);
+    if ((fres = f_lseek(&fileLastCommands, f_size(&fileLastCommands) - (CLI_MAX_BUF_SIZE * pos))) == FR_OK) {
+        // read last command
+        if ((fres = f_read(&fileLastCommands, inputLine, CLI_MAX_BUF_SIZE, &read)) == FR_OK) {
+            // Clear all indicator
+            inputLineLength = inputLineIndex = strlen(inputLine);
+            rtn = true;
+        } else {
+            // Unable to read
+            verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+            rtn = false;
+        }
+    } else {
+        // Unable to move pointer 
+        verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+        rtn = false;
+    }
+    return rtn;
 }
 
 void CLI::putLastCommandInFile(void) {
@@ -658,6 +675,7 @@ void CLI::putLastCommandInFile(void) {
         verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
 
     // Synchronize the content of the file on the micro SD
+
     if ((fres = f_sync(&fileLastCommands)) != FR_OK)
         verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
 

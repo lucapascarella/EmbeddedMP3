@@ -55,8 +55,8 @@ BYTE holdRtccHour, holdRtccMin, holdRtccSec;
 
 void InitRtcc(void) {
 
-    rtccYear = 2015 - 1980;
-    rtccMon = 8;
+    rtccYear = 2017 - 1980;
+    rtccMon = 4;
     rtccMday = 1;
 
     rtccHour = 12;

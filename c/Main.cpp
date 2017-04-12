@@ -147,6 +147,15 @@ int main(int argc, char** argv) {
     //    pb = new Playback();
     //    pb->getStatistics();
     //    pb->playback(argc, argv);
+    
+    
+    //    int a;
+    //    Test *t = new Test(1, 2);
+    //    a = t->testIt();
+    //    t->callException(12);
+    //
+    //    Test tt(3, 4);
+    //    a = tt.testIt();
 
     int play = FALSE, rec = FALSE;
     BOOL logResults;
@@ -157,33 +166,25 @@ int main(int argc, char** argv) {
     // Initialize application specific hardware
     InitializeSystem();
 
-    //    int a;
-    //    Test *t = new Test(1, 2);
-    //    a = t->testIt();
-    //    t->callException(12);
-    //
-    //    Test tt(3, 4);
-    //    a = tt.testIt();
-
     // Initialize Disk IO
     if (disk_initialize(0) != RES_OK)
-        FlashLight(250, 50, TRUE);
+        FlashLight(250, 50, true);
 
     // Initialize (Mount) File System structure
     if (f_mount(&Fatfs, "0", 1) != FR_OK)
-        FlashLight(250, 50, TRUE);
+        FlashLight(250, 50, true);
 
     // Initialize virtual Real Time Clock Calendar
     InitRtcc();
 
-    // Open the LOG file and append to it the new stram
+    // Open the LOG file and append to it the new stream
     logResults = openLogFile();
-    if (logResults == FALSE)
-        FlashLight(350, 50, FALSE);
+    if (logResults == false)
+        FlashLight(350, 50, false);
 
     // Initialize the INI file
-    if (ConfigInit() == FALSE)
-        FlashLight(150, 50, TRUE);
+    if (ConfigInit() == false)
+        FlashLight(150, 50, true);
 
 
     // Initializes USB module SFRs and firmware variables to known state
@@ -223,11 +224,11 @@ int main(int argc, char** argv) {
     GPIOInit();
 
     // Initialize commands interpreter
-            cli = new CLI();
+    cli = new CLI();
     if (config.console.console == CLI_MODE) {
         // Initialize Command Line Interpreter
-        if (InitCli() == FALSE)
-            FlashLight(150, 50, TRUE);
+        ////        if (InitCli() == FALSE)
+        ////            FlashLight(150, 50, TRUE);
     } else {
         // Initialize Single Character Commands Interpreter
         if (InitSCC(config.console.console) == FALSE)
@@ -250,7 +251,7 @@ int main(int argc, char** argv) {
 
     // Update gpio state with successful message
     GpioUpdateOutputState(GPIO_BIT_MICRO_SD);
-
+    
     // Now that all items are initialized, begin the co-operative
     // multitasking loop.  This infinite loop will continuously
     // execute all stack-related tasks, as well as your own
@@ -268,10 +269,10 @@ int main(int argc, char** argv) {
         ClearWDT();
 
         // Manager of the console routine
-        if (config.console.console == CLI_MODE){
+        if (config.console.console == CLI_MODE) {
             cli->cliTaskHadler();
-            CliHandler();
-        }else{
+            //            CliHandler();
+        } else {
             SCCHandler();
         }
         cmds->commandsTaskHandler();
@@ -287,7 +288,7 @@ int main(int argc, char** argv) {
         // Manager of the player routine
         if (rec == REC_IDLE) {
             ccp->playTaskHandler();
-            play = PlayTaskHandler();
+            ////            play = PlayTaskHandler();
         }
 
         // BlinkLed

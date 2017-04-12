@@ -92,28 +92,21 @@ void InitializeSystem(void) {
         // ...
     }
 
-
     // configure for multi-vectored mode
     INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
     // enable interrupts
     INTEnableInterrupts();
-
 
     // Enable optimal performance
     SYSTEMConfigPerformance(GetSystemClock());
     // Use 1:1 CPU Core:Peripheral clocks
     OSCSetPBDIV(OSC_PB_DIV_1);
 
-
     // Disable JTAG port so we get our I/O pins back, but first
     // wait 50ms so if you want to reprogram the part with
     // JTAG, you'll still have a tiny window before JTAG goes away.
-    // The PIC32 Starter Kit debuggers use JTAG and therefore must not
-    // disable JTAG.
-    //    DelayMs(50);
+    // DelayMs(50);
     mJTAGPortEnable(DEBUG_JTAGPORT_OFF);
-
-
 
     // Unlock configuration
     CFGCONbits.IOLOCK = 0;
@@ -187,6 +180,7 @@ void Toggle1Second(void) {
         //LEDs_TOGGLE();
         if (LEDs_TRIS == 1) {
             LED_BLUE_ON();
+            printf("Questo e' un test vediamo come va\r\n");
         } else {
             LEDs_OFF();
         }

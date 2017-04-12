@@ -48,7 +48,7 @@ const char file_ini_dump[] = "conf.dmp";
 
 configuration config;
 
-#define FULL_CONFIG
+//#define FULL_CONFIG
 
 #ifdef FULL_CONFIG
 const char conf[] = "# Embedded MP3 Player and Recorder\r\n\
@@ -462,7 +462,7 @@ BOOL ConfigInit(void) {
         // Try to open 'ini' file
         writeToLogFile(LOG_NORMAL, config_msg, "Try to open '%s'", pIni);
         if (ini_parse(pIni, handler, &config) < 0) {
-            writeToLogFile(LOG_NORMAL, config_msg, "Can't load '%s'", pIni);
+            writeToLogFile(LOG_NORMAL, config_msg, "Cannot load '%s'", pIni);
             if (pIni == (char*) file_ini) {
                 // Try to open 'dump' file
                 pIni = (char*) file_ini_dump;
@@ -474,17 +474,17 @@ BOOL ConfigInit(void) {
                 if (ConfigGenerate()) {
                     writeToLogFile(LOG_DEBUG, config_msg, "Generated '%s'", pIni);
                 } else {
-                    writeToLogFile(LOG_NORMAL, config_msg, "Can't generated '%s'", pIni);
+                    writeToLogFile(LOG_NORMAL, config_msg, "Cannot generated '%s'", pIni);
                     return FALSE;
                 }
             }
             // File opend successful
         } else {
             if (ConfigDumpIni(pIni, pDmp)) {
-                writeToLogFile(LOG_DEBUG, config_msg, "Backupped '%s' in '%s'", pIni, pDmp);
+                writeToLogFile(LOG_DEBUG, config_msg, "Backup '%s' in '%s'", pIni, pDmp);
                 return TRUE;
             } else {
-                writeToLogFile(LOG_NORMAL, config_msg, "Can't backup '%s' in '%s'", pIni, pDmp);
+                writeToLogFile(LOG_NORMAL, config_msg, "Cannot backup '%s' in '%s'", pIni, pDmp);
                 return FALSE;
             }
         }
