@@ -14,10 +14,10 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#include "Commands/CommandBase.h"
+#include "Commands/CommandBase.hpp"
 #include "CommandLineInterpreter.h"
 #include "Utilities/Utilities.h"
-#include "Utilities/ArgsParser.h"
+#include "Utilities/ArgsParser.hpp"
 
 CommandBase::CommandBase(void) {
     this->initializeStatistics();

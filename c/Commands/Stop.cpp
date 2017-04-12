@@ -14,12 +14,12 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#include "Commands/Stop.h"
+#include "Commands/Stop.hpp"
 #include "MP3/Play.h"
-#include "Utilities/ArgsParser.h"
+#include "Utilities/ArgsParser.hpp"
 
-Stop::Stop(void) {
-
+Stop::Stop(void) : CommandBase() {
+    Nop();
 }
 
 int Stop::command(int argc, char **argv) {

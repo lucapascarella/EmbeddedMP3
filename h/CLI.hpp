@@ -9,7 +9,7 @@
 #define	CLI_HPP
 
 
-#include "Commands/CommandBase.h"
+#include "Commands/CommandBase.hpp"
 #include "FatFS/ff.h"
 #include <stdint.h>
 #include <stdbool.h>

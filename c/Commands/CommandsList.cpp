@@ -15,9 +15,9 @@
  */
 
 
-#include "Commands/CommandsList.h"
-#include "Commands/Playback.h"
-#include "Commands/Stop.h"
+#include "Commands/CommandsList.hpp"
+#include "Commands/Playback.hpp"
+#include "Commands/Stop.hpp"
 
 CommandsList::CommandsList(CLI *cli) {
     Playback *playback = new Playback();

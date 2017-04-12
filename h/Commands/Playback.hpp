@@ -14,24 +14,23 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#ifndef STOP_HPP
-#define	STOP_HPP
+#ifndef PLAYBACK_HPP
+#define	PLAYBACK_HPP
 
-#include "CommandBase.h"
+#include "CommandBase.hpp"
 
-class Stop : public CommandBase {
+class Playback : public CommandBase {
 private:
-    static constexpr const char* name = "stop";
+    static constexpr const char* name = "play";
     static constexpr const char* options = "";
 
 public:
-    Stop(void);
-    int stop(int argc, char **argv);
+    Playback(void);
     virtual const char * getCommandOptions(void);
     virtual const char * getCommandName(void);
     virtual int command(int argc, char **argv); // pure specifier
 };
 
 
-#endif	/* STOP_HPP */
+#endif	/* PLAYBACK_HPP */
 

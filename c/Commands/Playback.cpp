@@ -14,18 +14,24 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#include "Commands/Playback.h"
+#include "Commands/Playback.hpp"
 #include "MP3/Play.h"
-#include "Utilities/ArgsParser.h"
+#include "Utilities/ArgsParser.hpp"
+#include "Utilities/Optlist.h"
 
 Playback::Playback(void) {
-
+    Nop();
 }
 
 int Playback::command(int argc, char **argv) {
 
+    return_t *opt;
+
     if (checkParameters(argc, argv, 2, 2)) {
+        opt = GetOptList(argc, argv, "C");
         startPlay(argv[1]);
+        FreeRtnList(opt);
+        
         return 0;
     } else {
         return -1;

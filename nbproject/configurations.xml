@@ -8,10 +8,10 @@
                    displayName="Header Files"
                    projectFiles="true">
       <logicalFolder name="f3" displayName="Commands" projectFiles="true">
-        <itemPath>h/Commands/Playback.h</itemPath>
-        <itemPath>h/Commands/CommandBase.h</itemPath>
-        <itemPath>h/Commands/CCCommands.h</itemPath>
-        <itemPath>h/Commands/Stop.h</itemPath>
+        <itemPath>h/Commands/Playback.hpp</itemPath>
+        <itemPath>h/Commands/Stop.hpp</itemPath>
+        <itemPath>h/Commands/CommandBase.hpp</itemPath>
+        <itemPath>h/Commands/CommandsList.hpp</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="Common" projectFiles="true">
         <itemPath>h/Compiler.h</itemPath>
@@ -63,18 +63,17 @@
         <itemPath>h/Utilities/Logging.h</itemPath>
         <itemPath>h/Utilities/USB.h</itemPath>
         <itemPath>h/Utilities/AsyncTimer.h</itemPath>
-        <itemPath>h/Utilities/ArgsParser.h</itemPath>
+        <itemPath>h/Utilities/ArgsParser.hpp</itemPath>
       </logicalFolder>
       <itemPath>h/HardwareProfile.h</itemPath>
       <itemPath>h/usb_config.h</itemPath>
       <itemPath>h/CommandLineInterpreter.h</itemPath>
       <itemPath>h/Commands.h</itemPath>
-      <itemPath>h/Main.h</itemPath>
       <itemPath>h/SingleCharacterCommands.h</itemPath>
       <itemPath>h/I2CSlave.h</itemPath>
-      <itemPath>h/test.h</itemPath>
-      <itemPath>test_header.h</itemPath>
       <itemPath>h/CLI.hpp</itemPath>
+      <itemPath>h/Main.hpp</itemPath>
+      <itemPath>h/Test.hpp</itemPath>
     </logicalFolder>
     <logicalFolder name="LibraryFiles"
                    displayName="Library Files"

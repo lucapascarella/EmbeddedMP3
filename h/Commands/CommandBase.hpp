@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "Utilities/ArgsParser.h"
+#include "Utilities/ArgsParser.hpp"
 
 class CommandBase {
 private:

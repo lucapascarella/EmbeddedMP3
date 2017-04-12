@@ -14,7 +14,7 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#include "Utilities/ArgsParser.h"
+#include "Utilities/ArgsParser.hpp"
 #include "Utilities/Utilities.h"
 
 ArgsParser::ArgsParser(void) {
