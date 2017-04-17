@@ -63,19 +63,20 @@ CLI::CLI(void) {
     this->createFileListOfFilesEntry();
 
     // Creates a temporary file where put a list of latter commands
-    custom_malloc(fileLastCommands, sizeof (FIL));
+    fileLastCommands = NULL;
+    fileLastCommands = (FIL*) custom_malloc(fileLastCommands, sizeof (FIL));
     if ((fres = f_open(fileLastCommands, temporaryFileLatterCommands, FA_READ | FA_WRITE | FA_OPEN_ALWAYS)) == FR_OK) {
         // Changes the properties of the temporary file to hide it
         if ((fres = f_chmod(temporaryFileLatterCommands, AM_HID, AM_HID)) == FR_OK) {
             // Flush hidden property
             if ((fres = f_sync(fileLastCommands)) != FR_OK) {
-                verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+                verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
             }
         } else {
-            verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+            verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
         }
     } else {
-        verbosePrintf(VER_DBG, "Error: %s", string_rc(fres));
+        verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
     }
 
     // Flush console content
@@ -446,7 +447,7 @@ bool CLI::createFileListOfCommands(void) {
 
     // Allocate enough space for FIL structure
     fp = NULL;
-    custom_malloc((void**) fp, sizeof (FIL));
+    fp = (FIL*) custom_malloc((void*) fp, sizeof (FIL));
 
     rtn = true;
     // Create a temporary file where will create a list of commands
@@ -495,7 +496,7 @@ bool CLI::createFileListOfFilesEntry(void) {
     finfo = NULL;
     fp = NULL;
     dir = NULL;
-    custom_malloc((void**) fp, sizeof (FIL));
+    fp = (FIL*) custom_malloc(fp, sizeof (FIL));
 
     // Create a temporary file where will create a list of files
     if ((fres = f_open(fp, temporaryFileEntryList, FA_WRITE | FA_CREATE_ALWAYS)) == FR_OK) {
@@ -506,8 +507,8 @@ bool CLI::createFileListOfFilesEntry(void) {
                 // Get the current directory name
                 if ((fres = f_getcwd(tmp, CLI_MAX_DIR_SIZE)) == FR_OK) {
                     // Open the directory
-                    custom_malloc((void**) dir, sizeof (DIR));
-                    custom_malloc((void**) finfo, sizeof (FILINFO));
+                    dir = (DIR*) custom_malloc((void*) dir, sizeof (DIR));
+                    finfo = (FILINFO*) custom_malloc((void*) finfo, sizeof (FILINFO));
                     if ((fres = f_opendir(dir, tmp)) == FR_OK) {
                         while (true) {
                             // Read a directory item
@@ -588,7 +589,7 @@ uint8_t CLI::CliCompleteCommandSearchInFile(char *fileName, char *p) {
     FRESULT fres;
 
     fp = NULL;
-    custom_malloc((void**) fp, sizeof (FIL));
+    fp = (FIL*) custom_malloc(fp, sizeof (FIL));
 
     // Search method (Files and Commands) unified
     if ((fres = f_open(fp, fileName, FA_READ)) == FR_OK) {

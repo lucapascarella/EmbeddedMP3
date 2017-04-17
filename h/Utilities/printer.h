@@ -65,6 +65,7 @@ extern "C" {
     char __getc();
 
 
+#define VER_NONE            0
 #define VER_MIN             1
 #define VER_ERR             2
 #define VER_DBG             3
