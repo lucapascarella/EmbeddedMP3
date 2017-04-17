@@ -14,22 +14,24 @@ int Test::testIt(void) {
 void Test::callException(int b) {
 
     verbosePrintf(VER_DBG, "Value of: %d", b);
+    Nop();
 
-
-    //    try {
-    //        this->testThrow(b);
-    //        // Because the function throws an exception,
-    //        // the rest of the code in this block will not
-    //        // be executed
-    //    } catch (char const* pch) {
-    //        // will react on exceptions
-    //        // of type char const*
-    //        char string[10];
-    //        memcpy(string, pch, strlen(pch));
-    //    }
+//    try {
+//        Nop();
+//        this->testThrow(b);
+//        // Because the function throws an exception,
+//        // the rest of the code in this block will not
+//        // be executed
+//    } catch (char const* pch) {
+//        // will react on exceptions
+//        // of type char const*
+//        Nop();
+//        char string[10];
+//        memcpy(string, pch, strlen(pch));
+//    }
 }
 
 void Test::testThrow(int a) {
     this->gx = a;
-    //  throw "Throw exception";
+//    throw "Throw exception";
 }

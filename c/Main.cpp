@@ -15,7 +15,10 @@
  */
 
 
-// Configuring the Device Configuration Registers
+// PIC32MX270F256B Configuration Bit Settings
+
+// 'C' source line config statements
+
 // DEVCFG3
 // USERID = No Setting
 #pragma config PMDL1WAY = OFF           // Peripheral Module Disable Configuration (Allow multiple reconfigurations)
@@ -149,10 +152,10 @@ int main(int argc, char** argv) {
     //    pb->playback(argc, argv);
     
     
-    //    int a;
-    //    Test *t = new Test(1, 2);
-    //    a = t->testIt();
-    //    t->callException(12);
+//    int a;
+//    Test *t = new Test(1, 2);
+//    a = t->testIt();
+//    t->callException(12);
     //
     //    Test tt(3, 4);
     //    a = tt.testIt();
