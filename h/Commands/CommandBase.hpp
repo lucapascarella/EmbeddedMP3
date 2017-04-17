@@ -19,32 +19,33 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "Utilities/ArgsParser.h"
+#include "Utilities/ArgsParser.hpp"
 
 class CommandBase {
 private:
+    // Statistics information
     long tooFewArgsCounter;
     long tooManyArgsCounter;
     long correctArgsCounter;
     long lastCommandArgsCounter;
-    char *commandName;
+    // Class property
     int commandNameLength;
-    char *commandOptions;
 
 public:
-    CommandBase(char *name, char *options);
+    CommandBase(void);
     void getStatistics(void);
-    ~CommandBase(void);
-    char* getCommandName(void);
+    
+    virtual const char* getCommandOptions(void); // pure specifier
+    virtual const char* getCommandName(void); // pure specifier
     int getCommandNameLength(void);
-    char* getCommandOptions(void);
-    virtual int taskCommand(ArgsParser *args); // pure specifier
+    int taskCommand(ArgsParser *args); // pure specifier
+    virtual int command(int argc, char **argv); // pure specifier
 
+    ~CommandBase(void);
+    
 protected:
     void initializeStatistics(void);
     bool checkParameters(int argc, char **argv, int lowLimit, int upperLimit);
-
-
 };
 
 

@@ -67,7 +67,7 @@ extern "C" {
 #include "USB/usb_function_msd.h"
 #include "USB/usb_function_cdc.h"
 #include "Utilities/USB.h"
-#include "Main.h"
+#include "Main.hpp"
 #include "Utilities/Utilities.h"
 #include "Utilities/Logging.h"
 #include "Utilities/Config.h"
@@ -86,15 +86,16 @@ extern "C" {
 #include "Utilities/ADC.h"
 #include "Utilities/RTCC.h"
 #include "Utilities/ADC.h"
+#include "Utilities/Optlist.h"
 #include "MP3/VS1063.h"
 #include "Commands.h"
 }
 
 #include "CLI.hpp"
 #include "MP3/CCPlay.h"
-#include "Commands/Playback.h"
-#include "test.h"
-#include "Commands/CCCommands.h"
+#include "Commands/Playback.hpp"
+#include "Test.hpp"
+#include "Commands/CommandsList.hpp"
 #include <cstdlib>
 
 using namespace std;
@@ -102,12 +103,12 @@ using namespace std;
 // MIPS C32 Exception Handlers
 // If your code gets here, you either tried to read or write a NULL pointer,
 // or your application overflowed the stack by having too many local variables or parameters declared.
-Exception except;
+HardwareException he;
 static unsigned int address;
 
 void __attribute__((nomips16)) _general_exception_handler(unsigned cause, unsigned status) {
 
-    asm volatile("mfc0 %0,$13" : "=r" (except));
+    asm volatile("mfc0 %0,$13" : "=r" (he));
     asm volatile("mfc0 %0,$14" : "=r" (address));
 
     Nop();
@@ -144,7 +145,7 @@ int main(int argc, char** argv) {
 
     CCPlay *ccp;
     CLI *cli;
-    CCCommands *cmds;
+    CommandsList *cmds;
 
     //    CommandBase *pb;
     //    pb = new Playback();
@@ -226,8 +227,15 @@ int main(int argc, char** argv) {
     // Initialize GPIO
     GPIOInit();
 
-    // Initialize commands interpreter
+
+
+    // Initialize command line interpreter
     cli = new CLI();
+    // Instantiate commands
+    cmds = new CommandsList(cli);
+    cli->createFileListOfCommands();
+    delete cmds;
+
     if (config.console.console == CLI_MODE) {
         // Initialize Command Line Interpreter
         ////        if (InitCli() == FALSE)
@@ -237,8 +245,6 @@ int main(int argc, char** argv) {
         if (InitSCC(config.console.console) == FALSE)
             FlashLight(150, 50, TRUE);
     }
-
-    cmds = new CCCommands();
 
 #if defined(USB_INTERRUPT)
     if (isUSBEnabled())
@@ -254,7 +260,7 @@ int main(int argc, char** argv) {
 
     // Update gpio state with successful message
     GpioUpdateOutputState(GPIO_BIT_MICRO_SD);
-    
+
     // Now that all items are initialized, begin the co-operative
     // multitasking loop.  This infinite loop will continuously
     // execute all stack-related tasks, as well as your own
@@ -278,7 +284,6 @@ int main(int argc, char** argv) {
         } else {
             SCCHandler();
         }
-        cmds->commandsTaskHandler();
         commandsTask();
 
         // Manager of I2C commander receiver

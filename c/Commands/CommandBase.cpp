@@ -14,41 +14,19 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#include <lega-c/string.h>
-#include "Commands/CommandBase.h"
+#include "Commands/CommandBase.hpp"
 #include "CommandLineInterpreter.h"
 #include "Utilities/Utilities.h"
-#include "Utilities/ArgsParser.h"
+#include "Utilities/ArgsParser.hpp"
 
-CommandBase::CommandBase(char *name, char *options) {
-    int length;
-
+CommandBase::CommandBase(void) {
     this->initializeStatistics();
-
-    length = custom_strlen(name);
-    commandNameLength = length;
-    custom_malloc(commandName, length);
-    length = custom_strlen(options);
-    custom_malloc(commandOptions, length);
+    commandNameLength = custom_strlen((char*) getCommandName());
 }
 
 void CommandBase::getStatistics(void) {
     // Initialize statistical information
 
-}
-
-char* CommandBase::getCommandName(void) {
-    // Initialize statistical information
-    return commandName;
-}
-
-int CommandBase::getCommandNameLength(void) {
-    return commandNameLength;
-}
-
-char* CommandBase::getCommandOptions(void) {
-    // Initialize statistical information
-    return commandOptions;
 }
 
 void CommandBase::initializeStatistics(void) {
@@ -78,13 +56,30 @@ bool CommandBase::checkParameters(int argc, char **argv, int lowLimit, int upper
     }
 }
 
+const char* CommandBase::getCommandOptions(void) {
+    return 0;
+}
+
+const char * CommandBase::getCommandName(void) {
+    return 0;
+}
+
+int CommandBase::getCommandNameLength(void) {
+    return commandNameLength;
+}
+
 int CommandBase::taskCommand(ArgsParser *args) {
+    int argc;
+    char **argv;
+    argc = args->getArgc();
+    argv = args->getArgv();
+    return this->command(argc, argv);
+}
+
+int CommandBase::command(int argc, char **argv) {
     return 0;
 }
 
 CommandBase::~CommandBase(void) {
-    if (commandName != NULL)
-        custom_free((void**) &commandName);
-    if (commandOptions != NULL)
-        custom_free((void**) &commandOptions);
+
 }

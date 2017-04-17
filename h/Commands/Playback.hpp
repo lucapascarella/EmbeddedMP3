@@ -14,20 +14,23 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#ifndef CCCOMMANDS_HPP
-#define	CCCOMMANDS_HPP
+#ifndef PLAYBACK_HPP
+#define	PLAYBACK_HPP
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "CommandBase.hpp"
 
-class CCCommands {
+class Playback : public CommandBase {
+private:
+    static constexpr const char* name = "play";
+    static constexpr const char* options = "";
 
 public:
-    CCCommands(void);
-    void commandsTaskHandler(void);
-
+    Playback(void);
+    virtual const char * getCommandOptions(void);
+    virtual const char * getCommandName(void);
+    virtual int command(int argc, char **argv); // pure specifier
 };
 
 
-#endif	/* CCCOMMANDS_HPP */
+#endif	/* PLAYBACK_HPP */
 

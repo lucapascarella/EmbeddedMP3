@@ -14,21 +14,16 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#ifndef PLAYBACK_HPP
-#define	PLAYBACK_HPP
 
-#include "CommandBase.h"
+#include "Commands/CommandsList.hpp"
+#include "Commands/Playback.hpp"
+#include "Commands/Stop.hpp"
 
-class Playback: public CommandBase {
-
-public:
-    Playback(void);
-    int playback(int argc, char **argv);
-    int stopPlayback(int argc, char **argv);
-    int pausePlayback(int argc, char **argv);
-    virtual int taskCommand(ArgsParser *args);
-};
-
-
-#endif	/* PLAYBACK_HPP */
+CommandsList::CommandsList(CLI *cli) {
+    Playback *playback = new Playback();
+    Stop *stop = new Stop();
+    
+    cli->registerCommand(playback);
+    cli->registerCommand(stop);
+}
 

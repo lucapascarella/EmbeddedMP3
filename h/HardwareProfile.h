@@ -124,11 +124,6 @@
 #define UART_RX_TRIS                    (TRISBbits.TRISB1)      // Testata ed è OK
 
 // DMA 3 for REC purpose
-#define UART_DMA_CHANNEL                DMA_CHANNEL2
-#define UART_DMA_WORKING()              (DCH2INTbits.CHBCIF == FALSE)
-#define UART_DMA_CLR_BTC()              (DCH2INTCLR = 0x00FF)
-#define UART_DMA_SET_BTC()              (DCH2INTSET = 0x0008)
-
 
 #define MEM_MATCH_DMA_CHANNEL           DMA_CHANNEL0
 #define MEM_MATCH_DCHxSSA               DCH0SSA         // Source start address
@@ -157,6 +152,34 @@
 #define MEM_TO_MEM_DMA_WORKING()        (DCH1INTbits.CHBCIF == FALSE)
 #define MEM_TO_MEM_DMA_CLR_BTC()        (DCH1INTCLR = 0x00FF)
 #define MEM_TO_MEM_DMA_SET_BTC()        (DCH1INTSET = 0x0008)
+
+#define UART_TX_DMA_CHANNEL             DMA_CHANNEL2
+#define UART_TX_DCHxSSA                 DCH2SSA         // Source start address
+#define UART_TX_DCHxDSA                 DCH2DSA         // Destination start address
+#define UART_TX_DCHxSSIZ                DCH2SSIZ        // Source Size
+#define UART_TX_DCHxDSIZ                DCH2DSIZ        // Destination Size
+#define UART_TX_DCHxSPTR                DCH2SPTR        // Source Pointer
+#define UART_TX_DCHxDPTR                DCH2DPTR        // Destination Pointer
+#define UART_TX_DCHxCSIZ                DCH2CSIZ        // Cell Size
+#define UART_TX_DCHxCPTR                DCH2CPTR        // Cell Pointer
+#define UART_TX_DCHxDAT                 DCH2DAT         // Data to be matched
+#define UART_TX_DMA_WORKING()           (DCH2INTbits.CHBCIF == FALSE)
+#define UART_TX_DMA_CLR_BTC()           (DCH2INTCLR = 0x00FF)
+#define UART_TX_DMA_SET_BTC()           (DCH2INTSET = 0x0008)
+
+#define UART_RX_DMA_CHANNEL             DMA_CHANNEL3
+#define UART_RX_DCHxSSA                 DCH3SSA         // Source start address
+#define UART_RX_DCHxDSA                 DCH3DSA         // Destination start address
+#define UART_RX_DCHxSSIZ                DCH3SSIZ        // Source Size
+#define UART_RX_DCHxDSIZ                DCH3DSIZ        // Destination Size
+#define UART_RX_DCHxSPTR                DCH3SPTR        // Source Pointer
+#define UART_RX_DCHxDPTR                DCH3DPTR        // Destination Pointer
+#define UART_RX_DCHxCSIZ                DCH3CSIZ        // Cell Size
+#define UART_RX_DCHxCPTR                DCH3CPTR        // Cell Pointer
+#define UART_RX_DCHxDAT                 DCH3DAT         // Data to be matched
+#define UART_RX_DMA_WORKING()           (DCH3INTbits.CHBCIF == FALSE)
+#define UART_RX_DMA_CLR_BTC()           (DCH3INTCLR = 0x00FF)
+#define UART_RX_DMA_SET_BTC()           (DCH3INTSET = 0x0008)
 
 #ifndef INPUT
 #define INPUT                           1

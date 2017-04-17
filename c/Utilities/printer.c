@@ -90,6 +90,7 @@ int verbosePrintf(int level, const char * fmt, ...) {
             return n;
         }
     }
+    // TODO write to log file
 
     return 0;
 }
@@ -98,7 +99,7 @@ uint16_t consoleWrite(uint8_t *buffer, uint16_t count) {
 
     if (config.console.port == 0) {
         // Print on UART port
-        return UartWrite(buffer, count);
+        return UartWrite(buffer, count); // TODO Should work with UartWriteDirectly
     } else if (config.console.port == 1) {
         // Print on USB port
         return USBWrite(buffer, count);

@@ -14,34 +14,24 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#include "Commands/Playback.hpp"
-#include "MP3/Play.h"
-#include "Utilities/ArgsParser.hpp"
-#include "Utilities/Optlist.h"
+#ifndef STOP_HPP
+#define	STOP_HPP
 
-Playback::Playback(void) {
-    Nop();
-}
+#include "CommandBase.hpp"
 
-int Playback::command(int argc, char **argv) {
+class Stop : public CommandBase {
+private:
+    static constexpr const char* name = "stop";
+    static constexpr const char* options = "";
 
-    return_t *opt;
+public:
+    Stop(void);
+    int stop(int argc, char **argv);
+    virtual const char * getCommandOptions(void);
+    virtual const char * getCommandName(void);
+    virtual int command(int argc, char **argv); // pure specifier
+};
 
-    if (checkParameters(argc, argv, 2, 2)) {
-        opt = GetOptList(argc, argv, "C");
-        startPlay(argv[1]);
-        FreeRtnList(opt);
-        
-        return 0;
-    } else {
-        return -1;
-    }
-}
 
-const char * Playback::getCommandOptions(void) {
-    return options;
-}
+#endif	/* STOP_HPP */
 
-const char * Playback::getCommandName(void) {
-    return name;
-}

@@ -14,15 +14,20 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
+#ifndef COMMANDSLIST_HPP
+#define	COMMANDSLIST_HPP
 
-#include "Commands/CCCommands.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include "CLI.hpp"
 
-CCCommands::CCCommands(void) {
+class CommandsList {
+
+public:
+    CommandsList(CLI *cli);
     
-}
+};
 
-void CCCommands::commandsTaskHandler(void) {
 
-    
+#endif	/* COMMANDSLIST_HPP */
 
-}

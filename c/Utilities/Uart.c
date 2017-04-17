@@ -115,28 +115,28 @@ void __ISR(_UART2_VECTOR, IPL5AUTO) IntUart2Handler(void) {
 
 uint16_t UartWrite(uint8_t *buffer, uint16_t count) {
 
-    while (UART_DMA_WORKING());
+    while (UART_TX_DMA_WORKING());
 
-    UART_DMA_CLR_BTC();
+    UART_TX_DMA_CLR_BTC();
     //memcpy(uart.txBuf, buffer, count);
-    DmaChnSetTxfer(UART_DMA_CHANNEL, buffer, uart.txBuf, count, count, count);
-    DmaChnStartTxfer(UART_DMA_CHANNEL, DMA_WAIT_NOT, 0);
-    while (UART_DMA_WORKING());
+    DmaChnSetTxfer(UART_TX_DMA_CHANNEL, buffer, uart.txBuf, count, count, count);
+    DmaChnStartTxfer(UART_TX_DMA_CHANNEL, DMA_WAIT_NOT, 0);
+    while (UART_TX_DMA_WORKING());
 
-    UART_DMA_CLR_BTC();
+    UART_TX_DMA_CLR_BTC();
     uart.txLen = count;
-    DmaChnSetTxfer(UART_DMA_CHANNEL, uart.txBuf, (void*) &U2TXREG, uart.txLen, 1, 1);
-    DmaChnStartTxfer(UART_DMA_CHANNEL, DMA_WAIT_NOT, 0);
+    DmaChnSetTxfer(UART_TX_DMA_CHANNEL, uart.txBuf, (void*) &U2TXREG, uart.txLen, 1, 1);
+    DmaChnStartTxfer(UART_TX_DMA_CHANNEL, DMA_WAIT_NOT, 0);
     return count;
 }
 
 uint16_t UartWriteDirectly(uint8_t *buffer, uint16_t count) {
 
-    if (UART_DMA_WORKING())
+    if (UART_TX_DMA_WORKING())
         return 0;
-    UART_DMA_CLR_BTC();
-    DmaChnSetTxfer(UART_DMA_CHANNEL, buffer, (void*) &U2TXREG, count, 1, 1);
-    DmaChnStartTxfer(UART_DMA_CHANNEL, DMA_WAIT_NOT, 0);
+    UART_TX_DMA_CLR_BTC();
+    DmaChnSetTxfer(UART_TX_DMA_CHANNEL, buffer, (void*) &U2TXREG, count, 1, 1);
+    DmaChnStartTxfer(UART_TX_DMA_CHANNEL, DMA_WAIT_NOT, 0);
     return count;
 }
 
@@ -181,12 +181,12 @@ void UartInit(void) {
     INTEnable(INT_U2RX, INT_ENABLED);
 
     // Configure the DMA Channel 2 assigned to TX UART 4
-    DmaChnOpen(UART_DMA_CHANNEL, DMA_CHN_PRI2, DMA_OPEN_DEFAULT);
+    DmaChnOpen(UART_TX_DMA_CHANNEL, DMA_CHN_PRI2, DMA_OPEN_DEFAULT);
     // set the events: now the start event is the UART tx being empty
     // we maintain the pattern match mode
-    DmaChnSetEventControl(UART_DMA_CHANNEL, DMA_EV_START_IRQ_EN | DMA_EV_START_IRQ(_UART2_TX_IRQ));
+    DmaChnSetEventControl(UART_TX_DMA_CHANNEL, DMA_EV_START_IRQ_EN | DMA_EV_START_IRQ(_UART2_TX_IRQ));
     //    // set the transfer source and dest addresses, source and dest size and cell size
-    DmaChnSetTxfer(UART_DMA_CHANNEL, uart.txBuf, (void*) &U2TXREG, NULL, 1, 1);
+    DmaChnSetTxfer(UART_TX_DMA_CHANNEL, uart.txBuf, (void*) &U2TXREG, NULL, 1, 1);
     // enable the transfer done interrupt: all the characters transferred
     //DmaChnSetEvEnableFlags(UART_DMA_CHANNEL, DMA_EV_BLOCK_DONE);
     // enable system wide multi vectored interrupts
@@ -195,5 +195,5 @@ void UartInit(void) {
     // enable the chn interrupt in the INT controller
     //INTEnable(INT_SOURCE_DMA(UART_DMA_CHANNEL), INT_ENABLED);
     // Reset busy flag indicator
-    UART_DMA_SET_BTC();
+    UART_TX_DMA_SET_BTC();
 }

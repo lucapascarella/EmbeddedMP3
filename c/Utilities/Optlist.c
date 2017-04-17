@@ -69,7 +69,7 @@
  ***************************************************************************/
 argument_t *MakeArg(void);
 option_t *MakeOpt(const char option, char *const argument, const int index);
-int MatchOpt(const char argument, char *const options);
+int MatchOpt(const char argument, const char * options);
 
 /***************************************************************************
  *                                FUNCTIONS
@@ -101,7 +101,7 @@ int MatchOpt(const char argument, char *const options);
  *   NOTE: The caller is responsible for freeing up the option list when it
  *         is no longer needed.
  ****************************************************************************/
-return_t *GetOptList(const int argc, char *const argv[], char *const options) {
+return_t *GetOptList(int argc, char * argv[], const char *options) {
 
     return_t *rtn;
 
@@ -386,7 +386,7 @@ void FreeArgList(argument_t *list) {
  *   Returned   : Index of argument in option list.  Index of end of string
  *                if argument does not appear in the option list.
  ****************************************************************************/
-int MatchOpt(const char argument, char *const options) {
+int MatchOpt(const char argument, const char * options) {
     int optIndex = 0;
 
     // Attempt to find a matching option

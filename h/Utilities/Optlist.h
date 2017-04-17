@@ -41,49 +41,60 @@
 #ifndef OPTLIST_H
 #define OPTLIST_H
 
-/***************************************************************************
- *                             INCLUDED FILES
- ***************************************************************************/
 
-/***************************************************************************
- *                                 MACROS
- ***************************************************************************/
+/* Provide C++ Compatibility */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/***************************************************************************
- *                                CONSTANTS
- ***************************************************************************/
+    /***************************************************************************
+     *                             INCLUDED FILES
+     ***************************************************************************/
+
+    /***************************************************************************
+     *                                 MACROS
+     ***************************************************************************/
+
+    /***************************************************************************
+     *                                CONSTANTS
+     ***************************************************************************/
 #define    OL_NOINDEX    -1        /* this option has no arguement */
 
-/***************************************************************************
- *                            TYPE DEFINITIONS
- ***************************************************************************/
-typedef struct argument_t {
-    char *argument;
-    int argIndex;
-    struct argument_t *nextArgument;
-} argument_t;
+    /***************************************************************************
+     *                            TYPE DEFINITIONS
+     ***************************************************************************/
+    typedef struct argument_t {
+        char *argument;
+        int argIndex;
+        struct argument_t *nextArgument;
+    } argument_t;
 
-typedef struct option_t {
-    char option;
-    //char *argument;
-    //int argIndex;
-    int argNumber;
-    struct argument_t *nextArgument;
-    struct option_t *next;
-} option_t;
+    typedef struct option_t {
+        char option;
+        //char *argument;
+        //int argIndex;
+        int argNumber;
+        struct argument_t *nextArgument;
+        struct option_t *next;
+    } option_t;
 
-typedef struct return_t {
-    struct option_t *opt;
-    struct argument_t *arg;
-} return_t;
+    typedef struct return_t {
+        struct option_t *opt;
+        struct argument_t *arg;
+    } return_t;
 
 
-/***************************************************************************
- *                               PROTOTYPES
- ***************************************************************************/
-return_t *GetOptList(int argc, char *const argv[], char *const options);
-void FreeRtnList(return_t *rtn);
-void FreeOptList(option_t *list);
-void FreeArgList(argument_t *list);
+    /***************************************************************************
+     *                               PROTOTYPES
+     ***************************************************************************/
+    return_t *GetOptList(int argc, char * argv[], const char * options);
+    void FreeRtnList(return_t *rtn);
+    void FreeOptList(option_t *list);
+    void FreeArgList(argument_t *list);
+
+    /* Provide C++ Compatibility */
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* ndef OPTLIST_H */
