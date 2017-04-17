@@ -17,6 +17,7 @@
 #include "MP3/CCPlay.h"
 #include "Utilities/printer.h"
 #include "Utilities/Utilities.h"
+#include "Utilities/CustomFunctions.h"
 #include "Utilities/GPIO.h"
 #include "MP3/VS1063.h"
 #include "Utilities/Config.h"

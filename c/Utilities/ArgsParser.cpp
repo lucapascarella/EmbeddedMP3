@@ -15,7 +15,7 @@
  */
 
 #include "Utilities/ArgsParser.hpp"
-#include "Utilities/Utilities.h"
+#include "Utilities/CustomFunctions.h"
 
 ArgsParser::ArgsParser(void) {
     argc = 0;

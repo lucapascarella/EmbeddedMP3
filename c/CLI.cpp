@@ -8,6 +8,7 @@
 #include "CLI.hpp"
 #include "Utilities/printer.h"
 #include "Utilities/Utilities.h"
+#include "Utilities/CustomFunctions.h"
 #include "Commands/CommandBase.hpp"
 #include "Utilities/ArgsParser.hpp"
 #include "Utilities/GPIO.h"

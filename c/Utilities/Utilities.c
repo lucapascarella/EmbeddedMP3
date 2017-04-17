@@ -180,7 +180,6 @@ void Toggle1Second(void) {
         //LEDs_TOGGLE();
         if (LEDs_TRIS == 1) {
             LED_BLUE_ON();
-            printf("Questo e' un test vediamo come va\r\n");
         } else {
             LEDs_OFF();
         }
@@ -246,92 +245,3 @@ const char * string_rc(FRESULT rc) {
 //        printf(buf);
 //    }
 //}
-
-static malloc_count_check = 0;
-
-void * custom_malloc2(void **ptr, uint16_t size) {
-    if (*ptr != NULL)
-        while (1); // Catch here with debugger, this must never happen
-    if ((*ptr = malloc(size)) == NULL)
-        while (1); // Catch here with debugger, this must never happen
-    custom_memset(*ptr, 0x00, size);
-    malloc_count_check++;
-    return *ptr;
-}
-
-void * custom_malloc(void *ptr, uint16_t size) {
-    if (ptr != NULL)
-        while (1); // Catch here with debugger, this must never happen
-    if ((ptr = malloc(size)) == NULL)
-        while (1); // Catch here with debugger, this must never happen
-    custom_memset(ptr, 0x00, size);
-    malloc_count_check++;
-    return ptr;
-}
-
-void custom_free(void **ptr) {
-    if (ptr == NULL)
-        while (1); // Catch here with debugger, this must never happen
-    if (*ptr != NULL) {
-        free(*ptr);
-        *ptr = NULL;
-        malloc_count_check--;
-    }
-}
-
-void * custom_memcpy(void * dst, const void * src, size_t size) {
-
-    if (dst != NULL && src != NULL && size != 0x0000) {
-        // TODO improve with DMA RAM to RAM fast copy
-        memcpy(dst, src, size);
-
-        //while (MEM_TO_MEM_DMA_WORKING());
-        //MEM_TO_MEM_DMA_CLR_BTC();
-        DmaChnSetTxfer(MEM_TO_MEM_DMA_CHANNEL, src, dst, size, size, size);
-        DmaChnStartTxfer(MEM_TO_MEM_DMA_CHANNEL, DMA_WAIT_BLOCK, 0);
-        //while (MEM_TO_MEM_DMA_WORKING());
-    }
-    return dst;
-}
-
-void * custom_memset(void * dst, int value, size_t size) {
-    // TODO improve with DMA RAM to RAM fast copy
-    if (dst != NULL && size != 0x0000) {
-        memset(dst, value, size);
-        //while (MEM_TO_MEM_DMA_WORKING());
-        //MEM_TO_MEM_DMA_CLR_BTC();
-        DmaChnSetTxfer(MEM_TO_MEM_DMA_CHANNEL, &value, dst, 1, size, size);
-        DmaChnStartTxfer(MEM_TO_MEM_DMA_CHANNEL, DMA_WAIT_BLOCK, 0);
-        //while (MEM_TO_MEM_DMA_WORKING());
-    }
-    return dst;
-}
-
-int custom_strlen(char *str) {
-
-    //    int size;
-    //    char value;
-    if (str != NULL) {
-        // TODO improve with DMA match pattern
-        // To get the size you have to subtract the address of the src DMA pointer to with base address of "str"
-        // Or you can just use DCHxSPTR
-        // However a new reopen is required to configure the pattern matching system. After the use you have to restore the previous conditions
-        return strlen(str);
-
-        //        size = 65355;
-        //        DmaChnSetTxfer(MEM_TO_MEM_DMA_CHANNEL, str, &value, size, size, 1);
-        //        DmaChnSetMatchPattern(MEM_TO_MEM_DMA_CHANNEL, '\0');
-        //        DmaChnStartTxfer(MEM_TO_MEM_DMA_CHANNEL, DMA_WAIT_BLOCK, 0);
-        //        Nop();
-    }
-    return 0;
-}
-
-void * custom_memchr(const void * src, int match, size_t size) {
-    // TODO improve with DMA pattern match
-    return memchr(src, match, size);
-}
-
-void * custom_memrchr(const void * src, int match, size_t size) {
-
-}

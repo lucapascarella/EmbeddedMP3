@@ -16,7 +16,7 @@
 
 #include "Commands/CommandBase.hpp"
 #include "CommandLineInterpreter.h"
-#include "Utilities/Utilities.h"
+#include "Utilities/CustomFunctions.h"
 #include "Utilities/ArgsParser.hpp"
 
 CommandBase::CommandBase(void) {

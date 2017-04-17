@@ -135,6 +135,7 @@
 #define MEM_MATCH_DCHxCSIZ              DCH0CSIZ        // Cell Size
 #define MEM_MATCH_DCHxCPTR              DCH0CPTR        // Cell Pointer
 #define MEM_MATCH_DCHxDAT               DCH0DAT         // Data to be matched
+#define MEM_MATCH_DCHxINTbits           DCH0INTbits     // Interrupt control register
 #define MEM_MATCH_DMA_WORKING()         (DCH0INTbits.CHBCIF == FALSE)
 #define MEM_MATCH_DMA_CLR_BTC()         (DCH0INTCLR = 0x00FF)
 #define MEM_MATCH_DMA_SET_BTC()         (DCH0INTSET = 0x0008)
@@ -149,6 +150,7 @@
 #define MEM_TO_MEM_DCHxCSIZ             DCH1CSIZ        // Cell Size
 #define MEM_TO_MEM_DCHxCPTR             DCH1CPTR        // Cell Pointer
 #define MEM_TO_MEM_DCHxDAT              DCH1DAT         // Data to be matched
+#define MEM_TO_MEM_DCHxINTbits          DCH1INTbits     // Interrupt control register
 #define MEM_TO_MEM_DMA_WORKING()        (DCH1INTbits.CHBCIF == FALSE)
 #define MEM_TO_MEM_DMA_CLR_BTC()        (DCH1INTCLR = 0x00FF)
 #define MEM_TO_MEM_DMA_SET_BTC()        (DCH1INTSET = 0x0008)

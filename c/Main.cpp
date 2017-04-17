@@ -73,6 +73,7 @@ extern "C" {
 #include "Utilities/Config.h"
 #include "Utilities/Uart.h"
 #include "Utilities/printer.h"
+#include "Utilities/CustomFunctions.h"
 #include "Delay/Delay.h"
 #include "MP3/MP3.h"
 #include "MP3/Play.h"
@@ -169,6 +170,9 @@ int main(int argc, char** argv) {
 
     // Initialize application specific hardware
     InitializeSystem();
+    
+    // Initialize custom functions
+    InitCustomFunctions();
 
     // Initialize Disk IO
     if (disk_initialize(0) != RES_OK)
