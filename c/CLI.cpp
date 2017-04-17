@@ -428,9 +428,10 @@ bool CLI::searchExecutableCommand(char *name) {
     int len;
     std::list<CommandBase*>::iterator it;
 
-    len = strlen(name);
+    if((len = strlen(name)) == 0)
+        return false;
     for (it = commandList.begin(); it != commandList.end(); it++)
-        if (len == (*it)->getCommandNameLength() && strcmp(name, (*it)->getCommandName()) == 0) {
+        if (len == (*it)->getCommandNameLength() && memcmp(name, (*it)->getCommandName(), len) == 0) {
             cmd = *it;
             return true;
         }

@@ -16,6 +16,8 @@
 
 #define __CUSTOM_FUNCTIOMS_C
 
+#include <Cpp/c/string.h>
+
 #include "Utilities/CustomFunctions.h"
 #include "Utilities/AsyncTimer.h"
 #include "Compiler.h"
@@ -147,7 +149,8 @@ int custom_strlen(char *str) {
         do {
             DmaChnStartTxfer(MEM_MATCH_DMA_CHANNEL, DMA_WAIT_BLOCK, 0);
             if (MEM_MATCH_DCHxINTbits.CHERIF == true)
-                return -1;
+                return strlen(str);
+                //return -1;
             len = (DMAADDR - MEM_MATCH_DCHxDSA) & 0x00FFFFFF;
         } while (DMASTATbits.DMACH != MEM_MATCH_DMA_CHANNEL);
         return len;

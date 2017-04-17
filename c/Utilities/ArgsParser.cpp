@@ -36,7 +36,7 @@ int ArgsParser::extractArgs(char *input) {
     if (cmdLineCopy != NULL)
         custom_free((void**) &cmdLineCopy);
     cmdLineCopy = (char*) custom_malloc(cmdLineCopy, length);
-    custom_memset(cmdLineCopy, '\0', length);
+    custom_memcpy(cmdLineCopy, input, length);
 
     if ('"' == *cmdLineCopy) {
         // If command line starts with a quote ("), it's a quoted filename.  Skip to next quote.

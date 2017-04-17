@@ -238,7 +238,7 @@ int main(int argc, char** argv) {
     // Instantiate commands
     cmds = new CommandsList(cli);
     cli->createFileListOfCommands();
-    delete cmds;
+    //delete cmds;
 
     if (config.console.console == CLI_MODE) {
         // Initialize Command Line Interpreter
@@ -288,7 +288,7 @@ int main(int argc, char** argv) {
         } else {
             SCCHandler();
         }
-        commandsTask();
+        //commandsTask();
 
         // Manager of I2C commander receiver
         //        I2CHandler();
