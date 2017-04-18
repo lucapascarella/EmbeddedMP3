@@ -97,27 +97,26 @@ int verbosePrintf(int level, const char * fmt, ...) {
 
 uint16_t consoleWrite(uint8_t *buffer, uint16_t count) {
 
-    if (config.console.port == 0) {
-        // Print on UART port
+    if (config.console.port == 0)
         return UartWrite(buffer, count); // TODO Should work with UartWriteDirectly
-    } else if (config.console.port == 1) {
-        // Print on USB port
+     else if (config.console.port == 1) 
         return USBWrite(buffer, count);
-    } else {
-        // Print on I2C port
+     else if (config.console.port == 2)
         return I2CWrite(buffer, count);
-    }
+    else 
+        return 0;
 }
 
 uint16_t consoleRead(uint8_t *buffer, uint16_t count) {
 
-    if (config.console.port == 0) {
+    if (config.console.port == 0)
         return UartRead(buffer, count);
-    } else if (config.console.port == 1) {
+    else if (config.console.port == 1)
         return USBRead(buffer, count);
-    } else {
+    else if (config.console.port == 2)
         return I2CRead(buffer, count);
-    }
+    else
+        return 0;
 }
 
 int Config(int argc, char **argv) {

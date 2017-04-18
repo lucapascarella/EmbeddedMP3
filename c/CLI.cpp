@@ -170,6 +170,10 @@ bool CLI::cliInputHadler(void) {
     bool rtn;
     uint8_t c;
 
+//    switch(c){
+//        
+//    }
+    
     rtn = false;
     // Check if commandsTask is free to manage another command
     // and if a character is available, otherwise wait to next cycle
