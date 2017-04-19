@@ -75,6 +75,16 @@ private:
         CLI_SM_COMMAND_NOT_FOUND,
         CLI_SM_DONE,
     } sm;
+    
+    // Command line parser state machine
+    enum PARSER_STATE_MACHINE {
+        CLI_PARSER_SM_HOME = 0,
+        CLI_PARSER_SM_WAIT_INPUT,
+        CLI_PARSER_SM_PARSE_BUF,
+        CLI_PARSER_SM_COMPOSE_ESCAPE_SEQUENCE,
+        CLI_PARSER_SM_ESCAPE_SEQUENCE,
+        CLI_PARSER_SM_DONE,
+    } clp;
 
 public:
     CLI(void);
@@ -89,7 +99,7 @@ private:
 
     bool copyInputInLocalBuffer(uint8_t *p);
     uint8_t completeCommand(void);
-    void addCharAndUpdateConsole(uint8_t c);
+    void addByteAndUpdateConsole(uint8_t c);
     void clearCommand(void);
     void reprintConsole(void);
     void CliAddStringAndUpdateConsole(char *str);

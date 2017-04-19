@@ -167,13 +167,104 @@ bool CLI::cliArgsParse(void) {
 }
 
 bool CLI::cliInputHadler(void) {
-    bool rtn;
+    bool end, rtn;
+    uint16_t read, i;
+    uint8_t buf[16], *p;
     uint8_t c;
 
-//    switch(c){
-//        
-//    }
-    
+    rtn = false;
+    end = true;
+    do {
+        switch (clp) {
+            case CLI_PARSER_SM_HOME:
+                escapeCount = 0;
+                clp = CLI_PARSER_SM_WAIT_INPUT;
+                break;
+
+            case CLI_PARSER_SM_WAIT_INPUT:
+                if ((read = consoleRead(buf, sizeof (buf))) > 0) {
+                    i = 0;
+                    clp = CLI_PARSER_SM_PARSE_BUF;
+                } else {
+                    end = false;
+                }
+                break;
+
+            case CLI_PARSER_SM_PARSE_BUF:
+                if (i < read) {
+                    c = buf[i++];
+                    if (escapeCount == 0 && c != ESCAPE) {
+                        if (c == '\t') {
+                            // Horizontal Tab. Completes command
+                            this->completeCommand();
+                        } else if (c == '\0') {
+                            // Null character
+                            // Special char '\0' do nothing
+                        } else if (c == '\n') {
+                            // Line feed
+                            // Special char '\n' do nothing
+                        } else if (c == '\r') {
+                            // Carriage return
+                            printf("\r\n");
+                            rtn = true;
+                        } else {
+                            // Any other character (printable or control), add it to the buffer and update screen console
+                            this->addByteAndUpdateConsole(c);
+                        }
+                    } else {
+                        escapeSequence[escapeCount++] = c;
+                        if (escapeCount > sizeof (escapeSequence)) {
+                            custom_memset(escapeSequence, '0', escapeCount);
+                            escapeCount = 0;
+                            return false;
+                        }
+                        clp = CLI_PARSER_SM_COMPOSE_ESCAPE_SEQUENCE;
+                    }
+                } else {
+                    end = false;
+                }
+                break;
+
+            case CLI_PARSER_SM_COMPOSE_ESCAPE_SEQUENCE:
+                if (escapeCount > 2) {
+                    if (memcmp(escapeSequence, escape_arrow_left, sizeof (escape_arrow_left)) == 0) {
+                        *p = ESCAPE_ARROW_LEFT;
+                    } else if (memcmp(escapeSequence, escape_arrow_right, sizeof (escape_arrow_right)) == 0) {
+                        *p = ESCAPE_ARROW_RIGHT;
+                    } else if (memcmp(escapeSequence, escape_arrow_up, sizeof (escape_arrow_up)) == 0) {
+                        *p = ESCAPE_ARROW_UP;
+                    } else if (memcmp(escapeSequence, escape_arrow_down, sizeof (escape_arrow_down)) == 0) {
+                        *p = ESCAPE_ARROW_DOWN;
+                    } else if (memcmp(escapeSequence, escape_home, sizeof (escape_home)) == 0) {
+                        *p = ESCAPE_HOME;
+                    } else if (memcmp(escapeSequence, escape_page_up, sizeof (escape_page_up)) == 0) {
+                        *p = ESCAPE_PAGE_UP;
+                    } else if (memcmp(escapeSequence, escape_page_down, sizeof (escape_page_down)) == 0) {
+                        *p = ESCAPE_PAGE_DOWN;
+                    } else if (memcmp(escapeSequence, escape_end, sizeof (escape_end)) == 0) {
+                        *p = ESCAPE_END;
+                    } else if (memcmp(escapeSequence, escape_del, sizeof (escape_del)) == 0) {
+                        *p = ESCAPE_DEL;
+                    } else {
+                        return false;
+                    }
+                    custom_memset(escapeSequence, '0', escapeCount);
+                    escapeCount = 0;
+                    return true;
+                }
+                clp = CLI_PARSER_SM_ESCAPE_SEQUENCE;
+                break;
+
+            case CLI_PARSER_SM_ESCAPE_SEQUENCE:
+                clp = CLI_PARSER_SM_DONE;
+                break;
+
+            case CLI_PARSER_SM_DONE:
+                clp = CLI_PARSER_SM_HOME;
+                break;
+        }
+    } while (end);
+
     rtn = false;
     // Check if commandsTask is free to manage another command
     // and if a character is available, otherwise wait to next cycle
@@ -193,7 +284,7 @@ bool CLI::cliInputHadler(void) {
             rtn = true;
         } else {
             // Any other character (printable or control), add it to the buffer and update screen console
-            this->addCharAndUpdateConsole(c);
+            this->addByteAndUpdateConsole(c);
         }
     }
     return rtn;
@@ -266,7 +357,7 @@ uint8_t CLI::completeCommand(void) {
     return this->CliCompleteCommandSearchInFile(fileName, p);
 }
 
-void CLI::addCharAndUpdateConsole(uint8_t c) {
+void CLI::addByteAndUpdateConsole(uint8_t c) {
 
     int i;
 
@@ -408,7 +499,7 @@ void CLI::reprintConsole(void) {
 
 void CLI::CliAddStringAndUpdateConsole(char *str) {
     while (*str != '\0')
-        this->addCharAndUpdateConsole(*str++);
+        this->addByteAndUpdateConsole(*str++);
 }
 
 void CLI::printEscape(const char *p, int i) {
@@ -432,7 +523,7 @@ bool CLI::searchExecutableCommand(char *name) {
     int len;
     std::list<CommandBase*>::iterator it;
 
-    if((len = strlen(name)) == 0)
+    if ((len = strlen(name)) == 0)
         return false;
     for (it = commandList.begin(); it != commandList.end(); it++)
         if (len == (*it)->getCommandNameLength() && memcmp(name, (*it)->getCommandName(), len) == 0) {
@@ -625,7 +716,7 @@ uint8_t CLI::CliCompleteCommandSearchInFile(char *fileName, char *p) {
                 }
             }
             if (found && occ > 0)
-                this->addCharAndUpdateConsole(match);
+                this->addByteAndUpdateConsole(match);
             if ((fres = f_lseek(fp, 0l)) != FR_OK)
                 verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), fileName);
         } while (found && occ != 0);

@@ -8,10 +8,10 @@
                    displayName="Header Files"
                    projectFiles="true">
       <logicalFolder name="f3" displayName="Commands" projectFiles="true">
-        <itemPath>h/Commands/CommandBase.hpp</itemPath>
-        <itemPath>h/Commands/CommandsList.hpp</itemPath>
         <itemPath>h/Commands/Playback.hpp</itemPath>
         <itemPath>h/Commands/Stop.hpp</itemPath>
+        <itemPath>h/Commands/CommandBase.hpp</itemPath>
+        <itemPath>h/Commands/CommandsList.hpp</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="Common" projectFiles="true">
         <itemPath>h/Compiler.h</itemPath>
@@ -64,7 +64,6 @@
         <itemPath>h/Utilities/USB.h</itemPath>
         <itemPath>h/Utilities/AsyncTimer.h</itemPath>
         <itemPath>h/Utilities/ArgsParser.hpp</itemPath>
-        <itemPath>h/Utilities/CustomFunctions.h</itemPath>
       </logicalFolder>
       <itemPath>h/HardwareProfile.h</itemPath>
       <itemPath>h/usb_config.h</itemPath>
@@ -72,8 +71,9 @@
       <itemPath>h/Commands.h</itemPath>
       <itemPath>h/SingleCharacterCommands.h</itemPath>
       <itemPath>h/I2CSlave.h</itemPath>
-      <itemPath>test_header.h</itemPath>
       <itemPath>h/CLI.hpp</itemPath>
+      <itemPath>h/Main.hpp</itemPath>
+      <itemPath>h/Test.hpp</itemPath>
     </logicalFolder>
     <logicalFolder name="LibraryFiles"
                    displayName="Library Files"
@@ -97,8 +97,8 @@
         <itemPath>c/Commands/List.c</itemPath>
         <itemPath>c/Commands/Playback.cpp</itemPath>
         <itemPath>c/Commands/CommandBase.cpp</itemPath>
-        <itemPath>c/Commands/CommandsList.cpp</itemPath>
         <itemPath>c/Commands/Stop.cpp</itemPath>
+        <itemPath>c/Commands/CommandsList.cpp</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="Delay" projectFiles="true">
         <itemPath>c/Delay/Delay.c</itemPath>
@@ -174,7 +174,7 @@
         <platformTool>RealICEPlatformTool</platformTool>
         <languageToolchain>XC32</languageToolchain>
         <languageToolchainVersion>1.43</languageToolchainVersion>
-        <platform>3</platform>
+        <platform>4</platform>
       </toolsSet>
       <compileType>
         <linkerTool>
@@ -370,7 +370,6 @@
         <property key="UART2" value="true"/>
         <property key="USB" value="true"/>
         <property key="debugoptions.useswbreakpoints" value="false"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="hwtoolclock.instructionspeed" value="4"/>
         <property key="hwtoolclock.units" value="mips"/>
@@ -1593,39 +1592,6 @@
         </C32Global>
       </item>
       <item path="c/Utilities/Config.c" ex="false" overriding="false">
-        <C32>
-          <property key="additional-warnings" value="false"/>
-          <property key="enable-app-io" value="false"/>
-          <property key="enable-omit-frame-pointer" value="false"/>
-          <property key="enable-symbols" value="true"/>
-          <property key="enable-unroll-loops" value="false"/>
-          <property key="exclude-floating-point" value="false"/>
-          <property key="extra-include-directories" value="h"/>
-          <property key="generate-16-bit-code" value="false"/>
-          <property key="isolate-each-function" value="false"/>
-          <property key="make-warnings-into-errors" value="false"/>
-          <property key="optimization-level" value=""/>
-          <property key="place-data-into-section" value="false"/>
-          <property key="post-instruction-scheduling" value="default"/>
-          <property key="pre-instruction-scheduling" value="default"/>
-          <property key="preprocessor-macros" value=""/>
-          <property key="strict-ansi" value="false"/>
-          <property key="support-ansi" value="false"/>
-          <property key="use-cci" value="false"/>
-          <property key="use-indirect-calls" value="false"/>
-        </C32>
-        <C32-AR>
-        </C32-AR>
-        <C32-AS>
-        </C32-AS>
-        <C32-LD>
-        </C32-LD>
-        <C32CPP>
-        </C32CPP>
-        <C32Global>
-        </C32Global>
-      </item>
-      <item path="c/Utilities/CustomFunctions.c" ex="false" overriding="false">
         <C32>
           <property key="additional-warnings" value="false"/>
           <property key="enable-app-io" value="false"/>
