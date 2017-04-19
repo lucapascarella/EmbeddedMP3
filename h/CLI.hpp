@@ -47,13 +47,17 @@ private:
     int inputLineIndex;
     int inputLineLength;
 
-    char tmp[CLI_MAX_BUF_SIZE];
+    char tmpBuffer[CLI_MAX_BUF_SIZE];
     int tmpIndex;
     int tmpLength;
 
     int lastCmd;
     int nCmd;
 
+    // Parsing input
+    int charRead;
+    int charIndex;
+    
     // Args parser
     ArgsParser *args;
 

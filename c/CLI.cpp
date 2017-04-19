@@ -48,7 +48,7 @@ CLI::CLI(void) {
 
     custom_memset(inputLine, '\0', sizeof (inputLine));
     inputLineLength = inputLineIndex = 0;
-    custom_memset(tmp, '\0', sizeof (tmp));
+    custom_memset(tmpBuffer, '\0', sizeof (tmpBuffer));
     tmpLength = tmpIndex = 0;
 
     // Create Arguments parser object
@@ -168,8 +168,7 @@ bool CLI::cliArgsParse(void) {
 
 bool CLI::cliInputHadler(void) {
     bool end, rtn;
-    uint16_t read, i;
-    uint8_t buf[16], *p;
+    uint8_t *p;
     uint8_t c;
 
     rtn = false;
@@ -178,12 +177,12 @@ bool CLI::cliInputHadler(void) {
         switch (clp) {
             case CLI_PARSER_SM_HOME:
                 escapeCount = 0;
+                charIndex = 0;
                 clp = CLI_PARSER_SM_WAIT_INPUT;
                 break;
 
             case CLI_PARSER_SM_WAIT_INPUT:
-                if ((read = consoleRead(buf, sizeof (buf))) > 0) {
-                    i = 0;
+                if ((charRead = consoleRead((uint8_t*) tmpBuffer, sizeof (tmpBuffer))) > 0) {
                     clp = CLI_PARSER_SM_PARSE_BUF;
                 } else {
                     end = false;
@@ -191,8 +190,8 @@ bool CLI::cliInputHadler(void) {
                 break;
 
             case CLI_PARSER_SM_PARSE_BUF:
-                if (i < read) {
-                    c = buf[i++];
+                if (charIndex < charRead) {
+                    c = tmpBuffer[charIndex++];
                     if (escapeCount == 0 && c != ESCAPE) {
                         if (c == '\t') {
                             // Horizontal Tab. Completes command
@@ -227,23 +226,23 @@ bool CLI::cliInputHadler(void) {
 
             case CLI_PARSER_SM_COMPOSE_ESCAPE_SEQUENCE:
                 if (escapeCount > 2) {
-                    if (memcmp(escapeSequence, escape_arrow_left, sizeof (escape_arrow_left)) == 0) {
+                    if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_arrow_left, sizeof (escape_arrow_left)) == 0) {
                         *p = ESCAPE_ARROW_LEFT;
-                    } else if (memcmp(escapeSequence, escape_arrow_right, sizeof (escape_arrow_right)) == 0) {
+                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_arrow_right, sizeof (escape_arrow_right)) == 0) {
                         *p = ESCAPE_ARROW_RIGHT;
-                    } else if (memcmp(escapeSequence, escape_arrow_up, sizeof (escape_arrow_up)) == 0) {
+                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_arrow_up, sizeof (escape_arrow_up)) == 0) {
                         *p = ESCAPE_ARROW_UP;
-                    } else if (memcmp(escapeSequence, escape_arrow_down, sizeof (escape_arrow_down)) == 0) {
+                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_arrow_down, sizeof (escape_arrow_down)) == 0) {
                         *p = ESCAPE_ARROW_DOWN;
-                    } else if (memcmp(escapeSequence, escape_home, sizeof (escape_home)) == 0) {
+                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_home, sizeof (escape_home)) == 0) {
                         *p = ESCAPE_HOME;
-                    } else if (memcmp(escapeSequence, escape_page_up, sizeof (escape_page_up)) == 0) {
+                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_page_up, sizeof (escape_page_up)) == 0) {
                         *p = ESCAPE_PAGE_UP;
-                    } else if (memcmp(escapeSequence, escape_page_down, sizeof (escape_page_down)) == 0) {
+                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_page_down, sizeof (escape_page_down)) == 0) {
                         *p = ESCAPE_PAGE_DOWN;
-                    } else if (memcmp(escapeSequence, escape_end, sizeof (escape_end)) == 0) {
+                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_end, sizeof (escape_end)) == 0) {
                         *p = ESCAPE_END;
-                    } else if (memcmp(escapeSequence, escape_del, sizeof (escape_del)) == 0) {
+                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_del, sizeof (escape_del)) == 0) {
                         *p = ESCAPE_DEL;
                     } else {
                         return false;
@@ -601,11 +600,11 @@ bool CLI::createFileListOfFilesEntry(void) {
             // Flush the hidden property
             if ((fres = f_sync(fp)) == FR_OK) {
                 // Get the current directory name
-                if ((fres = f_getcwd(tmp, CLI_MAX_DIR_SIZE)) == FR_OK) {
+                if ((fres = f_getcwd(tmpBuffer, CLI_MAX_DIR_SIZE)) == FR_OK) {
                     // Open the directory
                     dir = (DIR*) custom_malloc((void*) dir, sizeof (DIR));
                     finfo = (FILINFO*) custom_malloc((void*) finfo, sizeof (FILINFO));
-                    if ((fres = f_opendir(dir, tmp)) == FR_OK) {
+                    if ((fres = f_opendir(dir, tmpBuffer)) == FR_OK) {
                         while (true) {
                             // Read a directory item
                             if ((fres = (f_readdir(dir, finfo))) != FR_OK) {
@@ -694,22 +693,22 @@ uint8_t CLI::CliCompleteCommandSearchInFile(char *fileName, char *p) {
             occ = 0;
             ////        len = strlen(p);
             len = inputLineIndex - (p - inputLine);
-            while (f_gets(tmp, sizeof (tmp), fp) != NULL) {
-                tmpLen = strlen(tmp) - 1;
-                if (tmp[tmpLen] == '\n')
-                    tmp[tmpLen] = '\0';
-                if (tmpLen >= len && strncmp(p, tmp, len) == 0) {
-                    if (tmp[len] == '\0') {
+            while (f_gets(tmpBuffer, sizeof (tmpBuffer), fp) != NULL) {
+                tmpLen = strlen(tmpBuffer) - 1;
+                if (tmpBuffer[tmpLen] == '\n')
+                    tmpBuffer[tmpLen] = '\0';
+                if (tmpLen >= len && strncmp(p, tmpBuffer, len) == 0) {
+                    if (tmpBuffer[len] == '\0') {
                         occ = 0;
                         found = FALSE;
                         break;
                     }
                     if (occ == 0) {
-                        match = tmp[len];
+                        match = tmpBuffer[len];
                         occ++;
                         found = TRUE;
                     } else {
-                        if (match != tmp[len]) {
+                        if (match != tmpBuffer[len]) {
                             found = FALSE;
                         }
                     }
@@ -722,12 +721,12 @@ uint8_t CLI::CliCompleteCommandSearchInFile(char *fileName, char *p) {
         } while (found && occ != 0);
 
         if (occ != 0) {
-            while (f_gets(tmp, sizeof (tmp), fp) != NULL) {
-                if (strncmp(p, tmp, len) == 0) {
-                    tmpLen = strlen(tmp) - 1;
-                    if (tmp[tmpLen] == '\n')
-                        tmp[tmpLen] = '\0';
-                    printf("\r\n%s", tmp);
+            while (f_gets(tmpBuffer, sizeof (tmpBuffer), fp) != NULL) {
+                if (strncmp(p, tmpBuffer, len) == 0) {
+                    tmpLen = strlen(tmpBuffer) - 1;
+                    if (tmpBuffer[tmpLen] == '\n')
+                        tmpBuffer[tmpLen] = '\0';
+                    printf("\r\n%s", tmpBuffer);
                 }
             }
             printf("\r\n");
