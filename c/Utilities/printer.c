@@ -35,7 +35,9 @@ void InitPinter(void) {
 
 int __putc(char c) {
     // print a single character
-    consoleWrite(&c, 1);
+    if (isUARTEnabled() || isUSBEnabled() || isI2CEnabled())
+        return consoleWrite(&c, 1);
+    return 0;
 }
 
 //int __puts(const char *p) {
@@ -99,11 +101,11 @@ uint16_t consoleWrite(uint8_t *buffer, uint16_t count) {
 
     if (config.console.port == 0)
         return UartWrite(buffer, count); // TODO Should work with UartWriteDirectly
-     else if (config.console.port == 1) 
+    else if (config.console.port == 1)
         return USBWrite(buffer, count);
-     else if (config.console.port == 2)
+    else if (config.console.port == 2)
         return I2CWrite(buffer, count);
-    else 
+    else
         return 0;
 }
 

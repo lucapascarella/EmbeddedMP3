@@ -16,7 +16,7 @@
 #include <list>
 
 #define CLI_MAX_DIR_SIZE    128
-#define CLI_MAX_BUF_SIZE    1024 * 4
+#define CLI_MAX_BUF_SIZE    16////1024 * 4
 
 #define CLI_MAX_LINE_INPUT_SIZE     1024
 
@@ -40,7 +40,7 @@ private:
 
     // Escape sequence
     uint16_t escapeCount;
-    char escapeSequence[10];
+    char escapeSequence[16];
 
     // Received input
     char inputLine[CLI_MAX_BUF_SIZE];
@@ -50,6 +50,10 @@ private:
     char tmpBuffer[CLI_MAX_BUF_SIZE];
     int tmpIndex;
     int tmpLength;
+
+    uint8_t inputBuffer[32];
+    int inputIndex;
+    int inputLength;
 
     int lastCmd;
     int nCmd;
@@ -73,6 +77,7 @@ private:
     enum SM {
         CLI_SM_HOME = 0,
         CLI_SM_WAIT_INPUT,
+        CLI_SM_PARSE_INPUT,
         CLI_SM_ARGS_PARSER,
         CLI_SM_FIND_COMMAND,
         CLI_SM_COMMAND_TASK,
@@ -103,13 +108,14 @@ private:
 
     bool copyInputInLocalBuffer(uint8_t *p);
     uint8_t completeCommand(void);
-    void addByteAndUpdateConsole(uint8_t c);
+    bool addByteAndUpdateConsole(void);
+    bool returnEscapeInternalCharacter(uint8_t *c);
     void clearCommand(void);
     void reprintConsole(void);
     void CliAddStringAndUpdateConsole(char *str);
-    void printEscape(const char *p, int i);
+    void printEscapeSequence(const char *p, int i);
     void printBackspace(void);
-    void printFor(char *p, int i, int len);
+    void printString(char *p, int i, int len);
     bool searchExecutableCommand(char *name);
     bool createFileListOfFilesEntry(void);
     uint8_t CliCompleteCommandSearchInFile(char *fileName, char *p);
