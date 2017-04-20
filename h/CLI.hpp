@@ -51,16 +51,16 @@ private:
     int tmpIndex;
     int tmpLength;
 
-    uint8_t inputBuffer[32];
-    int inputIndex;
-    int inputLength;
+    
+    //int inputIndex;
+    //int inputLength;
 
     int lastCmd;
     int nCmd;
 
     // Parsing input
-    int charRead;
-    int charIndex;
+    //int charRead;
+    //int charIndex;
     
     // Args parser
     ArgsParser *args;
@@ -77,7 +77,6 @@ private:
     enum SM {
         CLI_SM_HOME = 0,
         CLI_SM_WAIT_INPUT,
-        CLI_SM_PARSE_INPUT,
         CLI_SM_ARGS_PARSER,
         CLI_SM_FIND_COMMAND,
         CLI_SM_COMMAND_TASK,
@@ -107,8 +106,8 @@ private:
     bool cliInputHadler(void);
 
     bool copyInputInLocalBuffer(uint8_t *p);
-    uint8_t completeCommand(void);
-    bool addByteAndUpdateConsole(void);
+    int completeCommand(void);
+    bool addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len);
     bool returnEscapeInternalCharacter(uint8_t *c);
     void clearCommand(void);
     void reprintConsole(void);
@@ -118,7 +117,7 @@ private:
     void printString(char *p, int i, int len);
     bool searchExecutableCommand(char *name);
     bool createFileListOfFilesEntry(void);
-    uint8_t CliCompleteCommandSearchInFile(char *fileName, char *p);
+    int completeCommandSearchingInFile(char *fileName, char *p);
     bool getLastCommandFromFile(int pos);
     void putLastCommandInFile(void);
 };

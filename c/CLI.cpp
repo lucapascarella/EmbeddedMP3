@@ -90,6 +90,8 @@ void CLI::registerCommand(CommandBase *cb) {
 void CLI::cliTaskHadler(void) {
     int rtn;
     char *name;
+    uint16_t read;
+    uint8_t inputBuffer[16];
 
     switch (sm) {
         case CLI_SM_HOME:
@@ -99,17 +101,10 @@ void CLI::cliTaskHadler(void) {
 
         case CLI_SM_WAIT_INPUT:
             // Get a copy input until the newline is reached
-            if ((charRead = consoleRead((uint8_t*) inputBuffer, sizeof (inputBuffer))) > 0) {
-                charIndex = 0;
-                sm = CLI_SM_PARSE_INPUT;
+            if ((read = consoleRead(inputBuffer, sizeof (inputBuffer))) > 0) {
+                if (this->addByteAndUpdateConsole(inputBuffer, read))
+                    sm = CLI_SM_ARGS_PARSER;
             }
-            break;
-
-        case CLI_SM_PARSE_INPUT:
-            if (this->addByteAndUpdateConsole())
-                sm = CLI_SM_ARGS_PARSER;
-            else
-                sm = CLI_SM_WAIT_INPUT;
             break;
 
         case CLI_SM_ARGS_PARSER:
@@ -175,204 +170,15 @@ bool CLI::cliArgsParse(void) {
     return false;
 }
 
-//bool CLI::cliInputHadler(void) {
-//    bool end, rtn;
-//    uint8_t *p;
-//    uint8_t c;
-//
-//    rtn = false;
-//    end = true;
-//    do {
-//        switch (clp) {
-//            case CLI_PARSER_SM_HOME:
-//                escapeCount = 0;
-//                clp = CLI_PARSER_SM_WAIT_INPUT;
-//                break;
-//
-//            case CLI_PARSER_SM_WAIT_INPUT:
-//                if ((charRead = consoleRead((uint8_t*) tmpBuffer, sizeof (tmpBuffer))) > 0) {
-//                    charIndex = 0;
-//                    clp = CLI_PARSER_SM_PARSE_BUF;
-//                } else {
-//                    end = false;
-//                }
-//                break;
-//
-//            case CLI_PARSER_SM_PARSE_BUF:
-//                if (charIndex < charRead) {
-//                    c = tmpBuffer[charIndex++];
-//                    if (escapeCount == 0 && c != ESCAPE) {
-//                        if (c == '\t') {
-//                            // Horizontal Tab. Completes command
-//                            this->completeCommand();
-//                        } else if (c == '\0') {
-//                            // Null character
-//                            // Special char '\0' do nothing
-//                        } else if (c == '\n') {
-//                            // Line feed
-//                            // Special char '\n' do nothing
-//                        } else if (c == '\r') {
-//                            // Carriage return
-//                            printf("\r\n");
-//                            rtn = true;
-//                        } else {
-//                            // Any other character (printable or control), add it to the buffer and update screen console
-//                            this->addByteAndUpdateConsole(c);
-//                        }
-//                    } else {
-//                        escapeSequence[escapeCount++] = c;
-//                        if (escapeCount > sizeof (escapeSequence)) {
-//                            custom_memset(escapeSequence, '0', escapeCount);
-//                            escapeCount = 0;
-//                            return false;
-//                        }
-//                        clp = CLI_PARSER_SM_COMPOSE_ESCAPE_SEQUENCE;
-//                    }
-//                } else {
-//                    end = false;
-//                    clp = CLI_PARSER_SM_WAIT_INPUT;
-//                }
-//                break;
-//
-//            case CLI_PARSER_SM_COMPOSE_ESCAPE_SEQUENCE:
-//                if (escapeCount > 2) {
-//                    if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_arrow_left, sizeof (escape_arrow_left)) == 0) {
-//                        *p = ESCAPE_ARROW_LEFT;
-//                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_arrow_right, sizeof (escape_arrow_right)) == 0) {
-//                        *p = ESCAPE_ARROW_RIGHT;
-//                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_arrow_up, sizeof (escape_arrow_up)) == 0) {
-//                        *p = ESCAPE_ARROW_UP;
-//                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_arrow_down, sizeof (escape_arrow_down)) == 0) {
-//                        *p = ESCAPE_ARROW_DOWN;
-//                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_home, sizeof (escape_home)) == 0) {
-//                        *p = ESCAPE_HOME;
-//                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_page_up, sizeof (escape_page_up)) == 0) {
-//                        *p = ESCAPE_PAGE_UP;
-//                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_page_down, sizeof (escape_page_down)) == 0) {
-//                        *p = ESCAPE_PAGE_DOWN;
-//                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_end, sizeof (escape_end)) == 0) {
-//                        *p = ESCAPE_END;
-//                    } else if (escapeCount == sizeof (escape_arrow_left) && memcmp(escapeSequence, escape_del, sizeof (escape_del)) == 0) {
-//                        *p = ESCAPE_DEL;
-//                    } else {
-//                        return false;
-//                    }
-//                    custom_memset(escapeSequence, '0', escapeCount);
-//                    escapeCount = 0;
-//                    return true;
-//                }
-//                clp = CLI_PARSER_SM_ESCAPE_SEQUENCE;
-//                break;
-//
-//            case CLI_PARSER_SM_ESCAPE_SEQUENCE:
-//                clp = CLI_PARSER_SM_DONE;
-//                break;
-//
-//            case CLI_PARSER_SM_DONE:
-//                clp = CLI_PARSER_SM_HOME;
-//                break;
-//        }
-//    } while (end);
-//
-//    rtn = false;
-//    // Check if commandsTask is free to manage another command
-//    // and if a character is available, otherwise wait to next cycle
-//    if (this->copyInputInLocalBuffer(&c)) {
-//        if (c == '\t') {
-//            // Horizontal Tab. Completes command
-//            this->completeCommand();
-//        } else if (c == '\0') {
-//            // Null character
-//            // Special char '\0' do nothing
-//        } else if (c == '\n') {
-//            // Line feed
-//            // Special char '\n' do nothing
-//        } else if (c == '\r') {
-//            // Carriage return
-//            printf("\r\n");
-//            rtn = true;
-//        } else {
-//            // Any other character (printable or control), add it to the buffer and update screen console
-//            this->addByteAndUpdateConsole(c);
-//        }
-//    }
-//    return rtn;
-//}
+bool CLI::addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len) {
 
-//bool CLI::copyInputInLocalBuffer(uint8_t *p) {
-//
-//    // Read a normal character or the entire escape sequence
-//    while (consoleRead(p, 1) != 0) {
-//        if (escapeCount == 0 && *p != ESCAPE) {
-//            return true;
-//        } else {
-//            escapeSequence[escapeCount++] = *p;
-//            if (escapeCount > sizeof (escapeSequence)) {
-//                custom_memset(escapeSequence, '0', escapeCount);
-//                escapeCount = 0;
-//                return false;
-//            }
-//        }
-//    }
-//
-//    if (escapeCount > 2) {
-//        if (memcmp(escapeSequence, escape_arrow_left, sizeof (escape_arrow_left)) == 0) {
-//            *p = ESCAPE_ARROW_LEFT;
-//        } else if (memcmp(escapeSequence, escape_arrow_right, sizeof (escape_arrow_right)) == 0) {
-//            *p = ESCAPE_ARROW_RIGHT;
-//        } else if (memcmp(escapeSequence, escape_arrow_up, sizeof (escape_arrow_up)) == 0) {
-//            *p = ESCAPE_ARROW_UP;
-//        } else if (memcmp(escapeSequence, escape_arrow_down, sizeof (escape_arrow_down)) == 0) {
-//            *p = ESCAPE_ARROW_DOWN;
-//        } else if (memcmp(escapeSequence, escape_home, sizeof (escape_home)) == 0) {
-//            *p = ESCAPE_HOME;
-//        } else if (memcmp(escapeSequence, escape_page_up, sizeof (escape_page_up)) == 0) {
-//            *p = ESCAPE_PAGE_UP;
-//        } else if (memcmp(escapeSequence, escape_page_down, sizeof (escape_page_down)) == 0) {
-//            *p = ESCAPE_PAGE_DOWN;
-//        } else if (memcmp(escapeSequence, escape_end, sizeof (escape_end)) == 0) {
-//            *p = ESCAPE_END;
-//        } else if (memcmp(escapeSequence, escape_del, sizeof (escape_del)) == 0) {
-//            *p = ESCAPE_DEL;
-//        } else {
-//            return false;
-//        }
-//        custom_memset(escapeSequence, '0', escapeCount);
-//        escapeCount = 0;
-//        return true;
-//    }
-//    return false;
-//}
-
-uint8_t CLI::completeCommand(void) {
-
-    char *p, *fileName;
-
-    // If there is nothing written in the buffer do nothing.
-    if (inputLineLength == 0)
-        return 0;
-
-    // If in the buffer there is a space, search a file, otherwise search a command
-    if ((p = strrchr(inputLine, ' ')) == NULL) {
-        p = inputLine;
-        fileName = (char*) temporaryFileCommands;
-    } else {
-        // p pointer refer to "strrchr(cmd2, ' ')"
-        p++;
-        fileName = (char*) temporaryFileEntryList;
-    }
-
-    // Complete the command by searching into selected file
-    return this->CliCompleteCommandSearchInFile(fileName, p);
-}
-
-bool CLI::addByteAndUpdateConsole(void) {
-
+    int occ;
     uint8_t c;
-    int i;
+    int i, j;
 
+    j = 0;
     do {
-        c = inputBuffer[charIndex++];
+        c = pbuf[j++];
         switch (c) {
             case ESCAPE:
                 custom_memset(escapeSequence, '\0', sizeof (escapeSequence));
@@ -474,17 +280,21 @@ bool CLI::addByteAndUpdateConsole(void) {
 
             case '\t':
                 // Horizontal Tab. Completes command
-                this->completeCommand();
+                occ = this->completeCommand();
                 break;
+
             case '\0':
                 Nop();
                 // Null character
                 // Special char '\0' do nothing
                 break;
+
             case '\n':
+                Nop();
                 // Line feed
                 // Special char '\n' do nothing
                 break;
+
             case'\r':
 
                 return true;
@@ -495,7 +305,7 @@ bool CLI::addByteAndUpdateConsole(void) {
                     escapeSequence[escapeCount++] = c;
                     if (this->returnEscapeInternalCharacter(&c)) {
                         // The escape sequence is converted in a internal single character escape, reprocess it
-                        inputBuffer[--charIndex] = c;
+                        pbuf[--j] = c;
                         escapeCount = 0;
                     }
                 } else {
@@ -520,7 +330,7 @@ bool CLI::addByteAndUpdateConsole(void) {
                 }
                 break;
         }
-    } while (charIndex < charRead);
+    } while (j < len);
     return false;
 }
 
@@ -548,6 +358,28 @@ bool CLI::returnEscapeInternalCharacter(uint8_t *c) {
         rtn = false;
     }
     return rtn;
+}
+
+int CLI::completeCommand(void) {
+
+    char *p, *fileName;
+
+    // If there is nothing written in the buffer do nothing.
+    if (inputLineLength == 0)
+        return 0;
+
+    // If in the buffer there is a space, search a file, otherwise search a command
+    if ((p = strrchr(inputLine, ' ')) == NULL) {
+        p = inputLine;
+        fileName = (char*) temporaryFileCommands;
+    } else {
+        // p pointer refer to "strrchr(cmd2, ' ')"
+        p++;
+        fileName = (char*) temporaryFileEntryList;
+    }
+
+    // Complete the command by searching into selected file
+    return this->completeCommandSearchingInFile(fileName, p);
 }
 
 void CLI::clearCommand(void) {
@@ -742,58 +574,61 @@ bool CLI::createFileListOfFilesEntry(void) {
     return rtn;
 }
 
-uint8_t CLI::CliCompleteCommandSearchInFile(char *fileName, char *p) {
+int CLI::completeCommandSearchingInFile(char *fileName, char *p) {
 
     FIL *fp;
-    bool found, rtn;
+    bool found;
+    uint16_t rtn;
     int len, occ, tmpLen;
-    char match;
+    char match, *buf;
     FRESULT fres;
 
+    rtn = 0;
     fp = NULL;
     fp = (FIL*) custom_malloc(fp, sizeof (FIL));
+    buf = NULL;
+    buf = (char*) custom_malloc(buf, CLI_MAX_BUF_SIZE);
 
     // Search method (Files and Commands) unified
     if ((fres = f_open(fp, fileName, FA_READ)) == FR_OK) {
-        found = FALSE;
+        found = false;
         do {
             occ = 0;
-            ////        len = strlen(p);
-            len = inputLineIndex - (p - inputLine);
-            while (f_gets(tmpBuffer, sizeof (tmpBuffer), fp) != NULL) {
-                tmpLen = strlen(tmpBuffer) - 1;
-                if (tmpBuffer[tmpLen] == '\n')
-                    tmpBuffer[tmpLen] = '\0';
-                if (tmpLen >= len && strncmp(p, tmpBuffer, len) == 0) {
-                    if (tmpBuffer[len] == '\0') {
+            len = custom_strlen(p);
+            while (f_gets(buf, CLI_MAX_BUF_SIZE, fp) != NULL) {
+                tmpLen = custom_strlen(buf) - 1;
+                if (buf[tmpLen] == '\n')
+                    buf[tmpLen] = '\0';
+                if (tmpLen >= len && strncmp(p, buf, len) == 0) {
+                    if (buf[len] == '\0') {
                         occ = 0;
-                        found = FALSE;
+                        found = false;
                         break;
                     }
                     if (occ == 0) {
-                        match = tmpBuffer[len];
+                        match = buf[len];
                         occ++;
-                        found = TRUE;
+                        found = true;
                     } else {
-                        if (match != tmpBuffer[len]) {
-                            found = FALSE;
+                        if (match != buf[len]) {
+                            found = false;
                         }
                     }
                 }
             }
             if (found && occ > 0)
-                ////this->addByteAndUpdateConsole(match);
-                if ((fres = f_lseek(fp, 0l)) != FR_OK)
-                    verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), fileName);
+                this->addByteAndUpdateConsole((uint8_t*) & match, 1);
+            if ((fres = f_lseek(fp, 0l)) != FR_OK)
+                verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), fileName);
         } while (found && occ != 0);
 
         if (occ != 0) {
-            while (f_gets(tmpBuffer, sizeof (tmpBuffer), fp) != NULL) {
-                if (strncmp(p, tmpBuffer, len) == 0) {
-                    tmpLen = strlen(tmpBuffer) - 1;
-                    if (tmpBuffer[tmpLen] == '\n')
-                        tmpBuffer[tmpLen] = '\0';
-                    printf("\r\n%s", tmpBuffer);
+            while (f_gets(buf, CLI_MAX_BUF_SIZE, fp) != NULL) {
+                if (strncmp(p, buf, len) == 0) {
+                    tmpLen = strlen(buf) - 1;
+                    if (buf[tmpLen] == '\n')
+                        buf[tmpLen] = '\0';
+                    printf("\r\n%s", buf);
                 }
             }
             printf("\r\n");
@@ -801,14 +636,17 @@ uint8_t CLI::CliCompleteCommandSearchInFile(char *fileName, char *p) {
         }
         if ((fres = f_close(fp)) != FR_OK)
             verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), fileName);
-        return occ;
+        rtn = occ;
+        //return occ;
     } else {
         // Unable to open file
         verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), fileName);
-        rtn = false;
+        rtn = -1;
     }
     if (fp != NULL)
         custom_free((void**) &fp);
+    if (buf != NULL)
+        custom_free((void**) &buf);
     return rtn;
 }
 
