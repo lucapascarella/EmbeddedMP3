@@ -71,6 +71,8 @@ extern "C" {
 #define VER_DBG             3
     int verbosePrintf(int level, const char * fmt, ...);
 
+    int consolePrint(uint8_t *buffer, uint16_t count);
+    
     uint16_t consoleWrite(uint8_t *buffer, uint16_t count);
     uint16_t consoleRead(uint8_t *buffer, uint16_t count);
 

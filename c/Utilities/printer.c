@@ -25,6 +25,7 @@
 #include "Utilities/GPIO.h"
 #include "I2CSlave.h"
 #include "Delay/Delay.h"
+#include "Utilities/CustomFunctions.h"
 
 PRINTER_CONFIG pri;
 
@@ -35,17 +36,27 @@ void InitPinter(void) {
 
 int __putc(char c) {
     // print a single character
-    if (isUARTEnabled() || isUSBEnabled() || isI2CEnabled())
-        return consoleWrite(&c, 1);
+
+    return consoleWrite(&c, 1);
     return 0;
 }
 
-//int __puts(const char *p) {
-//
-//    // print a string
-//    while (*p != 0)
-//        __putc(*p++);
-//}
+int consolePrint(uint8_t *buffer, uint16_t count) {
+
+    va_list ap;
+    int sent, retry;
+    char *p;
+
+    retry = 20;
+    sent = 0;
+    p = pri.txBuf[pri.alt++ % PRI_BUF_ALT_DIM];
+    custom_memcpy(p, buffer, count);
+    // Print on UART, USB or I2C port
+    do {
+        sent += consoleWrite(&p[sent], count - sent);
+    } while (sent < count && retry--);
+    return sent;
+}
 
 int __printf(const char * fmt, ...) {
 
@@ -58,67 +69,63 @@ int __printf(const char * fmt, ...) {
     p = pri.txBuf[pri.alt++ % PRI_BUF_ALT_DIM];
 
     // If the user disable both UART and USB serial console do anything
-    if (isUARTEnabled() || isUSBEnabled() || isI2CEnabled()) {
+    va_start(ap, fmt);
+    len = vsnprintf(p, PRINTER_BUFFER_SIZE, fmt, ap);
+    va_end(ap);
+    // Print on UART, USB or I2C port
+    do {
+        sent += consoleWrite(&p[sent], len - sent);
+    } while (sent < len && retry--);
+    return sent;
+}
+
+//char returnLineVerbose[] = "\r\n>";
+
+int verbosePrintf(int level, const char * fmt, ...) {
+
+    va_list ap;
+    int len, sent, retry;
+    char *p;
+
+    retry = 20;
+    len = sent = 0;
+    p = pri.txBuf[pri.alt++ % PRI_BUF_ALT_DIM];
+
+    if (level <= config.console.verbose) {
+        consoleWrite("\r\n", 2);
+        // If the user disable both UART and USB serial console do anything
         va_start(ap, fmt);
         len = vsnprintf(p, PRINTER_BUFFER_SIZE, fmt, ap);
         va_end(ap);
-
         // Print on UART, USB or I2C port
         do {
             sent += consoleWrite(&p[sent], len - sent);
         } while (sent < len && retry--);
     }
+    // TODO write to log file
     return sent;
 }
 
-char returnLineVerbose[] = "\r\n>";
-
-int verbosePrintf(int level, const char * fmt, ...) {
-
-    va_list ap;
-    int n;
-    char buf[1024];
-
-    if (level <= config.console.verbose) {
-        // If the user disable both UART and USB serial console do anything
-        if (isUARTEnabled() || isUSBEnabled() || isI2CEnabled()) {
-            va_start(ap, fmt);
-            n = vsnprintf(buf, sizeof (buf), fmt, ap);
-            va_end(ap);
-
-            // Print on UART, USB or I2C port
-            consoleWrite(buf, n);
-            consoleWrite(returnLineVerbose, sizeof (returnLineVerbose));
-            return n;
-        }
-    }
-    // TODO write to log file
-
+uint16_t consoleWrite(uint8_t *buffer, uint16_t count) {
+    if (count != 0 && (isUARTEnabled() || isUSBEnabled() || isI2CEnabled()))
+        if (config.console.port == 0)
+            return UartWrite(buffer, count); // TODO Should work with UartWriteDirectly
+        else if (config.console.port == 1)
+            return USBWrite(buffer, count);
+        else if (config.console.port == 2)
+            return I2CWrite(buffer, count);
     return 0;
 }
 
-uint16_t consoleWrite(uint8_t *buffer, uint16_t count) {
-
-    if (config.console.port == 0)
-        return UartWrite(buffer, count); // TODO Should work with UartWriteDirectly
-    else if (config.console.port == 1)
-        return USBWrite(buffer, count);
-    else if (config.console.port == 2)
-        return I2CWrite(buffer, count);
-    else
-        return 0;
-}
-
 uint16_t consoleRead(uint8_t *buffer, uint16_t count) {
-
-    if (config.console.port == 0)
-        return UartRead(buffer, count);
-    else if (config.console.port == 1)
-        return USBRead(buffer, count);
-    else if (config.console.port == 2)
-        return I2CRead(buffer, count);
-    else
-        return 0;
+    if (count != 0 && (isUARTEnabled() || isUSBEnabled() || isI2CEnabled()))
+        if (config.console.port == 0)
+            return UartRead(buffer, count);
+        else if (config.console.port == 1)
+            return USBRead(buffer, count);
+        else if (config.console.port == 2)
+            return I2CRead(buffer, count);
+    return 0;
 }
 
 int Config(int argc, char **argv) {

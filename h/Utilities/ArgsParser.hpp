@@ -30,7 +30,7 @@ private:
 
 public:
     ArgsParser(void);
-    int extractArgs(char *input);
+    int extractArgs(uint8_t *input);
     char * getArgPointer(int pos);
     int getArgc(void);
     char ** getArgv(void);

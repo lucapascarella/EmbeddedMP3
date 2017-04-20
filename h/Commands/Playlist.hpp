@@ -14,19 +14,23 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
+#ifndef PLAYLIST_HPP
+#define	PLAYLIST_HPP
 
-#include "Commands/CommandsList.hpp"
-#include "Commands/Playback.hpp"
-#include "Commands/Stop.hpp"
-#include "Commands/Playlist.hpp"
+#include "CommandBase.hpp"
 
-CommandsList::CommandsList(CLI *cli) {
-    Playback *playback = new Playback();
-    Stop *stop = new Stop();
-    Playlist *playlist = new Playlist();
-    
-    cli->registerCommand(playback);
-    cli->registerCommand(stop);
-    cli->registerCommand(playlist);
-}
+class Playlist : public CommandBase {
+private:
+    static constexpr const char* name = "playlist";
+    static constexpr const char* options = "";
+
+public:
+    Playlist(void);
+    virtual const char * getCommandOptions(void);
+    virtual const char * getCommandName(void);
+    virtual int command(int argc, char **argv); // pure specifier
+};
+
+
+#endif	/* PLAYLIST_HPP */
 

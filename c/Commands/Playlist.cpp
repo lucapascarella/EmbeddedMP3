@@ -14,19 +14,34 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-
-#include "Commands/CommandsList.hpp"
-#include "Commands/Playback.hpp"
-#include "Commands/Stop.hpp"
 #include "Commands/Playlist.hpp"
+#include "MP3/Play.h"
+#include "Utilities/ArgsParser.hpp"
+#include "Utilities/Optlist.h"
 
-CommandsList::CommandsList(CLI *cli) {
-    Playback *playback = new Playback();
-    Stop *stop = new Stop();
-    Playlist *playlist = new Playlist();
-    
-    cli->registerCommand(playback);
-    cli->registerCommand(stop);
-    cli->registerCommand(playlist);
+Playlist::Playlist(void) {
+    Nop();
 }
 
+int Playlist::command(int argc, char **argv) {
+
+    return_t *opt;
+
+    if (checkParameters(argc, argv, 2, 2)) {
+        opt = GetOptList(argc, argv, "C");
+        startPlay(argv[1]);
+        FreeRtnList(opt);
+        
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+const char * Playlist::getCommandOptions(void) {
+    return options;
+}
+
+const char * Playlist::getCommandName(void) {
+    return name;
+}

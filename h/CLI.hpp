@@ -15,8 +15,8 @@
 #include <stdbool.h>
 #include <list>
 
-#define CLI_MAX_DIR_SIZE    128
-#define CLI_MAX_BUF_SIZE    16////1024 * 4
+#define CLI_DIR_SIZE                _MAX_LFN
+#define CLI_INPUT_LINE_SIZE         32////1024 * 4
 
 #define CLI_MAX_LINE_INPUT_SIZE     1024
 
@@ -43,15 +43,15 @@ private:
     char escapeSequence[16];
 
     // Received input
-    char inputLine[CLI_MAX_BUF_SIZE];
+    uint8_t inputLine[CLI_INPUT_LINE_SIZE];
     int inputLineIndex;
     int inputLineLength;
 
-    char tmpBuffer[CLI_MAX_BUF_SIZE];
-    int tmpIndex;
-    int tmpLength;
+    //char tmpBuffer[CLI_MAX_BUF_SIZE];
+    //int tmpIndex;
+    //int tmpLength;
 
-    
+
     //int inputIndex;
     //int inputLength;
 
@@ -61,7 +61,7 @@ private:
     // Parsing input
     //int charRead;
     //int charIndex;
-    
+
     // Args parser
     ArgsParser *args;
 
@@ -83,8 +83,9 @@ private:
         CLI_SM_COMMAND_NOT_FOUND,
         CLI_SM_DONE,
     } sm;
-    
+
     // Command line parser state machine
+
     enum PARSER_STATE_MACHINE {
         CLI_PARSER_SM_HOME = 0,
         CLI_PARSER_SM_WAIT_INPUT,
@@ -110,14 +111,15 @@ private:
     bool addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len);
     bool returnEscapeInternalCharacter(uint8_t *c);
     void clearCommand(void);
-    void reprintConsole(void);
+    //void reprintConsole(void);
+    void reprintConsoleNew(void);
     void CliAddStringAndUpdateConsole(char *str);
     void printEscapeSequence(const char *p, int i);
     void printBackspace(void);
-    void printString(char *p, int i, int len);
+    //void printString(uint8_t *p, int i, int len);
     bool searchExecutableCommand(char *name);
     bool createFileListOfFilesEntry(void);
-    int completeCommandSearchingInFile(char *fileName, char *p);
+    int completeCommandSearchingInFile(const char *fileName, uint8_t *p, int *index);
     bool getLastCommandFromFile(int pos);
     void putLastCommandInFile(void);
 };

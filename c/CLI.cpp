@@ -14,7 +14,9 @@
 #include "Utilities/GPIO.h"
 #include "Utilities/Config.h"
 #include "CommandLineInterpreter.h"
+#include "Utilities/AsyncTimer.h"
 #include <iterator>
+#include <lega-c/machine/types.h>
 
 const char temporaryFileLatterCommands[] = "/cmds.tmp";
 const char temporaryFileEntryList[] = "/lst.tmp";
@@ -48,8 +50,6 @@ CLI::CLI(void) {
 
     custom_memset(inputLine, '\0', sizeof (inputLine));
     inputLineLength = inputLineIndex = 0;
-    custom_memset(tmpBuffer, '\0', sizeof (tmpBuffer));
-    tmpLength = tmpIndex = 0;
 
     // Create Arguments parser object
     args = new ArgsParser();
@@ -80,7 +80,7 @@ CLI::CLI(void) {
     }
 
     // Flush console content
-    this->reprintConsole();
+    this->reprintConsoleNew();
 }
 
 void CLI::registerCommand(CommandBase *cb) {
@@ -223,7 +223,8 @@ bool CLI::addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len) {
                     this->printEscapeSequence(escape_arrow_right, 1);
                     this->printBackspace();
                     // Stampa gli elementi che sono da i a len
-                    this->printString(inputLine, inputLineIndex, inputLineLength);
+                    consolePrint(&inputLine[inputLineIndex], inputLineLength - inputLineIndex);
+                    //this->printString(inputLine, inputLineIndex, inputLineLength);
                     // Sposto a destra di uno e cancello
                     this->printEscapeSequence(escape_arrow_right, 1);
                     this->printBackspace();
@@ -243,7 +244,7 @@ bool CLI::addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len) {
                     inputLine[inputLineLength] = '\0';
                     this->printBackspace();
                     // Print characters on the right (if present)
-                    this->printString(inputLine, inputLineIndex, inputLineLength);
+                    consolePrint(&inputLine[inputLineIndex], inputLineLength - inputLineIndex);
                     // Move the cursor on the right and delete
                     this->printEscapeSequence(escape_arrow_right, 1);
                     this->printBackspace();
@@ -310,7 +311,7 @@ bool CLI::addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len) {
                     }
                 } else {
                     // Add a printable character to the inputLine buffer
-                    if (inputLineLength < CLI_MAX_BUF_SIZE && inputLineIndex < CLI_MAX_BUF_SIZE) {
+                    if (inputLineLength < CLI_INPUT_LINE_SIZE && inputLineIndex < CLI_INPUT_LINE_SIZE) {
                         // If the buffer index is different from buffer length, shift characters to right
                         for (i = inputLineLength; i > inputLineIndex; i--)
                             inputLine[i] = inputLine[i - 1];
@@ -320,12 +321,15 @@ bool CLI::addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len) {
                         // Update console
                         if (config.console.echo) {
                             // Print the char
-                            putc(c);
+                            consolePrint(&c, 1);
                             // Print remaining characters
-                            this->printString(inputLine, inputLineIndex, inputLineLength);
+                            consolePrint(&inputLine[inputLineIndex], inputLineLength - inputLineIndex);
                             // Move back the cursor of (length - index) positions
                             this->printEscapeSequence(escape_arrow_left, inputLineLength - inputLineIndex);
                         }
+                    } else {
+                        verbosePrintf(VER_DBG, "The input string is too long");
+                        this->reprintConsoleNew();
                     }
                 }
                 break;
@@ -362,24 +366,24 @@ bool CLI::returnEscapeInternalCharacter(uint8_t *c) {
 
 int CLI::completeCommand(void) {
 
-    char *p, *fileName;
+    int rtn, i;
+    uint8_t *p;
 
     // If there is nothing written in the buffer do nothing.
     if (inputLineLength == 0)
         return 0;
 
     // If in the buffer there is a space, search a file, otherwise search a command
-    if ((p = strrchr(inputLine, ' ')) == NULL) {
+    if ((p = (uint8_t*) custom_memchr(inputLine, ' ', inputLineIndex)) == NULL) {
         p = inputLine;
-        fileName = (char*) temporaryFileCommands;
+        // Complete the command by searching into selected file
+        rtn = this->completeCommandSearchingInFile(temporaryFileCommands, p, &inputLineIndex);
     } else {
-        // p pointer refer to "strrchr(cmd2, ' ')"
-        p++;
-        fileName = (char*) temporaryFileEntryList;
+        for (i = inputLineIndex; inputLine[i] != ' ' && i >= 0; i--);
+        p = &inputLine[++i];
+        rtn = this->completeCommandSearchingInFile(temporaryFileEntryList, p, &inputLineIndex);
     }
-
-    // Complete the command by searching into selected file
-    return this->completeCommandSearchingInFile(fileName, p);
+    return rtn;
 }
 
 void CLI::clearCommand(void) {
@@ -387,12 +391,20 @@ void CLI::clearCommand(void) {
     inputLineLength = inputLineIndex = 0;
 }
 
-void CLI::reprintConsole(void) {
-    this->printEscapeSequence(escape_arrow_left, inputLineLength - inputLineIndex);
-    if (inputLineLength)
-        printf(">%s", inputLine);
+//void CLI::reprintConsole(void) {
+//    this->printEscapeSequence(escape_arrow_left, inputLineLength - inputLineIndex);
+//    if (inputLineLength)
+//        printf(">%s", inputLine);
+//    else
+//        putc('>');
+//}
+
+void CLI::reprintConsoleNew(void) {
+    if (inputLineLength > 0)
+        printf("\r\n>%s", inputLine);
     else
-        putc('>');
+        printf("\r\n>");
+    this->printEscapeSequence(escape_arrow_left, inputLineLength - inputLineIndex);
 }
 
 //void CLI::CliAddStringAndUpdateConsole(char *str) {
@@ -406,15 +418,14 @@ void CLI::printEscapeSequence(const char *p, int i) {
 }
 
 void CLI::printBackspace(void) {
-    char c = 0x7F;
-    putc(c);
+    uint8_t c = 0x7F;
+    consolePrint(&c, 1);
 }
 
-void CLI::printString(char *p, int i, int len) {
-    // Stampa gli elementi che sono da i a len
-    while (i < len)
-        putc(p[i++]);
-}
+//void CLI::printString(uint8_t *p, int i, int len) {
+//    while (i < len)
+//        putc(p[i++]);
+//}
 
 bool CLI::searchExecutableCommand(char *name) {
 
@@ -485,12 +496,15 @@ bool CLI::createFileListOfFilesEntry(void) {
     FRESULT fres;
     UINT len, written;
     bool rtn;
+    char *buf;
 
     // Allocate enough space for FILINFO, FIL, and DIR structures
     finfo = NULL;
     fp = NULL;
     dir = NULL;
+    buf = NULL;
     fp = (FIL*) custom_malloc(fp, sizeof (FIL));
+    buf = (char*) custom_malloc(buf, CLI_DIR_SIZE);
 
     // Create a temporary file where will create a list of files
     if ((fres = f_open(fp, temporaryFileEntryList, FA_WRITE | FA_CREATE_ALWAYS)) == FR_OK) {
@@ -499,11 +513,11 @@ bool CLI::createFileListOfFilesEntry(void) {
             // Flush the hidden property
             if ((fres = f_sync(fp)) == FR_OK) {
                 // Get the current directory name
-                if ((fres = f_getcwd(tmpBuffer, CLI_MAX_DIR_SIZE)) == FR_OK) {
+                if ((fres = f_getcwd(buf, CLI_DIR_SIZE)) == FR_OK) {
                     // Open the directory
                     dir = (DIR*) custom_malloc((void*) dir, sizeof (DIR));
                     finfo = (FILINFO*) custom_malloc((void*) finfo, sizeof (FILINFO));
-                    if ((fres = f_opendir(dir, tmpBuffer)) == FR_OK) {
+                    if ((fres = f_opendir(dir, buf)) == FR_OK) {
                         while (true) {
                             // Read a directory item
                             if ((fres = (f_readdir(dir, finfo))) != FR_OK) {
@@ -570,74 +584,79 @@ bool CLI::createFileListOfFilesEntry(void) {
         custom_free((void**) &fp);
     if (dir != NULL)
         custom_free((void**) &dir);
+    if (buf != NULL)
+        custom_free((void**) &buf);
 
     return rtn;
 }
 
-int CLI::completeCommandSearchingInFile(char *fileName, char *p) {
+int CLI::completeCommandSearchingInFile(const char *fileName, uint8_t *p, int *index) {
 
     FIL *fp;
     bool found;
     uint16_t rtn;
-    int len, occ, tmpLen;
-    char match, *buf;
+    int size, inputLength, occ, fileLength;
+    uint8_t *l, match, *buf;
     FRESULT fres;
 
     rtn = 0;
     fp = NULL;
     fp = (FIL*) custom_malloc(fp, sizeof (FIL));
     buf = NULL;
-    buf = (char*) custom_malloc(buf, CLI_MAX_BUF_SIZE);
+    size = CLI_INPUT_LINE_SIZE - inputLineLength;
+    buf = (uint8_t*) custom_malloc(buf, size);
 
     // Search method (Files and Commands) unified
     if ((fres = f_open(fp, fileName, FA_READ)) == FR_OK) {
-        found = false;
         do {
+            found = false;
             occ = 0;
-            len = custom_strlen(p);
-            while (f_gets(buf, CLI_MAX_BUF_SIZE, fp) != NULL) {
-                tmpLen = custom_strlen(buf) - 1;
-                if (buf[tmpLen] == '\n')
-                    buf[tmpLen] = '\0';
-                if (tmpLen >= len && strncmp(p, buf, len) == 0) {
-                    if (buf[len] == '\0') {
-                        occ = 0;
-                        found = false;
-                        break;
-                    }
-                    if (occ == 0) {
-                        match = buf[len];
-                        occ++;
-                        found = true;
-                    } else {
-                        if (match != buf[len]) {
-                            found = false;
+            match = '\0';
+            inputLength = *index - (p - inputLine);
+            while (f_gets((TCHAR*) buf, size, fp) != NULL) {
+                if ((l = (uint8_t *) custom_memchr(buf, '\n', size)) != NULL) {
+                    fileLength = l - buf;
+                    *l = '\0';
+                    if (fileLength >= inputLength && strncmp((const char*) p, (const char*) buf, inputLength) == 0) {
+                        if (match == '\0' && found == false) {
+                            match = buf[inputLength];
+                            found = true;
+                            occ++;
+                        } else {
+                            occ++;
+                            if (match != buf[inputLength])
+                                found = false;
                         }
                     }
+                } else {
+                    verbosePrintf(VER_DBG, "Input space error");
+                    found = false;
+                    break;
                 }
             }
-            if (found && occ > 0)
+            if (match != '\0' && found == true)
                 this->addByteAndUpdateConsole((uint8_t*) & match, 1);
             if ((fres = f_lseek(fp, 0l)) != FR_OK)
                 verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), fileName);
-        } while (found && occ != 0);
+        } while (match != '\0' && found == true);
 
-        if (occ != 0) {
-            while (f_gets(buf, CLI_MAX_BUF_SIZE, fp) != NULL) {
-                if (strncmp(p, buf, len) == 0) {
-                    tmpLen = strlen(buf) - 1;
-                    if (buf[tmpLen] == '\n')
-                        buf[tmpLen] = '\0';
+        if (occ > 1) {
+            while (f_gets((TCHAR*) buf, size, fp) != NULL) {
+                if (strncmp((const char*) p, (const char*) buf, inputLength) == 0) {
+                    fileLength = custom_strlen((char*) buf) - 1;
+                    if (buf[fileLength] == '\n')
+                        buf[fileLength] = '\0';
                     printf("\r\n%s", buf);
                 }
             }
-            printf("\r\n");
-            reprintConsole();
+            reprintConsoleNew();
+        } else if (found == true) {
+            match = ' ';
+            this->addByteAndUpdateConsole((uint8_t*) & match, 1);
         }
         if ((fres = f_close(fp)) != FR_OK)
             verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), fileName);
         rtn = occ;
-        //return occ;
     } else {
         // Unable to open file
         verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), fileName);
@@ -657,11 +676,11 @@ bool CLI::getLastCommandFromFile(int pos) {
     FRESULT fres;
 
     // Place the file pointer at the end of the file
-    if ((fres = f_lseek(fileLastCommands, f_size(fileLastCommands) - (CLI_MAX_BUF_SIZE * pos))) == FR_OK) {
+    if ((fres = f_lseek(fileLastCommands, f_size(fileLastCommands) - (CLI_INPUT_LINE_SIZE * pos))) == FR_OK) {
         // read last command
-        if ((fres = f_read(fileLastCommands, inputLine, CLI_MAX_BUF_SIZE, &read)) == FR_OK) {
+        if ((fres = f_read(fileLastCommands, inputLine, CLI_INPUT_LINE_SIZE, &read)) == FR_OK) {
             // Clear all indicator
-            inputLineLength = inputLineIndex = custom_strlen(inputLine);
+            inputLineLength = inputLineIndex = custom_strlen((char*) inputLine);
             rtn = true;
         } else {
             // Unable to read
@@ -683,11 +702,11 @@ void CLI::putLastCommandInFile(void) {
 
     // Place the file pointer at the end of the file
     if ((fres = f_lseek(fileLastCommands, f_size(fileLastCommands))) == FR_OK) {
-        //for (i = inputLineLength; i < CLI_MAX_BUF_SIZE; i++)
+        //for (i = inputLineLength; i < CLI_INPUT_LINE_SIZE; i++)
         //    inputLine[i] = '\0';
-        custom_memset(&inputLine[inputLineLength], '\0', CLI_MAX_BUF_SIZE - inputLineLength);
+        custom_memset(&inputLine[inputLineLength], '\0', CLI_INPUT_LINE_SIZE - inputLineLength);
         // Write into the file last command
-        if ((fres = f_write(fileLastCommands, inputLine, CLI_MAX_BUF_SIZE, &writed)) == FR_OK) {
+        if ((fres = f_write(fileLastCommands, inputLine, CLI_INPUT_LINE_SIZE, &writed)) == FR_OK) {
             // Synchronize the content of the file on the micro SD
             if ((fres = f_sync(fileLastCommands)) == FR_OK) {
                 nCmd++;

@@ -108,11 +108,7 @@ void custom_free(void **ptr) {
 }
 
 void * custom_memcpy(void * dst, const void * src, size_t size) {
-
     if (dst != NULL && src != NULL && size != 0x0000) {
-        // TODO improve with DMA RAM to RAM fast copy
-        memcpy(dst, src, size);
-
         //while (MEM_TO_MEM_DMA_WORKING());
         //MEM_TO_MEM_DMA_CLR_BTC();
         DmaChnSetTxfer(MEM_TO_MEM_DMA_CHANNEL, src, dst, size, size, size);
@@ -123,9 +119,7 @@ void * custom_memcpy(void * dst, const void * src, size_t size) {
 }
 
 void * custom_memset(void * dst, int value, size_t size) {
-    // TODO improve with DMA RAM to RAM fast copy
     if (dst != NULL && size != 0x0000) {
-        memset(dst, value, size);
         //while (MEM_TO_MEM_DMA_WORKING());
         //MEM_TO_MEM_DMA_CLR_BTC();
         DmaChnSetTxfer(MEM_TO_MEM_DMA_CHANNEL, &value, dst, 1, size, size);

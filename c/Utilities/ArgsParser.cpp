@@ -23,7 +23,7 @@ ArgsParser::ArgsParser(void) {
     cmdLineCopy = NULL;
 }
 
-int ArgsParser::extractArgs(char *input) {
+int ArgsParser::extractArgs(uint8_t *input) {
 
     int length;
 
@@ -32,7 +32,7 @@ int ArgsParser::extractArgs(char *input) {
     argc = 0;
 
     // Allocate space for a manipulated copy of input
-    length = custom_strlen(input);
+    length = custom_strlen((char*) input);
     if (cmdLineCopy != NULL)
         custom_free((void**) &cmdLineCopy);
     cmdLineCopy = (char*) custom_malloc(cmdLineCopy, length);
