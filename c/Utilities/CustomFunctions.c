@@ -114,8 +114,9 @@ void * custom_memcpy(void * dst, const void * src, size_t size) {
         DmaChnSetTxfer(MEM_TO_MEM_DMA_CHANNEL, src, dst, size, size, size);
         DmaChnStartTxfer(MEM_TO_MEM_DMA_CHANNEL, DMA_WAIT_BLOCK, 0);
         //while (MEM_TO_MEM_DMA_WORKING());
+        return dst;
     }
-    return dst;
+    return NULL;
 }
 
 void * custom_memset(void * dst, int value, size_t size) {
@@ -125,8 +126,9 @@ void * custom_memset(void * dst, int value, size_t size) {
         DmaChnSetTxfer(MEM_TO_MEM_DMA_CHANNEL, &value, dst, 1, size, size);
         DmaChnStartTxfer(MEM_TO_MEM_DMA_CHANNEL, DMA_WAIT_BLOCK, 0);
         //while (MEM_TO_MEM_DMA_WORKING());
+        return dst;
     }
-    return dst;
+    return NULL;
 }
 
 int custom_strlen(char *str) {

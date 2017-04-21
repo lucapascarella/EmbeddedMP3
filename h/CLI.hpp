@@ -48,8 +48,8 @@ private:
     int escapeCount;
 
     // Command's history
-    int lastCmd;
-    int nCmd;
+    int lastCommand;
+    int numberOfCommands;
 
     // Args parser
     ArgsParser *args;
@@ -69,7 +69,6 @@ private:
         CLI_SM_ARGS_PARSER,
         CLI_SM_FIND_COMMAND,
         CLI_SM_COMMAND_TASK,
-        CLI_SM_COMMAND_NOT_FOUND,
         CLI_SM_DONE,
     } sm;
 

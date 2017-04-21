@@ -16,7 +16,6 @@
 #include "CommandLineInterpreter.h"
 #include "Utilities/AsyncTimer.h"
 #include <iterator>
-#include <lega-c/machine/types.h>
 
 const char temporaryFileLatterCommands[] = "/cmds.tmp";
 const char temporaryFileEntryList[] = "/lst.tmp";
@@ -46,7 +45,7 @@ CLI::CLI(void) {
     cmd = NULL;
     sm = CLI_SM_HOME;
     // Reset the last command indicator
-    nCmd = lastCmd = 0;
+    numberOfCommands = lastCommand = 0;
 
     custom_memset(inputLine, '\0', sizeof (inputLine));
     inputLineLength = inputLineIndex = 0;
@@ -149,9 +148,6 @@ void CLI::cliTaskHadler(void) {
             }
             break;
 
-        case CLI_SM_COMMAND_NOT_FOUND:
-            break;
-
         case CLI_SM_DONE:
             // De-initialize stuff here
             cmd = NULL;
@@ -249,9 +245,9 @@ bool CLI::addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len) {
                 break;
 
             case ESCAPE_ARROW_UP:
-                if (lastCmd < nCmd) {
-                    lastCmd++;
-                    this->getLastCommandFromFile(lastCmd);
+                if (lastCommand < numberOfCommands) {
+                    lastCommand++;
+                    this->getLastCommandFromFile(lastCommand);
                     if (config.console.echo)
                         printf("\r>%s", inputLine);
                     this->printEscapeSequence(escape_clear_end_row, 1);
@@ -259,15 +255,15 @@ bool CLI::addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len) {
                 break;
 
             case ESCAPE_ARROW_DOWN:
-                if (lastCmd > 1) {
-                    lastCmd--;
-                    this->getLastCommandFromFile(lastCmd);
+                if (lastCommand > 1) {
+                    lastCommand--;
+                    this->getLastCommandFromFile(lastCommand);
                     if (config.console.echo)
                         printf("\r>%s", inputLine);
                     this->printEscapeSequence(escape_clear_end_row, 1);
-                } else if (lastCmd == 1) {
+                } else if (lastCommand == 1) {
                     inputLine[0] = '\0';
-                    lastCmd = inputLineIndex = inputLineLength = 0;
+                    lastCommand = inputLineIndex = inputLineLength = 0;
                     if (config.console.echo)
                         printf("\r>%s", inputLine);
                     this->printEscapeSequence(escape_clear_end_row, 1);
@@ -679,15 +675,13 @@ void CLI::putLastCommandInFile(void) {
 
     // Place the file pointer at the end of the file
     if ((fres = f_lseek(fileLastCommands, f_size(fileLastCommands))) == FR_OK) {
-        //for (i = inputLineLength; i < CLI_INPUT_LINE_SIZE; i++)
-        //    inputLine[i] = '\0';
         custom_memset(&inputLine[inputLineLength], '\0', CLI_INPUT_LINE_SIZE - inputLineLength);
         // Write into the file last command
         if ((fres = f_write(fileLastCommands, inputLine, CLI_INPUT_LINE_SIZE, &writed)) == FR_OK) {
             // Synchronize the content of the file on the micro SD
             if ((fres = f_sync(fileLastCommands)) == FR_OK) {
-                nCmd++;
-                lastCmd = 0;
+                numberOfCommands++;
+                lastCommand = 0;
             } else {
                 this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
             }
