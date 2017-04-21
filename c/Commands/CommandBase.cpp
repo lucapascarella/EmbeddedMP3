@@ -15,9 +15,10 @@
  */
 
 #include "Commands/CommandBase.hpp"
-#include "CommandLineInterpreter.h"
 #include "Utilities/CustomFunctions.h"
 #include "Utilities/ArgsParser.hpp"
+#include "Utilities/CustomFunctions.h"
+#include <cctype>
 
 CommandBase::CommandBase(void) {
     this->initializeStatistics();
@@ -42,12 +43,12 @@ bool CommandBase::checkParameters(int argc, char **argv, int lowLimit, int upper
     lastCommandArgsCounter = argc;
     if (argc < lowLimit) {
         // Too few arguments passed
-        CliTooFewArgumnets(argv[0]);
+        this->argumnetsProblem();
         tooFewArgsCounter++;
         return false;
     } else if (argc > upperLimit) {
         // Too many arguments passed
-        CliTooManyArgumnets(argv[0]);
+        this->argumnetsProblem();
         tooManyArgsCounter++;
         return false;
     } else {
@@ -66,6 +67,43 @@ const char * CommandBase::getCommandName(void) {
 
 int CommandBase::getCommandNameLength(void) {
     return commandNameLength;
+}
+
+bool CommandBase::isConvertible(char *pstr) {
+
+    int num;
+    char *p = pstr;
+
+    num = 0;
+    while (*p != '\0') {
+        if (isdigit(*p) || *p == '-')
+            num++;
+        p++;
+    }
+
+    if (num == custom_strlen(pstr))
+        return true;
+    return false;
+}
+
+long CommandBase::atolmm(char *str, long min, long max, long def) {
+
+    long tmp;
+
+    tmp = def;
+    if (str != NULL)
+        if (this->isConvertible(str)) {
+            tmp = atol(str);
+            if (tmp < min)
+                tmp = min;
+            if (tmp > max)
+                tmp = max;
+        }
+    return tmp;
+}
+
+void CommandBase::argumnetsProblem(void) {
+    this->getCommandName();
 }
 
 int CommandBase::taskCommand(ArgsParser *args) {

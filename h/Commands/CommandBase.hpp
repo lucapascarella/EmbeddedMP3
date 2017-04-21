@@ -38,6 +38,9 @@ public:
     virtual const char* getCommandOptions(void); // pure specifier
     virtual const char* getCommandName(void); // pure specifier
     int getCommandNameLength(void);
+    bool isConvertible(char *pstr);
+    long atolmm(char *str, long min, long max, long def);
+    void argumnetsProblem(void);
     int taskCommand(ArgsParser *args); // pure specifier
     virtual int command(int argc, char **argv); // pure specifier
 

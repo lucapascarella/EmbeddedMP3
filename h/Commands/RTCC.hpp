@@ -14,34 +14,24 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#include "Commands/Playback.hpp"
-#include "MP3/Play.h"
-#include "Utilities/ArgsParser.hpp"
-#include "Utilities/Optlist.h"
+#ifndef RTCC_HPP
+#define	RTCC_HPP
 
-Playback::Playback(void) {
-    Nop();
-}
+#include "CommandBase.hpp"
 
-int Playback::command(int argc, char **argv) {
+class RTCC : public CommandBase {
+private:
+    static constexpr const char* name = "rtcc";
+    static constexpr const char* options = "h:m:s:D:M:Y:";
 
-//    return_t *opt;
+public:
+    RTCC(void);
+    int rtcc(int argc, char **argv);
+    virtual const char * getCommandOptions(void);
+    virtual const char * getCommandName(void);
+    virtual int command(int argc, char **argv); // pure specifier
+};
 
-    if (checkParameters(argc, argv, 2, 2)) {
-//        opt = GetOptList(argc, argv, "C");
-        startPlay(argv[1]);
-  //      FreeRtnList(opt);
-        
-        return 0;
-    } else {
-        return -1;
-    }
-}
 
-const char * Playback::getCommandOptions(void) {
-    return options;
-}
+#endif	/* RTCC_HPP */
 
-const char * Playback::getCommandName(void) {
-    return name;
-}

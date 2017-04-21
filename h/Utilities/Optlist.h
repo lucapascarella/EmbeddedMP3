@@ -91,6 +91,8 @@ extern "C" {
     void FreeRtnList(return_t *rtn);
     void FreeOptList(option_t *list);
     void FreeArgList(argument_t *list);
+    
+    char * getArgumentFromOption(char option);
 
     /* Provide C++ Compatibility */
 #ifdef __cplusplus

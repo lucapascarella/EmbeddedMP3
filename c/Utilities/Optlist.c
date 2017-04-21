@@ -121,19 +121,15 @@ return_t *GetOptList(int argc, char * argv[], const char *options) {
     argTail = NULL;
 
     // Prepare the return_t structure with optHead and argHead
-    rtn = malloc(sizeof (return_t));
+    rtn = (return_t*) custom_malloc(rtn, sizeof (return_t));
     rtn->opt = NULL;
     rtn->arg = NULL;
-
 
     // Loop through all of the command line arguments
     while (nextArg < argc) {
         argIndex = 1;
-
         while ((strlen(argv[nextArg]) > argIndex) && ('-' == argv[nextArg][0])) {
-
             optIndex = MatchOpt(argv[nextArg][argIndex], options);
-
             if (options[optIndex] == argv[nextArg][argIndex]) {
                 //if (optIndex < optionsLen) {
                 // We found the matching option
@@ -397,4 +393,8 @@ int MatchOpt(const char argument, const char * options) {
     }
 
     return optIndex;
+}
+
+char * getArgumentFromOption(char option) {
+
 }

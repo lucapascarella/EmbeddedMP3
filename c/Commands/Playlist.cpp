@@ -25,13 +25,13 @@ Playlist::Playlist(void) {
 
 int Playlist::command(int argc, char **argv) {
 
-    return_t *opt;
+    //    return_t *opt;
 
     if (checkParameters(argc, argv, 2, 2)) {
-        opt = GetOptList(argc, argv, "C");
+        //        opt = GetOptList(argc, argv, "C");
         startPlay(argv[1]);
-        FreeRtnList(opt);
-        
+        //      FreeRtnList(opt);
+
         return 0;
     } else {
         return -1;
