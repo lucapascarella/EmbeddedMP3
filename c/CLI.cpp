@@ -70,13 +70,13 @@ CLI::CLI(void) {
         if ((fres = f_chmod(temporaryFileLatterCommands, AM_HID, AM_HID)) == FR_OK) {
             // Flush hidden property
             if ((fres = f_sync(fileLastCommands)) != FR_OK) {
-                verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
+                this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
             }
         } else {
-            verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
+            this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
         }
     } else {
-        verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
+        this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
     }
 
     // Flush console content
@@ -109,7 +109,7 @@ void CLI::cliTaskHadler(void) {
 
         case CLI_SM_ARGS_PARSER:
             // Try to extract arguments
-            if (this->cliArgsParse()) {
+            if (args->extractArgs(inputLine) > 0) {
                 sm = CLI_SM_FIND_COMMAND;
             } else {
                 sm = CLI_SM_DONE;
@@ -117,17 +117,17 @@ void CLI::cliTaskHadler(void) {
             break;
 
         case CLI_SM_FIND_COMMAND:
-            // Find a command matching first argv
+            // Find a command matching first argument (the name of the program)
             name = args->getArgPointer(0);
             if (this->searchExecutableCommand(name)) {
-                // It is a command, print it
+                // It is a command, add to history list
                 this->putLastCommandInFile();
                 GpioUpdateOutputState(GPIO_BIT_CMD_OK);
                 sm = CLI_SM_COMMAND_TASK;
             } else {
                 GpioUpdateOutputState(GPIO_BIT_CMD_ERR);
                 // The command was not found
-                printf("Command '%s' not found!\r\n", name);
+                this->verbosePrintfWrapper(VER_MIN, "Command '%s' not found!\r\n", name);
                 // Clear the command buffer and reprint the console indicator
                 this->clearCommand();
                 sm = CLI_SM_DONE;
@@ -139,7 +139,7 @@ void CLI::cliTaskHadler(void) {
             rtn = cmd->taskCommand(args);
             if (rtn < 0) {
                 // Some error happened
-                printf("Command '%s' terminated with error code %d\r\n", cmd->getCommandName(), rtn);
+                this->verbosePrintfWrapper(VER_MIN, "Command '%s' terminated with error code %d\r\n", cmd->getCommandName(), rtn);
                 sm = CLI_SM_DONE;
             } else if (rtn > 0) {
                 // Still working
@@ -155,6 +155,7 @@ void CLI::cliTaskHadler(void) {
         case CLI_SM_DONE:
             // De-initialize stuff here
             cmd = NULL;
+            this->clearCommand();
             sm = CLI_SM_HOME;
             break;
 
@@ -162,12 +163,6 @@ void CLI::cliTaskHadler(void) {
             sm = CLI_SM_DONE;
             break;
     }
-}
-
-bool CLI::cliArgsParse(void) {
-    if (args->extractArgs(inputLine) > 0)
-        return true;
-    return false;
 }
 
 bool CLI::addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len) {
@@ -282,22 +277,23 @@ bool CLI::addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len) {
             case '\t':
                 // Horizontal Tab. Completes command
                 occ = this->completeCommand();
+                this->verbosePrintfWrapper(VER_DBG, "Occurrences %d", occ);
                 break;
 
             case '\0':
-                Nop();
                 // Null character
                 // Special char '\0' do nothing
+                this->verbosePrintfWrapper(VER_DBG, "Exception '\0'");
                 break;
 
             case '\n':
-                Nop();
                 // Line feed
                 // Special char '\n' do nothing
+                this->verbosePrintfWrapper(VER_DBG, "Exception '\n'");
                 break;
 
             case'\r':
-
+                // Carriage return execute command
                 return true;
                 break;
 
@@ -328,8 +324,7 @@ bool CLI::addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len) {
                             this->printEscapeSequence(escape_arrow_left, inputLineLength - inputLineIndex);
                         }
                     } else {
-                        verbosePrintf(VER_DBG, "The input string is too long");
-                        this->reprintConsoleNew();
+                        this->verbosePrintfWrapper(VER_ERR, "The input is too long");
                     }
                 }
                 break;
@@ -387,17 +382,9 @@ int CLI::completeCommand(void) {
 }
 
 void CLI::clearCommand(void) {
-    //cmd2[0] = '\0';
+    custom_memset(inputLine, '\0', CLI_INPUT_LINE_SIZE);
     inputLineLength = inputLineIndex = 0;
 }
-
-//void CLI::reprintConsole(void) {
-//    this->printEscapeSequence(escape_arrow_left, inputLineLength - inputLineIndex);
-//    if (inputLineLength)
-//        printf(">%s", inputLine);
-//    else
-//        putc('>');
-//}
 
 void CLI::reprintConsoleNew(void) {
     if (inputLineLength > 0)
@@ -406,11 +393,6 @@ void CLI::reprintConsoleNew(void) {
         printf("\r\n>");
     this->printEscapeSequence(escape_arrow_left, inputLineLength - inputLineIndex);
 }
-
-//void CLI::CliAddStringAndUpdateConsole(char *str) {
-//    while (*str != '\0')
-//        this->addByteAndUpdateConsole(*str++);
-//}
 
 void CLI::printEscapeSequence(const char *p, int i) {
     while (i--)
@@ -422,17 +404,12 @@ void CLI::printBackspace(void) {
     consolePrint(&c, 1);
 }
 
-//void CLI::printString(uint8_t *p, int i, int len) {
-//    while (i < len)
-//        putc(p[i++]);
-//}
-
 bool CLI::searchExecutableCommand(char *name) {
 
     int len;
     std::list<CommandBase*>::iterator it;
 
-    if ((len = strlen(name)) == 0)
+    if ((len = custom_strlen(name)) == 0)
         return false;
     for (it = commandList.begin(); it != commandList.end(); it++)
         if (len == (*it)->getCommandNameLength() && memcmp(name, (*it)->getCommandName(), len) == 0) {
@@ -467,18 +444,18 @@ bool CLI::createFileListOfCommands(void) {
                 //f_printf(fp, "%s\n", it->getCommandName());
             }
         } else {
-            verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileCommands);
+            this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileCommands);
             rtn = false;
         }
         // Close the temporary file
         if ((fres = f_close(fp)) != FR_OK) {
             // Unable to close the temporary file
-            verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileCommands);
+            this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileCommands);
             rtn = false;
         }
     } else {
         // Unable to create temporary file.
-        verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileCommands);
+        this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileCommands);
         rtn = false;
     }
 
@@ -521,7 +498,7 @@ bool CLI::createFileListOfFilesEntry(void) {
                         while (true) {
                             // Read a directory item
                             if ((fres = (f_readdir(dir, finfo))) != FR_OK) {
-                                verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
+                                this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
                                 break;
                             }
                             // Break on end of directory
@@ -541,12 +518,12 @@ bool CLI::createFileListOfFilesEntry(void) {
                         }
                         if ((fres = f_closedir(dir)) != FR_OK) {
                             // Unable to close directory
-                            verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
+                            this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
                             rtn = false;
                         }
                     } else {
                         // Unable to open directory
-                        verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
+                        this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
                         rtn = false;
                     }
                     // Try to close temporary file
@@ -554,27 +531,27 @@ bool CLI::createFileListOfFilesEntry(void) {
                         rtn = true;
                     } else {
                         // Unable to close the temporary file
-                        verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
+                        this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
                         rtn = false;
                     }
                 } else {
                     // Unable to get current directory
-                    verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
+                    this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
                     rtn = false;
                 }
             } else {
                 // Unable to write property
-                verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
+                this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
                 rtn = false;
             }
         } else {
             // Unable to change property
-            verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
+            this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
             rtn = false;
         }
     } else {
         // Unable to create temporary file
-        verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
+        this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileEntryList);
         rtn = false;
     }
 
@@ -629,7 +606,7 @@ int CLI::completeCommandSearchingInFile(const char *fileName, uint8_t *p, int *i
                         }
                     }
                 } else {
-                    verbosePrintf(VER_DBG, "Input space error");
+                    this->verbosePrintfWrapper(VER_DBG, "Exception 0");
                     found = false;
                     break;
                 }
@@ -637,7 +614,7 @@ int CLI::completeCommandSearchingInFile(const char *fileName, uint8_t *p, int *i
             if (match != '\0' && found == true)
                 this->addByteAndUpdateConsole((uint8_t*) & match, 1);
             if ((fres = f_lseek(fp, 0l)) != FR_OK)
-                verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), fileName);
+                this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), fileName);
         } while (match != '\0' && found == true);
 
         if (occ > 1) {
@@ -655,11 +632,11 @@ int CLI::completeCommandSearchingInFile(const char *fileName, uint8_t *p, int *i
             this->addByteAndUpdateConsole((uint8_t*) & match, 1);
         }
         if ((fres = f_close(fp)) != FR_OK)
-            verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), fileName);
+            this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), fileName);
         rtn = occ;
     } else {
         // Unable to open file
-        verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), fileName);
+        this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), fileName);
         rtn = -1;
     }
     if (fp != NULL)
@@ -684,12 +661,12 @@ bool CLI::getLastCommandFromFile(int pos) {
             rtn = true;
         } else {
             // Unable to read
-            verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
+            this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
             rtn = false;
         }
     } else {
         // Unable to move pointer 
-        verbosePrintf(VER_DBG, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
+        this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
         rtn = false;
     }
     return rtn;
@@ -712,14 +689,24 @@ void CLI::putLastCommandInFile(void) {
                 nCmd++;
                 lastCmd = 0;
             } else {
-                verbosePrintf(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
+                this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
             }
         } else {
-            verbosePrintf(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
+            this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
         }
     } else {
-        verbosePrintf(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
+        this->verbosePrintfWrapper(VER_ERR, "Error %s with %s", string_rc(fres), temporaryFileLatterCommands);
     }
+}
+
+int CLI::verbosePrintfWrapper(int level, const char * fmt, ...) {
+    int sent = 0;
+    if (level <= config.console.verbose) {
+        sent = consolePrint((uint8_t*) "\r\n", 2);
+        sent += verbosePrintf(level, fmt);
+        this->reprintConsoleNew();
+    }
+    return sent;
 }
 
 CLI::~CLI(void) {

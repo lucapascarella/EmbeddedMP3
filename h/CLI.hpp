@@ -38,29 +38,18 @@
 class CLI {
 private:
 
-    // Escape sequence
-    uint16_t escapeCount;
-    char escapeSequence[16];
-
     // Received input
     uint8_t inputLine[CLI_INPUT_LINE_SIZE];
     int inputLineIndex;
     int inputLineLength;
 
-    //char tmpBuffer[CLI_MAX_BUF_SIZE];
-    //int tmpIndex;
-    //int tmpLength;
+    // Escape sequence
+    uint8_t escapeSequence[16];
+    int escapeCount;
 
-
-    //int inputIndex;
-    //int inputLength;
-
+    // Command's history
     int lastCmd;
     int nCmd;
-
-    // Parsing input
-    //int charRead;
-    //int charIndex;
 
     // Args parser
     ArgsParser *args;
@@ -84,17 +73,6 @@ private:
         CLI_SM_DONE,
     } sm;
 
-    // Command line parser state machine
-
-    enum PARSER_STATE_MACHINE {
-        CLI_PARSER_SM_HOME = 0,
-        CLI_PARSER_SM_WAIT_INPUT,
-        CLI_PARSER_SM_PARSE_BUF,
-        CLI_PARSER_SM_COMPOSE_ESCAPE_SEQUENCE,
-        CLI_PARSER_SM_ESCAPE_SEQUENCE,
-        CLI_PARSER_SM_DONE,
-    } clp;
-
 public:
     CLI(void);
     void registerCommand(CommandBase *cb);
@@ -103,7 +81,7 @@ public:
     virtual ~CLI(void);
 
 private:
-    bool cliArgsParse(void);
+    //bool cliArgsParse(void);
     bool cliInputHadler(void);
 
     bool copyInputInLocalBuffer(uint8_t *p);
@@ -111,17 +89,17 @@ private:
     bool addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len);
     bool returnEscapeInternalCharacter(uint8_t *c);
     void clearCommand(void);
-    //void reprintConsole(void);
     void reprintConsoleNew(void);
     void CliAddStringAndUpdateConsole(char *str);
     void printEscapeSequence(const char *p, int i);
     void printBackspace(void);
-    //void printString(uint8_t *p, int i, int len);
     bool searchExecutableCommand(char *name);
     bool createFileListOfFilesEntry(void);
     int completeCommandSearchingInFile(const char *fileName, uint8_t *p, int *index);
     bool getLastCommandFromFile(int pos);
     void putLastCommandInFile(void);
+
+    int verbosePrintfWrapper(int level, const char * fmt, ...);
 };
 
 #endif	/* CLI_HPP */
