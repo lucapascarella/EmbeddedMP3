@@ -22,7 +22,11 @@ Optlist::Optlist(void) {
 }
 
 return_t *Optlist::createOptionList(int argc, char * argv[], const char *options) {
+
+    Option *option;
+
     return_t *rtn;
+
 
     int nextArg;
     option_t *optHead, *optTail;
@@ -40,6 +44,7 @@ return_t *Optlist::createOptionList(int argc, char * argv[], const char *options
     argTail = NULL;
 
     // Prepare the return_t structure with optHead and argHead
+    rtn = NULL;
     rtn = (return_t*) custom_malloc(rtn, sizeof (return_t));
     rtn->opt = NULL;
     rtn->arg = NULL;
@@ -48,48 +53,12 @@ return_t *Optlist::createOptionList(int argc, char * argv[], const char *options
     while (nextArg < argc) {
         argIndex = 1;
         while ((custom_strlen(argv[nextArg]) > argIndex) && ('-' == argv[nextArg][0])) {
-            optIndex = MatchOpt(argv[nextArg][argIndex], options);
+            optIndex = MatchOption(argv[nextArg][argIndex], options);
             if (options[optIndex] == argv[nextArg][argIndex]) {
                 //if (optIndex < optionsLen) {
                 // We found the matching option
-                if (NULL == optHead) {
-                    optHead = MakeOpt(options[optIndex], NULL, OL_NOINDEX);
-                    rtn->opt = optHead;
-                    optTail = optHead;
-                } else {
-                    optTail->next = MakeOpt(options[optIndex], NULL, OL_NOINDEX);
-                    optTail = optTail->next;
-                }
-
-                //		if (':' == options[optIndex + 1]) {
-                //		    // The option found should have a text arguement
-                //		    argIndex++;
-                //
-                //		    // Create a new object of argument_t and initialize it to NULL
-                //		    newArgument = MakeArg();
-                //
-                //		    if (strlen(argv[nextArg]) > argIndex) {
-                //			// No space between argument and option
-                //			////tail->argument = &(argv[nextArg][argIndex]);
-                //			////tail->argIndex = nextArg;
-                //			newArgument->argument = &(argv[nextArg][argIndex]);
-                //		    } else if (nextArg < argc) {
-                //			// There must be space between the argument option
-                //			nextArg++;
-                //			////tail->argument = argv[nextArg];
-                //			////tail->argIndex = nextArg;
-                //			newArgument->argument = argv[nextArg];
-                //		    }
-                //		    newArgument->argIndex = nextArg;
-                //
-                //		    tail->nextArgument = newArgument;
-                //		    tail->argNumber = 1;
-                //		    // Done with argv[nextArg]
-                //		    break;
-                //		} else
-                if (';' == options[optIndex + 1] || ':' == options[optIndex + 1]) {
-                    // The option found can have one or more text arguements
-
+                if (';' == options[optIndex + 1]) {
+                    // The option found can have one or more text arguments
                     argIndex++;
                     //thisArg = nextArg;
                     while ((nextArg + 1) <= argc || '-' != argv[nextArg + 1][0]) {
@@ -130,6 +99,25 @@ return_t *Optlist::createOptionList(int argc, char * argv[], const char *options
                     }
                     // Done with argv[nextArg]
                     break;
+                } else if (':' == options[optIndex + 1]) {
+                    // the option found should have a text argument
+                    argIndex++;
+                    if (custom_strlen(argv[nextArg]) > argIndex) {
+                        // no space between argument and option
+                        option = new Option(options[optIndex], &(argv[nextArg][argIndex]), nextArg);
+                        optionList.push_back(option);
+                    } else if (nextArg < argc) {
+                        // there must be space between the argument option
+                        nextArg++;
+                        option = new Option(options[optIndex], argv[nextArg], nextArg);
+                        optionList.push_back(option);
+                    } else {
+                        // Some error here
+                    }
+                    break; /* done with argv[nextArg] */
+                } else {
+                    option = new Option(options[optIndex]);
+                    optionList.push_back(option);
                 }
             }
             argIndex++;
@@ -163,6 +151,7 @@ argument_t *Optlist::MakeArg(void) {
     argument_t *newArgument;
 
     // Create a new object of argument_t and initialize it to NULL
+    newArgument = NULL;
     newArgument = (argument_t*) custom_malloc(newArgument, sizeof (argument_t));
 
     if (newArgument != NULL) {
@@ -210,7 +199,7 @@ void Optlist::FreeArgList(argument_t *list) {
     }
 }
 
-int Optlist::MatchOpt(const char argument, const char * options) {
+int Optlist::MatchOption(const char argument, const char * options) {
     int optIndex = 0;
 
     // Attempt to find a matching option
@@ -222,7 +211,6 @@ int Optlist::MatchOpt(const char argument, const char * options) {
 
     return optIndex;
 }
-
 
 char * Optlist::getArgumentFromOption(char option) {
 

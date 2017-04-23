@@ -20,7 +20,7 @@
 #include "Utilities/Optlist.h"
 
 Playlist::Playlist(void) {
-    Nop();
+    calculateNameLength();
 }
 
 int Playlist::command(int argc, char **argv) {

@@ -18,15 +18,21 @@
 #include "Utilities/CustomFunctions.h"
 #include "Utilities/ArgsParser.hpp"
 #include "Utilities/CustomFunctions.h"
+#include <string.h>
 #include <cctype>
 
 CommandBase::CommandBase(void) {
     this->initializeStatistics();
-    commandNameLength = custom_strlen((char*) getCommandName());
+    commandNameLength = 0;
+}
+
+void CommandBase::calculateNameLength(void) {
+    char *p;
+    if ((p = (char*) getCommandName()) != NULL)
+        commandNameLength = strlen(p);
 }
 
 void CommandBase::getStatistics(void) {
-    // Initialize statistical information
 
 }
 
@@ -58,11 +64,11 @@ bool CommandBase::checkParameters(int argc, char **argv, int lowLimit, int upper
 }
 
 const char* CommandBase::getCommandOptions(void) {
-    return 0;
+    return NULL;
 }
 
 const char * CommandBase::getCommandName(void) {
-    return 0;
+    return NULL;
 }
 
 int CommandBase::getCommandNameLength(void) {

@@ -20,7 +20,7 @@
 #include "Utilities/Optlist.h"
 
 Playback::Playback(void) {
-    Nop();
+    calculateNameLength();
 }
 
 int Playback::command(int argc, char **argv) {

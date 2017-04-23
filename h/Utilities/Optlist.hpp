@@ -17,8 +17,10 @@
 #ifndef OPTLIST_H
 #define	OPTLIST_H
 
+#include "Option.hpp"
 #include <stdint.h>
 #include <stdbool.h>
+#include <list>
 
 #define    OL_NOINDEX    -1        /* this option has no arguement */
 
@@ -45,7 +47,7 @@ typedef struct return_t {
 class Optlist {
 private:
     int argc;
-
+    std::list<Option*> optionList;
 
 
 public:
@@ -54,7 +56,7 @@ public:
     argument_t *MakeArg(void);
     option_t *MakeOpt(const char option, char *const argument, const int index);
     void FreeArgList(argument_t *list);
-    int MatchOpt(const char argument, const char * options);
+    int MatchOption(const char argument, const char * options);
     char * getArgumentFromOption(char option);
     ~Optlist(void);
 

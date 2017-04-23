@@ -21,7 +21,7 @@
 #include "Utilities/Optlist.hpp"
 
 RTCC::RTCC(void) : CommandBase() {
-    Nop();
+    calculateNameLength();
 }
 
 int RTCC::command(int argc, char **argv) {
@@ -37,7 +37,7 @@ int RTCC::command(int argc, char **argv) {
 
 
     if (argc == 1) {
-        rtccGetDateAndTime(&rtccYear, &rtccMon, &rtccMday, &rtccHour, &rtccMin, &rtccSec);
+        //rtccGetDateAndTime(&rtccYear, &rtccMon, &rtccMday, &rtccHour, &rtccMin, &rtccSec);
         printf("%d/%d/%d %02d:%02d:%02d\r\n", rtccMday, rtccMon, rtccYear + 1980, rtccHour, rtccMin, rtccSec);
         rtn = 0;
     } else if (argc == 7) {
@@ -50,7 +50,7 @@ int RTCC::command(int argc, char **argv) {
         rtccMin = this->atolmm(argv[5], 0, 59, 1);
         rtccSec = this->atolmm(argv[6], 0, 59, 1);
 
-        RtccSetDateAndTime();
+        //RtccSetDateAndTime();
         rtn = 0;
     } else {
         this->argumnetsProblem();
@@ -63,6 +63,6 @@ const char * RTCC::getCommandOptions(void) {
     return options;
 }
 
-const char * RTCC::getCommandName(void) {
+const char * RTCC::getCommandName(void)  {
     return name;
 }

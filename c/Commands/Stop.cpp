@@ -19,7 +19,7 @@
 #include "Utilities/ArgsParser.hpp"
 
 Stop::Stop(void) : CommandBase() {
-    Nop();
+    calculateNameLength();
 }
 
 int Stop::command(int argc, char **argv) {

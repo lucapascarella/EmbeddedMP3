@@ -126,7 +126,7 @@ void CLI::cliTaskHadler(void) {
             } else {
                 GpioUpdateOutputState(GPIO_BIT_CMD_ERR);
                 // The command was not found
-                this->verbosePrintfWrapper(VER_MIN, "Command '%s' not found!\r\n", name);
+                this->verbosePrintfWrapper(VER_MIN, "Command '%s' not found!", name);
                 // Clear the command buffer and reprint the console indicator
                 this->clearCommand();
                 sm = CLI_SM_DONE;
@@ -152,6 +152,7 @@ void CLI::cliTaskHadler(void) {
             // De-initialize stuff here
             cmd = NULL;
             this->clearCommand();
+            this->reprintConsoleNew();
             sm = CLI_SM_HOME;
             break;
 
@@ -694,10 +695,14 @@ void CLI::putLastCommandInFile(void) {
 }
 
 int CLI::verbosePrintfWrapper(int level, const char * fmt, ...) {
+    va_list ap;
     int sent = 0;
+
     if (level <= config.console.verbose) {
         sent = consolePrint((uint8_t*) "\r\n", 2);
-        sent += verbosePrintf(level, fmt);
+        va_start(ap, fmt);
+        sent += verbosePrintfVaList(level, fmt, ap);
+        va_end(ap);
         this->reprintConsoleNew();
     }
     return sent;

@@ -65,6 +65,8 @@
         <itemPath>h/Utilities/USB.h</itemPath>
         <itemPath>h/Utilities/AsyncTimer.h</itemPath>
         <itemPath>h/Utilities/ArgsParser.hpp</itemPath>
+        <itemPath>h/Utilities/Optlist.hpp</itemPath>
+        <itemPath>h/Utilities/Option.hpp</itemPath>
       </logicalFolder>
       <itemPath>h/HardwareProfile.h</itemPath>
       <itemPath>h/usb_config.h</itemPath>
@@ -100,6 +102,7 @@
         <itemPath>c/Commands/Stop.cpp</itemPath>
         <itemPath>c/Commands/CommandsList.cpp</itemPath>
         <itemPath>c/Commands/Playlist.cpp</itemPath>
+        <itemPath>c/Commands/RTCC.cpp</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="Delay" projectFiles="true">
         <itemPath>c/Delay/Delay.c</itemPath>
@@ -142,6 +145,8 @@
         <itemPath>c/Utilities/AsyncTimer.c</itemPath>
         <itemPath>c/Utilities/ArgsParser.cpp</itemPath>
         <itemPath>c/Utilities/CustomFunctions.c</itemPath>
+        <itemPath>c/Utilities/Optlist.cpp</itemPath>
+        <itemPath>c/Utilities/Option.cpp</itemPath>
       </logicalFolder>
       <itemPath>c/usb_descriptors.c</itemPath>
       <itemPath>c/Main.c</itemPath>
@@ -175,7 +180,7 @@
         <platformTool>RealICEPlatformTool</platformTool>
         <languageToolchain>XC32</languageToolchain>
         <languageToolchainVersion>1.43</languageToolchainVersion>
-        <platform>4</platform>
+        <platform>3</platform>
       </toolsSet>
       <compileType>
         <linkerTool>

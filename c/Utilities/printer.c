@@ -14,6 +14,8 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
+#include <Cpp/c/stdarg.h>
+
 #include "Utilities/printer.h"
 #include "Compiler.h"
 #include "GenericTypeDefs.h"
@@ -81,9 +83,8 @@ int __printf(const char * fmt, ...) {
 
 //char returnLineVerbose[] = "\r\n>";
 
-int verbosePrintf(int level, const char * fmt, ...) {
+int verbosePrintfVaList(int level, const char * fmt, va_list args) {
 
-    va_list ap;
     int len, sent, retry;
     char *p;
 
@@ -94,9 +95,9 @@ int verbosePrintf(int level, const char * fmt, ...) {
     if (level <= config.console.verbose) {
         consoleWrite("\r\n", 2);
         // If the user disable both UART and USB serial console do anything
-        va_start(ap, fmt);
-        len = vsnprintf(p, PRINTER_BUFFER_SIZE, fmt, ap);
-        va_end(ap);
+        //va_start(ap, fmt);
+        len = vsnprintf(p, PRINTER_BUFFER_SIZE, fmt, args);
+        //va_end(ap);
         // Print on UART, USB or I2C port
         do {
             sent += consoleWrite(&p[sent], len - sent);
@@ -104,6 +105,39 @@ int verbosePrintf(int level, const char * fmt, ...) {
     }
     // TODO write to log file
     return sent;
+}
+
+int verbosePrintf(int level, const char * fmt, ...) {
+
+    int len;
+    va_list ap;
+
+    va_start(ap, fmt);
+    verbosePrintfVaList(level, fmt, ap);
+    va_end(ap);
+
+    return len;
+    //
+    //    int len, sent, retry;
+    //    char *p;
+    //
+    //    retry = 20;
+    //    len = sent = 0;
+    //    p = pri.txBuf[pri.alt++ % PRI_BUF_ALT_DIM];
+    //
+    //    if (level <= config.console.verbose) {
+    //        consoleWrite("\r\n", 2);
+    //        // If the user disable both UART and USB serial console do anything
+    //        va_start(ap, fmt);
+    //        len = vsnprintf(p, PRINTER_BUFFER_SIZE, fmt, ap);
+    //        va_end(ap);
+    //        // Print on UART, USB or I2C port
+    //        do {
+    //            sent += consoleWrite(&p[sent], len - sent);
+    //        } while (sent < len && retry--);
+    //    }
+    //    // TODO write to log file
+    //    return sent;
 }
 
 uint16_t consoleWrite(uint8_t *buffer, uint16_t count) {

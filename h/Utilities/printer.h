@@ -69,6 +69,8 @@ extern "C" {
 #define VER_MIN             1
 #define VER_ERR             2
 #define VER_DBG             3
+    
+    int verbosePrintfVaList(int level, const char * fmt, va_list args);
     int verbosePrintf(int level, const char * fmt, ...);
 
     int consolePrint(uint8_t *buffer, uint16_t count);

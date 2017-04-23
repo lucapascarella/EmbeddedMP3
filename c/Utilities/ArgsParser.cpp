@@ -59,7 +59,7 @@ int ArgsParser::extractArgs(uint8_t *input) {
             cmdLineCopy++;
 
         if (*cmdLineCopy)
-            *cmdLineCopy++ = '0'; // Null terminate and advance to next char
+            *cmdLineCopy++ = '\0'; // Null terminate and advance to next char
     }
 
     // Done processing argv[0] (i.e., the executable name).  Now do the actual arguments

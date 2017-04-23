@@ -34,9 +34,10 @@ private:
 public:
     CommandBase(void);
     void getStatistics(void);
-    
+
+    void calculateNameLength(void);
     virtual const char* getCommandOptions(void); // pure specifier
-    virtual const char* getCommandName(void); // pure specifier
+    virtual const char* getCommandName(void) = 0; // pure specifier
     int getCommandNameLength(void);
     bool isConvertible(char *pstr);
     long atolmm(char *str, long min, long max, long def);
@@ -45,7 +46,7 @@ public:
     virtual int command(int argc, char **argv); // pure specifier
 
     ~CommandBase(void);
-    
+
 protected:
     void initializeStatistics(void);
     bool checkParameters(int argc, char **argv, int lowLimit, int upperLimit);
