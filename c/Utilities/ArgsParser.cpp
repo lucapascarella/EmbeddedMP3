@@ -28,11 +28,11 @@ int ArgsParser::extractArgs(uint8_t *input) {
     int length;
 
     // Set to no argv elements, in case we have to bail out
-    argv[0] = 0;
+    argv[0] = '\0';
     argc = 0;
 
-    // Allocate space for a manipulated copy of input
-    length = custom_strlen((char*) input);
+    // Allocate space for a manipulated copy of input + '\0' terminator
+    length = custom_strlen((char*) input) + 1;
     if (cmdLineCopy != NULL)
         custom_free((void**) &cmdLineCopy);
     cmdLineCopy = (char*) custom_malloc(cmdLineCopy, length);

@@ -135,7 +135,7 @@ void PrintRebootStatus(void) {
     if (reboot.bits.MCLR)
         printf("Master Clear (pin) Reset has occurred\r\n");
     if (reboot.bits.SWR)
-        printf("Software Reset was executed\r\n");
+        printf("Software Reset has executed\r\n");
     if (reboot.bits.CMR)
         printf("Configuration mismatch Reset has occurred\r\n");
     if (reboot.bits.WDTO)

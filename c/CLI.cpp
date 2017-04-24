@@ -292,6 +292,7 @@ bool CLI::addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len) {
 
             case'\r':
                 // Carriage return execute command
+                consolePrint((uint8_t*) "\r\n", 2);
                 return true;
                 break;
 
