@@ -22,42 +22,38 @@
 #include <stdbool.h>
 #include <list>
 
+/*
+ * Option rules
+ * a    -> no arguments
+ * a:   -> One argument
+ * 
+ * Option examples
+ * a:
+ * cmd -a12
+ * cmd -a 12
+ * 
+ * ab:
+ * cmd -a -b 12
+ * cmd -a -b12
+ * cmd -ab12
+ * 
+ */
+
 #define    OL_NOINDEX    -1        /* this option has no arguement */
-
-typedef struct argument_t {
-    char *argument;
-    int argIndex;
-    struct argument_t *nextArgument;
-} argument_t;
-
-typedef struct option_t {
-    char option;
-    //char *argument;
-    //int argIndex;
-    int argNumber;
-    struct argument_t *nextArgument;
-    struct option_t *next;
-} option_t;
-
-typedef struct return_t {
-    struct option_t *opt;
-    struct argument_t *arg;
-} return_t;
 
 class Optlist {
 private:
-    int argc;
     std::list<Option*> optionList;
 
-
+private:
+    int MatchOption(const char argument, const char * options);
+    
 public:
     Optlist(void);
     bool createOptionList(int argc, char * argv[], const char *options);
-    argument_t *MakeArg(void);
-    option_t *MakeOpt(const char option, char *const argument, const int index);
-    void FreeArgList(argument_t *list);
-    int MatchOption(const char argument, const char * options);
-    char * getArgumentFromOption(char option);
+    char * getFirstArgumentForOption(char option);
+    int getNumberOfArgumentsForOption(char option);
+    int getNumberOfOptions(void);
     ~Optlist(void);
 
 };

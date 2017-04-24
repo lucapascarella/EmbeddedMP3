@@ -24,12 +24,13 @@ Stop::Stop(void) : CommandBase() {
 
 int Stop::command(int argc, char **argv) {
 
-    if (checkParameters(argc, argv, 2, 2)) {
-        startPlay(argv[1]);
-        return 0;
-    } else {
-        return -1;
-    }
+//    if (checkParameters(argc, argv, 2, 2)) {
+//        startPlay(argv[1]);
+//        return 0;
+//    } else {
+//        return -1;
+//    }
+    return 0;
 }
 
 const char * Stop::getCommandOptions(void) {

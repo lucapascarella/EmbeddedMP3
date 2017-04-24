@@ -22,47 +22,17 @@
 #include <cctype>
 
 CommandBase::CommandBase(void) {
-    this->initializeStatistics();
     commandNameLength = 0;
-    sm = COMMAND_SM_CREATE_OPTLIST;
+    argc = 0;
+    argv = NULL;
     opt = NULL;
+    sm = COMMAND_SM_PARSE_ARGS;
 }
 
 void CommandBase::calculateNameLength(void) {
     char *p;
     if ((p = (char*) getCommandName()) != NULL)
         commandNameLength = strlen(p);
-}
-
-void CommandBase::getStatistics(void) {
-
-}
-
-void CommandBase::initializeStatistics(void) {
-    // Initialize statistical information
-    tooFewArgsCounter = 0;
-    tooManyArgsCounter = 0;
-    correctArgsCounter = 0;
-    lastCommandArgsCounter = 0;
-}
-
-bool CommandBase::checkParameters(int argc, char **argv, int lowLimit, int upperLimit) {
-
-    lastCommandArgsCounter = argc;
-    if (argc < lowLimit) {
-        // Too few arguments passed
-        this->argumnetsProblem();
-        tooFewArgsCounter++;
-        return false;
-    } else if (argc > upperLimit) {
-        // Too many arguments passed
-        this->argumnetsProblem();
-        tooManyArgsCounter++;
-        return false;
-    } else {
-        correctArgsCounter++;
-        return true;
-    }
 }
 
 const char* CommandBase::getCommandOptions(void) {
@@ -110,19 +80,75 @@ long CommandBase::atolmm(char *str, long min, long max, long def) {
     return tmp;
 }
 
-void CommandBase::argumnetsProblem(void) {
-    this->getCommandName();
+bool CommandBase::checkRequiredOptions(const char * opts) {
+    char p;
+    int expected, counted;
+
+    expected = counted = 0;
+    if (opts != NULL)
+        while ((p = opts[expected++]) != '\0') {
+            if (opt->getFirstArgumentForOption(p) != NULL)
+                counted++;
+        }
+    if (expected == counted)
+        return true;
+    return false;
+}
+
+void CommandBase::printUnexpectedNumberOfOptions(void) {
+    verbosePrintf(VER_ERR, "Unexpected number of options (%d)", numOfOpt);
+}
+
+void CommandBase::printUnexpectedOptions(const char *opts) {
+    verbosePrintf(VER_ERR, "Unexpected options %d", numOfOpt);
 }
 
 int CommandBase::taskCommand(ArgsParser *args) {
-    int argc;
-    char **argv;
-    argc = args->getArgc();
-    argv = args->getArgv();
-    return this->command(argc, argv);
+
+    int rtn;
+
+    rtn = 0;
+    switch (sm) {
+        case COMMAND_SM_PARSE_ARGS:
+            argc = args->getArgc();
+            argv = args->getArgv();
+            numOfOpt = 0;
+            rtn = 1;
+            sm = COMMAND_SM_CREATE_OPTLIST;
+            // break; // no break needed
+
+        case COMMAND_SM_CREATE_OPTLIST:
+            // Create a list of options
+            opt = new Optlist();
+            if (opt->createOptionList(argc, argv, this->getCommandOptions()) == true) {
+                numOfOpt = opt->getNumberOfOptions();
+                rtn = 1;
+                sm = COMMAND_SM_EXECUTE;
+            } else {
+                rtn = 0;
+                sm = COMMAND_SM_DESTROY_OPTLIST;
+            }
+            break;
+
+        case COMMAND_SM_EXECUTE:
+            if ((rtn = this->command()) > 0)
+                break;
+            sm = COMMAND_SM_DESTROY_OPTLIST;
+            // break; // No break here
+
+        case COMMAND_SM_DESTROY_OPTLIST:
+            opt->~Optlist();
+            sm = COMMAND_SM_DONE;
+            // break; // no break here
+
+        case COMMAND_SM_DONE:
+            sm = COMMAND_SM_PARSE_ARGS;
+            break;
+    }
+    return rtn;
 }
 
-int CommandBase::command(int argc, char **argv) {
+int CommandBase::command(void) {
     return 0;
 }
 

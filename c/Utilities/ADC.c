@@ -37,7 +37,6 @@
 #include "Utilities/ADC.h"
 #include "Utilities/printer.h"
 
-#include "Utilities/Optlist.h"
 #include "Utilities/Config.h"
 
 // Define setup parameters for OpenADC10 function

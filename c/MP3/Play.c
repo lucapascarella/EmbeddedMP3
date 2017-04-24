@@ -25,7 +25,6 @@
 #include "Utilities/GPIO.h"
 
 #include "Utilities/Config.h"
-#include "Utilities/Optlist.h"
 #include <math.h>
 
 PLAY_CONFIG play;

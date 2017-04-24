@@ -17,49 +17,45 @@
 #ifndef COMMAND_ABSTRACT_HPP
 #define	COMMAND_ABSTRACT_HPP
 
+#include "Utilities/ArgsParser.hpp"
+#include "Utilities/Optlist.hpp"
+#include "Utilities/printer.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include "Utilities/Optlist.hpp"
-#include "Utilities/ArgsParser.hpp"
 
 class CommandBase {
-private:
-    // Statistics information
-    long tooFewArgsCounter;
-    long tooManyArgsCounter;
-    long correctArgsCounter;
-    long lastCommandArgsCounter;
+protected:
     // Class property
     int commandNameLength;
-
-protected:
+    int argc;
+    char **argv;
     Optlist *opt;
+    int numOfOpt;
     
     enum SM {
-        COMMAND_SM_CREATE_OPTLIST = 0,
+        COMMAND_SM_PARSE_ARGS = 0,
+        COMMAND_SM_CREATE_OPTLIST,
         COMMAND_SM_EXECUTE,
         COMMAND_SM_DESTROY_OPTLIST,
+        COMMAND_SM_DONE,
     } sm;
 
 public:
     CommandBase(void);
-    void getStatistics(void);
-
-    void calculateNameLength(void);
-    virtual const char* getCommandOptions(void); // pure specifier
-    virtual const char* getCommandName(void) = 0; // pure specifier
+    int taskCommand(ArgsParser *args);
     int getCommandNameLength(void);
-    bool isConvertible(char *pstr);
-    long atolmm(char *str, long min, long max, long def);
-    void argumnetsProblem(void);
-    int taskCommand(ArgsParser *args); // pure specifier
-    virtual int command(int argc, char **argv); // pure specifier
-
+    virtual const char* getCommandOptions(void) = 0; // pure specifier
+    virtual const char* getCommandName(void) = 0; // pure specifier
     ~CommandBase(void);
 
 protected:
-    void initializeStatistics(void);
-    bool checkParameters(int argc, char **argv, int lowLimit, int upperLimit);
+    void calculateNameLength(void);
+    bool isConvertible(char *pstr);
+    long atolmm(char *str, long min, long max, long def);
+    bool checkRequiredOptions(const char * opts);
+    void printUnexpectedNumberOfOptions(void);
+    void printUnexpectedOptions(const char *opts);
+    virtual int command(void); // pure specifier
 };
 
 

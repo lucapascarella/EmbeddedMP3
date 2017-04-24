@@ -138,6 +138,7 @@ void CLI::cliTaskHadler(void) {
             rtn = cmd->taskCommand(args);
             if (rtn < 0) {
                 // Some error happened
+                this->clearCommand();
                 this->verbosePrintfWrapper(VER_MIN, "Command '%s' terminated with error code %d\r\n", cmd->getCommandName(), rtn);
                 sm = CLI_SM_DONE;
             } else if (rtn > 0) {

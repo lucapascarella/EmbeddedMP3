@@ -26,10 +26,9 @@ private:
 
 public:
     RTCC(void);
-    int rtcc(int argc, char **argv);
-    virtual const char * getCommandOptions(void);
-    const char * getCommandName(void) ;
-    virtual int command(int argc, char **argv); // pure specifier
+    const char * getCommandOptions(void);
+    const char * getCommandName(void);
+    int command(void); // pure specifier
 };
 
 

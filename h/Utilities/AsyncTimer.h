@@ -62,7 +62,7 @@ extern "C" {
     ASYNC_TIMER;
 
     // Internal calls
-    static void GetTickCopy(void);
+    //static void GetTickCopy(void);
 
     // Public calls
     void InitAsyncTimer(void);

@@ -22,50 +22,6 @@ RTCC::RTCC(void) : CommandBase() {
     calculateNameLength();
 }
 
-int RTCC::command(int argc, char **argv) {
-
-    uint16_t rtccYear;
-    uint8_t rtccMon, rtccMday, rtccHour, rtccMin, rtccSec;
-    int rtn;
-
-    switch (sm) {
-        case COMMAND_SM_CREATE_OPTLIST:
-            // Create a list of options
-            opt = new Optlist();
-            if (opt->createOptionList(argc, argv, options) == true)
-                sm = COMMAND_SM_EXECUTE;
-            break;
-
-        case COMMAND_SM_EXECUTE:
-            if (argc == 1) {
-                //rtccGetDateAndTime(&rtccYear, &rtccMon, &rtccMday, &rtccHour, &rtccMin, &rtccSec);
-                printf("%d/%d/%d %02d:%02d:%02d\r\n", rtccMday, rtccMon, rtccYear + 1980, rtccHour, rtccMin, rtccSec);
-                rtn = 0;
-            } else if (argc == 7) {
-                // To do add the set functionality
-                rtccMday = this->atolmm(opt->getArgumentFromOption('D'), 1, 31, 1);
-                rtccMon = this->atolmm(argv[2], 1, 12, 1);
-                rtccYear = this->atolmm(argv[3], 2010, 2200, 2017) - 1980;
-
-                rtccHour = this->atolmm(argv[4], 0, 23, 1);
-                rtccMin = this->atolmm(argv[5], 0, 59, 1);
-                rtccSec = this->atolmm(argv[6], 0, 59, 1);
-
-                //RtccSetDateAndTime();
-                rtn = 0;
-            } else {
-                this->argumnetsProblem();
-                rtn = -1;
-            }
-            break;
-
-        case COMMAND_SM_DESTROY_OPTLIST:
-            opt->~Optlist();
-            break;
-    }
-    return rtn;
-}
-
 const char * RTCC::getCommandOptions(void) {
     return options;
 }
@@ -73,3 +29,36 @@ const char * RTCC::getCommandOptions(void) {
 const char * RTCC::getCommandName(void) {
     return name;
 }
+
+int RTCC::command(void) {
+
+    const char requiredOptions[] = "hmsDMY";
+    uint16_t rtccYear;
+    uint8_t rtccMon, rtccMday, rtccHour, rtccMin, rtccSec;
+    int rtn;
+
+    if (numOfOpt == 0) {
+        rtccGetDateAndTime(&rtccYear, &rtccMon, &rtccMday, &rtccHour, &rtccMin, &rtccSec);
+        printf("%d/%d/%d %02d:%02d:%02d\r\n", rtccMday, rtccMon, rtccYear + 1980, rtccHour, rtccMin, rtccSec);
+        rtn = 0;
+    } else if (numOfOpt == 6) {
+        if (this->checkRequiredOptions(requiredOptions)) {
+            rtccHour = this->atolmm(opt->getFirstArgumentForOption('h'), 0, 23, 1);
+            rtccMin = this->atolmm(opt->getFirstArgumentForOption('m'), 0, 59, 1);
+            rtccSec = this->atolmm(opt->getFirstArgumentForOption('s'), 0, 59, 1);
+            rtccMday = this->atolmm(opt->getFirstArgumentForOption('D'), 1, 31, 1);
+            rtccMon = this->atolmm(opt->getFirstArgumentForOption('M'), 1, 12, 1);
+            rtccYear = this->atolmm(opt->getFirstArgumentForOption('Y'), 2010, 2200, 2017);
+            rtccSetDateAndTime(rtccYear, rtccMon, rtccMday, rtccHour, rtccMin, rtccSec);
+            rtn = 0;
+        } else {
+            this->printUnexpectedOptions(requiredOptions);
+            rtn = 1;
+        }
+    } else {
+        this->printUnexpectedNumberOfOptions();
+        rtn = -1;
+    }
+    return rtn;
+}
+

@@ -143,6 +143,16 @@ void rtccGetDateAndTime(WORD *rtccYear, BYTE *rtccMon, BYTE *rtccMday, BYTE *rtc
     *rtccHour = holdRtccHour;
 }
 
+void rtccSetDateAndTime(WORD rtccYear, BYTE rtccMon, BYTE rtccMday, BYTE rtccHour, BYTE rtccMin, BYTE rtccSec) {
+    holdRtccMday = rtccMday;
+    holdRtccMon = rtccMon;
+    holdRtccYear = rtccYear - 1980;
+    holdRtccSec = rtccSec;
+    holdRtccMin = rtccMin;
+    holdRtccHour = rtccHour;
+    RtccSetDateAndTime();
+}
+
 void rtccIncDateAndTime(WORD *rtccYear, BYTE *rtccMon, BYTE *rtccMday, BYTE *rtccHour, BYTE *rtccMin, BYTE *rtccSec, WORD secToInc) {
 
     BYTE n;

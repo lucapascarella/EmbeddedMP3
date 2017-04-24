@@ -17,7 +17,6 @@
 #include "Commands/Playlist.hpp"
 #include "MP3/Play.h"
 #include "Utilities/ArgsParser.hpp"
-#include "Utilities/Optlist.h"
 
 Playlist::Playlist(void) {
     calculateNameLength();
@@ -25,17 +24,18 @@ Playlist::Playlist(void) {
 
 int Playlist::command(int argc, char **argv) {
 
-    //    return_t *opt;
-
-    if (checkParameters(argc, argv, 2, 2)) {
-        //        opt = GetOptList(argc, argv, "C");
-        startPlay(argv[1]);
-        //      FreeRtnList(opt);
-
-        return 0;
-    } else {
-        return -1;
-    }
+//    //    return_t *opt;
+//
+//    if (checkParameters(argc, argv, 2, 2)) {
+//        //        opt = GetOptList(argc, argv, "C");
+//        startPlay(argv[1]);
+//        //      FreeRtnList(opt);
+//
+//        return 0;
+//    } else {
+//        return -1;
+//    }
+    return 0;
 }
 
 const char * Playlist::getCommandOptions(void) {

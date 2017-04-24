@@ -87,7 +87,6 @@ extern "C" {
 #include "Utilities/ADC.h"
 #include "Utilities/RTCC.h"
 #include "Utilities/ADC.h"
-#include "Utilities/Optlist.h"
 #include "MP3/VS1063.h"
 #include "Commands.h"
 }
