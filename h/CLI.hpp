@@ -16,9 +16,9 @@
 #include <list>
 
 #define CLI_DIR_SIZE                _MAX_LFN
-#define CLI_INPUT_LINE_SIZE         32////1024 * 4
+#define CLI_INPUT_LINE_SIZE         64////1024 * 4
 
-#define CLI_MAX_LINE_INPUT_SIZE     1024
+//#define CLI_MAX_LINE_INPUT_SIZE     1024
 
 #define ESCAPE                  0x1B
 #define ESCAPE_ARROW_LEFT       0x80
@@ -98,7 +98,7 @@ private:
     bool getLastCommandFromFile(int pos);
     void putLastCommandInFile(void);
 
-    int verbosePrintfWrapper(int level, const char * fmt, ...);
+    int verbosePrintfWrapper(int level, bool reprint, const char * fmt, ...);
 };
 
 #endif	/* CLI_HPP */

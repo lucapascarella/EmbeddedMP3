@@ -53,6 +53,7 @@ public:
     bool createOptionList(int argc, char * argv[], const char *options);
     char * getFirstArgumentForOption(char option);
     int getNumberOfArgumentsForOption(char option);
+    Option * getOptionNumber(uint16_t number);
     int getNumberOfOptions(void);
     ~Optlist(void);
 

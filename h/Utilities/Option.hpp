@@ -24,7 +24,6 @@ class Option {
 private:
     char option;
     char *argument;
-    int argNumber;
     int argIndex;
 
 public:
@@ -33,6 +32,7 @@ public:
     Option(char option, char *argument, int index);
     char getOption(void);
     char * getArgument(void);
+    int getArgumentIndex(void);
     ~Option(void);
 };
 

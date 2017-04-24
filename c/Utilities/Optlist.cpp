@@ -58,25 +58,13 @@ bool Optlist::createOptionList(int argc, char * argv[], const char *options) {
                 }
             } else {
                 // Option not expected
-                //argIndex++;
-                if (custom_strlen(argv[nextArg]) > argIndex) {
-                    // No space between argument and option
-                    option = new Option(options[optIndex], &(argv[nextArg][argIndex]), nextArg);
-                    optionList.push_back(option);
-                } else if (nextArg < argc) {
-                    // There must be space between the argument option
-                    nextArg++;
-                    option = new Option(options[optIndex], argv[nextArg], nextArg);
-                    optionList.push_back(option);
-                } else {
-                    // Some error here
-                }
+                option = new Option('\0', argv[nextArg], nextArg);
+                optionList.push_back(option);
             }
             argIndex++;
         }
         nextArg++;
     }
-
     return true;
 }
 
@@ -108,10 +96,27 @@ int Optlist::getNumberOfArgumentsForOption(char option) {
     int count;
     std::list<Option*>::iterator it;
 
-    for (count =0, it = optionList.begin(); it != optionList.end(); it++)
+    for (count = 0, it = optionList.begin(); it != optionList.end(); it++)
         if ((*it)->getOption() == option)
             count++;
     return count;
+}
+
+Option *Optlist::getOptionNumber(uint16_t number) {
+
+    uint16_t i;
+    std::list<Option*>::iterator it;
+
+    if (number < optionList.size()) {
+        it = optionList.begin();
+        i = 0;
+        do {
+            if (i++ == number)
+                return (*it);
+            it++;
+        } while (it != optionList.end());
+    }
+    return NULL;
 }
 
 int Optlist::getNumberOfOptions(void) {

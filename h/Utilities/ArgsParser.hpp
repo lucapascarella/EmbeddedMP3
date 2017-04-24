@@ -20,13 +20,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define _MAX_CMD_LINE_ARGS  128
+#define _MAX_CMD_LINE_ARGS  32
 
 class ArgsParser {
 private:
     int argc;
     char * argv[_MAX_CMD_LINE_ARGS + 1];
-    char *cmdLineCopy;
+    char *cmdLinePointer;
 
 public:
     ArgsParser(void);

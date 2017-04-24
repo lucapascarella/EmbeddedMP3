@@ -19,89 +19,85 @@
 
 ArgsParser::ArgsParser(void) {
     argc = 0;
-    argv[0] = 0;
-    cmdLineCopy = NULL;
+    argv[0] = '\0';
+    cmdLinePointer = NULL;
 }
 
 int ArgsParser::extractArgs(uint8_t *input) {
 
     int length;
-
-    // Set to no argv elements, in case we have to bail out
-    argv[0] = '\0';
-    argc = 0;
+    char *cmdLine;
 
     // Allocate space for a manipulated copy of input + '\0' terminator
     length = custom_strlen((char*) input) + 1;
-    if (cmdLineCopy != NULL)
-        custom_free((void**) &cmdLineCopy);
-    cmdLineCopy = (char*) custom_malloc(cmdLineCopy, length);
-    custom_memcpy(cmdLineCopy, input, length);
+    cmdLinePointer = (char*) custom_malloc(cmdLinePointer, length);
+    custom_memcpy(cmdLinePointer, input, length);
+    cmdLine = cmdLinePointer;
 
-    if ('"' == *cmdLineCopy) {
+    if ('"' == *cmdLine) {
         // If command line starts with a quote ("), it's a quoted filename.  Skip to next quote.
-        cmdLineCopy++;
+        cmdLine++;
         // argv[0] == executable name
-        argv[0] = cmdLineCopy;
-        while (*cmdLineCopy && (*cmdLineCopy != '"'))
-            cmdLineCopy++;
+        argv[0] = cmdLine;
+        while (*cmdLine && (*cmdLine != '"'))
+            cmdLine++;
 
-        if (*cmdLineCopy) // Did we see a non-NULL ending?
-            *cmdLineCopy++ = '\0'; // Null terminate and advance to next char
+        if (*cmdLine) // Did we see a non-NULL ending?
+            *cmdLine++ = '\0'; // Null terminate and advance to next char
         else
             return 0; // Oops!  We didn't see the end quote
     } else {
         // A regular (non-quoted) filename
         // argv[0] == executable name
-        argv[0] = cmdLineCopy;
+        argv[0] = cmdLine;
 
-        while (*cmdLineCopy && (' ' != *cmdLineCopy) && ('\t' != *cmdLineCopy))
-            cmdLineCopy++;
+        while (*cmdLine && (' ' != *cmdLine) && ('\t' != *cmdLine))
+            cmdLine++;
 
-        if (*cmdLineCopy)
-            *cmdLineCopy++ = '\0'; // Null terminate and advance to next char
+        if (*cmdLine)
+            *cmdLine++ = '\0'; // Null terminate and advance to next char
     }
 
     // Done processing argv[0] (i.e., the executable name).  Now do the actual arguments
     argc = 1;
     while (true) {
         // Skip over any whitespace
-        while (*cmdLineCopy && ((' ' == *cmdLineCopy) || ('\t' == *cmdLineCopy)))
-            cmdLineCopy++;
+        while (*cmdLine && ((' ' == *cmdLine) || ('\t' == *cmdLine)))
+            cmdLine++;
 
-        if (0 == *cmdLineCopy) // End of command line???
+        if (0 == *cmdLine) // End of command line???
             return argc;
 
-        if ('"' == *cmdLineCopy) {
+        if ('"' == *cmdLine) {
             // Argument starting with a quote???
-            cmdLineCopy++; // Advance past quote character
+            cmdLine++; // Advance past quote character
 
-            argv[argc++] = cmdLineCopy;
+            argv[argc++] = cmdLine;
             argv[argc] = 0;
 
             // Scan to end quote, or NULL terminator
-            while (*cmdLineCopy && (*cmdLineCopy != '"'))
-                cmdLineCopy++;
+            while (*cmdLine && (*cmdLine != '"'))
+                cmdLine++;
 
-            if (0 == *cmdLineCopy)
+            if (0 == *cmdLine)
                 return argc;
 
-            if (*cmdLineCopy)
-                *cmdLineCopy++ = 0; // Null terminate and advance to next char
+            if (*cmdLine)
+                *cmdLine++ = 0; // Null terminate and advance to next char
         } else {
             // Non-quoted argument
-            argv[argc++] = cmdLineCopy;
+            argv[argc++] = cmdLine;
             argv[argc] = 0;
 
             // Skip till whitespace or NULL terminator
-            while (*cmdLineCopy && (' ' != *cmdLineCopy) && ('\t' != *cmdLineCopy))
-                cmdLineCopy++;
+            while (*cmdLine && (' ' != *cmdLine) && ('\t' != *cmdLine))
+                cmdLine++;
 
-            if (0 == *cmdLineCopy)
+            if (0 == *cmdLine)
                 return argc;
 
-            if (*cmdLineCopy)
-                *cmdLineCopy++ = 0; // Null terminate and advance to next char
+            if (*cmdLine)
+                *cmdLine++ = 0; // Null terminate and advance to next char
         }
 
         if (argc >= (_MAX_CMD_LINE_ARGS))
@@ -129,5 +125,6 @@ char * ArgsParser::getLastArgPointer(void) {
 }
 
 ArgsParser::~ArgsParser(void) {
-    custom_free((void**) &cmdLineCopy);
+    if (cmdLinePointer != NULL)
+        custom_free((void**) &cmdLinePointer);
 }

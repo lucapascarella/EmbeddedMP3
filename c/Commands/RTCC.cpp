@@ -53,7 +53,7 @@ int RTCC::command(void) {
             rtn = 0;
         } else {
             this->printUnexpectedOptions(requiredOptions);
-            rtn = 1;
+            rtn = -1;
         }
     } else {
         this->printUnexpectedNumberOfOptions();

@@ -93,7 +93,7 @@ int verbosePrintfVaList(int level, const char * fmt, va_list args) {
     p = pri.txBuf[pri.alt++ % PRI_BUF_ALT_DIM];
 
     if (level <= config.console.verbose) {
-        consoleWrite("\r\n", 2);
+        //consoleWrite("\r\n", 2);
         // If the user disable both UART and USB serial console do anything
         //va_start(ap, fmt);
         len = vsnprintf(p, PRINTER_BUFFER_SIZE, fmt, args);

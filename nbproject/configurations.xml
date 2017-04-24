@@ -60,7 +60,6 @@
         <itemPath>h/Utilities/printer.h</itemPath>
         <itemPath>h/Utilities/RTCC.h</itemPath>
         <itemPath>h/Utilities/ADC.h</itemPath>
-        <itemPath>h/Utilities/Optlist.h</itemPath>
         <itemPath>h/Utilities/Logging.h</itemPath>
         <itemPath>h/Utilities/USB.h</itemPath>
         <itemPath>h/Utilities/AsyncTimer.h</itemPath>
@@ -139,7 +138,6 @@
         <itemPath>c/Utilities/printer.c</itemPath>
         <itemPath>c/Utilities/RTCC.c</itemPath>
         <itemPath>c/Utilities/ADC.c</itemPath>
-        <itemPath>c/Utilities/Optlist.c</itemPath>
         <itemPath>c/Utilities/Logging.c</itemPath>
         <itemPath>c/Utilities/USB.c</itemPath>
         <itemPath>c/Utilities/AsyncTimer.c</itemPath>

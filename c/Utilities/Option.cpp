@@ -43,6 +43,10 @@ char * Option::getArgument(void) {
     return this->argument;
 }
 
+int Option::getArgumentIndex(void) {
+    return this->argIndex;
+}
+
 Option::~Option(void) {
 
 }

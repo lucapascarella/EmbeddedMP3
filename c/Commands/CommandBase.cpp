@@ -82,25 +82,40 @@ long CommandBase::atolmm(char *str, long min, long max, long def) {
 
 bool CommandBase::checkRequiredOptions(const char * opts) {
     char p;
-    int expected, counted;
+    uint16_t expected, counted;
 
     expected = counted = 0;
-    if (opts != NULL)
+    if (opts != NULL) {
         while ((p = opts[expected++]) != '\0') {
             if (opt->getFirstArgumentForOption(p) != NULL)
                 counted++;
         }
-    if (expected == counted)
-        return true;
+        if (strlen(opts) == counted)
+            return true;
+    }
     return false;
 }
 
 void CommandBase::printUnexpectedNumberOfOptions(void) {
-    verbosePrintf(VER_ERR, "Unexpected number of options (%d)", numOfOpt);
+    int i;
+    Option *p;
+    verbosePrintf(VER_MIN, "Unexpected number of options (%d)", numOfOpt);
+    for (i = 0; i < numOfOpt; i++) {
+        p = opt->getOptionNumber(i);
+        if (p != NULL)
+            verbosePrintf(VER_ERR, "\r\n%s", argv[p->getArgumentIndex()]);
+    }
 }
 
 void CommandBase::printUnexpectedOptions(const char *opts) {
-    verbosePrintf(VER_ERR, "Unexpected options %d", numOfOpt);
+    int i;
+    Option *p;
+    verbosePrintf(VER_MIN, "Unexpected option(s):");
+    for (i = 0; i < numOfOpt; i++) {
+        p = opt->getOptionNumber(i);
+        if (p != NULL && p->getOption() == '\0')
+            verbosePrintf(VER_ERR, "\r\n%s", argv[p->getArgumentIndex()]);
+    }
 }
 
 int CommandBase::taskCommand(ArgsParser *args) {
