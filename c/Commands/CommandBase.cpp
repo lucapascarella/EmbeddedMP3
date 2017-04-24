@@ -99,22 +99,44 @@ bool CommandBase::checkRequiredOptions(const char * opts) {
 void CommandBase::printUnexpectedNumberOfOptions(void) {
     int i;
     Option *p;
-    verbosePrintf(VER_MIN, "Unexpected number of options (%d)", numOfOpt);
+    verbosePrintf(VER_MIN, "\r\nUnexpected number of options (%d)", numOfOpt);
     for (i = 0; i < numOfOpt; i++) {
         p = opt->getOptionNumber(i);
-        if (p != NULL)
-            verbosePrintf(VER_ERR, "\r\n%s", argv[p->getArgumentIndex()]);
+        if (p != NULL) {
+            if (p->getRequiredOption() && p->getArgument() != NULL)
+                verbosePrintf(VER_ERR, "\r\n-%c %s", p->getFoundOption(), p->getArgument());
+            else
+                verbosePrintf(VER_ERR, "\r\n-%c", p->getFoundOption());
+        }
     }
 }
 
 void CommandBase::printUnexpectedOptions(const char *opts) {
     int i;
     Option *p;
-    verbosePrintf(VER_MIN, "Unexpected option(s):");
+    verbosePrintf(VER_MIN, "\r\nUnexpected option(s):");
     for (i = 0; i < numOfOpt; i++) {
         p = opt->getOptionNumber(i);
-        if (p != NULL && p->getOption() == '\0')
-            verbosePrintf(VER_ERR, "\r\n%s", argv[p->getArgumentIndex()]);
+        if (p != NULL && p->getGivenOption() == '\0')
+            verbosePrintf(VER_ERR, "\r\n-%c", p->getFoundOption());
+    }
+}
+
+void CommandBase::printOptions(void) {
+    int i;
+    Option *p;
+    
+    verbosePrintf(VER_MIN, "\r\nFound options (%d)", numOfOpt);
+    verbosePrintf(VER_MIN, "\r\nRequired options: %s", this->getCommandOptions());
+    for (i = 0; i < numOfOpt; i++) {
+        p = opt->getOptionNumber(i);
+        if (p != NULL) {
+            // TODO test this
+            if (p->getRequiredOption() && p->getArgument() != NULL)
+                verbosePrintf(VER_ERR, "\r\n-%c %s", p->getFoundOption(), p->getArgument());
+            else
+                verbosePrintf(VER_ERR, "\r\n-%c", p->getFoundOption());
+        }
     }
 }
 
@@ -137,6 +159,7 @@ int CommandBase::taskCommand(ArgsParser *args) {
             opt = new Optlist();
             if (opt->createOptionList(argc, argv, this->getCommandOptions()) == true) {
                 numOfOpt = opt->getNumberOfOptions();
+                printOptions();
                 rtn = 1;
                 sm = COMMAND_SM_EXECUTE;
             } else {

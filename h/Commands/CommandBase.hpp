@@ -55,6 +55,7 @@ protected:
     bool checkRequiredOptions(const char * opts);
     void printUnexpectedNumberOfOptions(void);
     void printUnexpectedOptions(const char *opts);
+    void printOptions(void);
     virtual int command(void); // pure specifier
 };
 

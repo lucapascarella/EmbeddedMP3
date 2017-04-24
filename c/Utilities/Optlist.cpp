@@ -40,25 +40,27 @@ bool Optlist::createOptionList(int argc, char * argv[], const char *options) {
                     argIndex++;
                     if (custom_strlen(argv[nextArg]) > argIndex) {
                         // No space between argument and option
-                        option = new Option(options[optIndex], &(argv[nextArg][argIndex]), nextArg);
+                        option = new Option(options[optIndex], argv[nextArg][argIndex - 1], &(argv[nextArg][argIndex]), nextArg, true);
                         optionList.push_back(option);
-                    } else if (nextArg < argc) {
+                    } else if (nextArg + 1 < argc) {
                         // There must be space between the argument option
                         nextArg++;
-                        option = new Option(options[optIndex], argv[nextArg], nextArg);
+                        option = new Option(options[optIndex], argv[nextArg - 1][argIndex - 1], argv[nextArg], nextArg, true);
                         optionList.push_back(option);
                     } else {
                         // Some error here
+                        option = new Option('\0', argv[nextArg][argIndex - 1], NULL, argIndex - 1, true);
+                        optionList.push_back(option);
                     }
                     break; /* done with argv[nextArg] */
                 } else {
                     // the option found does not have a text argument
-                    option = new Option(options[optIndex]);
+                    option = new Option(options[optIndex], argv[nextArg][argIndex]);
                     optionList.push_back(option);
                 }
             } else {
                 // Option not expected
-                option = new Option('\0', argv[nextArg], nextArg);
+                option = new Option('\0', argv[nextArg][argIndex], NULL, argIndex, false);
                 optionList.push_back(option);
             }
             argIndex++;
@@ -86,7 +88,7 @@ char * Optlist::getFirstArgumentForOption(char option) {
     std::list<Option*>::iterator it;
 
     for (it = optionList.begin(); it != optionList.end(); it++)
-        if ((*it)->getOption() == option)
+        if ((*it)->getGivenOption() == option)
             return (*it)->getArgument();
     return NULL;
 }
@@ -97,7 +99,7 @@ int Optlist::getNumberOfArgumentsForOption(char option) {
     std::list<Option*>::iterator it;
 
     for (count = 0, it = optionList.begin(); it != optionList.end(); it++)
-        if ((*it)->getOption() == option)
+        if ((*it)->getGivenOption() == option)
             count++;
     return count;
 }

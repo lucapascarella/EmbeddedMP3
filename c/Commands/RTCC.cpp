@@ -39,7 +39,7 @@ int RTCC::command(void) {
 
     if (numOfOpt == 0) {
         rtccGetDateAndTime(&rtccYear, &rtccMon, &rtccMday, &rtccHour, &rtccMin, &rtccSec);
-        printf("%d/%d/%d %02d:%02d:%02d", rtccMday, rtccMon, rtccYear, rtccHour, rtccMin, rtccSec);
+        printf("\r\n%d/%d/%d %02d:%02d:%02d", rtccMday, rtccMon, rtccYear, rtccHour, rtccMin, rtccSec);
         rtn = 0;
     } else if (numOfOpt == 6) {
         if (this->checkRequiredOptions(requiredOptions)) {

@@ -127,7 +127,7 @@ void CLI::cliTaskHadler(void) {
             } else {
                 GpioUpdateOutputState(GPIO_BIT_CMD_ERR);
                 // The command was not found
-                this->verbosePrintfWrapper(VER_MIN, false, "Command '%s' not found!", name);
+                this->verbosePrintfWrapper(VER_MIN, false, "\r\nCommand '%s' not found!", name);
                 sm = CLI_SM_DONE;
             }
             break;
@@ -291,7 +291,7 @@ bool CLI::addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len) {
 
             case'\r':
                 // Carriage return execute command
-                consolePrint((uint8_t*) "\r\n", 2);
+                //consolePrint((uint8_t*) "\r\n", 2);
                 return true;
                 break;
 

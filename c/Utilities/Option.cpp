@@ -18,25 +18,39 @@
 #include "Utilities/Optlist.hpp"
 
 Option::Option(void) {
-    this->option = '\0';
+    this->givenOption = '\0';
+    this->foundOption = '\0';
     this->argument = NULL;
     this->argIndex = 0;
+    this->requiredOption = false;
 }
 
-Option::Option(char option) {
-    this->option = option;
+Option::Option(char reqOpt, char opt) {
+    this->givenOption = reqOpt;
+    this->foundOption = opt;
     this->argument = NULL;
     this->argIndex = 0;
+    this->requiredOption = false;
 }
 
-Option::Option(char option, char *argument, int index) {
-    this->option = option;
+Option::Option(char given, char found, char *argument, int argIndex, bool required) {
+    this->givenOption = given;
+    this->foundOption = found;
     this->argument = argument;
-    this->argIndex = index;
+    this->argIndex = argIndex;
+    this->requiredOption = required;
 }
 
-char Option::getOption(void) {
-    return this->option;
+char Option::getGivenOption(void) {
+    return this->givenOption;
+}
+
+char Option::getFoundOption(void) {
+    return this->foundOption;
+}
+
+bool Option::getRequiredOption(void) {
+    return this->requiredOption;
 }
 
 char * Option::getArgument(void) {

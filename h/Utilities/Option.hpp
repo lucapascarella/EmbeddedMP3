@@ -22,15 +22,19 @@
 
 class Option {
 private:
-    char option;
+    char givenOption;
+    char foundOption;
     char *argument;
     int argIndex;
+    bool requiredOption;
 
 public:
     Option(void);
-    Option(char option);
-    Option(char option, char *argument, int index);
-    char getOption(void);
+    Option(char reqOpt, char opt);
+    Option(char given, char found, char *argument, int argIndex, bool required);
+    char getGivenOption(void);
+    char getFoundOption(void);
+    bool getRequiredOption(void);
     char * getArgument(void);
     int getArgumentIndex(void);
     ~Option(void);
