@@ -18,19 +18,29 @@
 #include "Utilities/Optlist.hpp"
 
 Option::Option(void) {
-    option = '\0';
-    argument = NULL;
+    this->option = '\0';
+    this->argument = NULL;
+    this->argIndex = 0;
 }
 
 Option::Option(char option) {
     this->option = option;
-    argument = NULL;
+    this->argument = NULL;
+    this->argIndex = 0;
 }
 
 Option::Option(char option, char *argument, int index) {
     this->option = option;
     this->argument = argument;
     this->argIndex = index;
+}
+
+char Option::getOption(void) {
+    return this->option;
+}
+
+char * Option::getArgument(void) {
+    return this->argument;
 }
 
 Option::~Option(void) {

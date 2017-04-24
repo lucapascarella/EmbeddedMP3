@@ -21,11 +21,9 @@ Optlist::Optlist(void) {
     argc = 0;
 }
 
-return_t *Optlist::createOptionList(int argc, char * argv[], const char *options) {
+bool Optlist::createOptionList(int argc, char * argv[], const char *options) {
 
     Option *option;
-
-    return_t *rtn;
 
 
     int nextArg;
@@ -42,12 +40,6 @@ return_t *Optlist::createOptionList(int argc, char * argv[], const char *options
 
     argHead = NULL;
     argTail = NULL;
-
-    // Prepare the return_t structure with optHead and argHead
-    rtn = NULL;
-    rtn = (return_t*) custom_malloc(rtn, sizeof (return_t));
-    rtn->opt = NULL;
-    rtn->arg = NULL;
 
     // Loop through all of the command line arguments
     while (nextArg < argc) {
@@ -100,14 +92,14 @@ return_t *Optlist::createOptionList(int argc, char * argv[], const char *options
                     // Done with argv[nextArg]
                     break;
                 } else if (':' == options[optIndex + 1]) {
-                    // the option found should have a text argument
+                    // The option found should have a text argument
                     argIndex++;
                     if (custom_strlen(argv[nextArg]) > argIndex) {
-                        // no space between argument and option
+                        // No space between argument and option
                         option = new Option(options[optIndex], &(argv[nextArg][argIndex]), nextArg);
                         optionList.push_back(option);
                     } else if (nextArg < argc) {
-                        // there must be space between the argument option
+                        // There must be space between the argument option
                         nextArg++;
                         option = new Option(options[optIndex], argv[nextArg], nextArg);
                         optionList.push_back(option);
@@ -116,6 +108,7 @@ return_t *Optlist::createOptionList(int argc, char * argv[], const char *options
                     }
                     break; /* done with argv[nextArg] */
                 } else {
+                    // the option found does not have a text argument
                     option = new Option(options[optIndex]);
                     optionList.push_back(option);
                 }
@@ -127,7 +120,7 @@ return_t *Optlist::createOptionList(int argc, char * argv[], const char *options
             // Parse a non option arguments
             if (NULL == argHead) {
                 argHead = MakeArg(); //MakeOpt(options[optIndex], NULL, OL_NOINDEX);
-                rtn->arg = argHead;
+               // rtn->arg = argHead;
                 argHead->argument = argv[nextArg];
                 argHead->argIndex = nextArg;
                 argHead->nextArgument = NULL;
@@ -144,7 +137,7 @@ return_t *Optlist::createOptionList(int argc, char * argv[], const char *options
         nextArg++;
     }
 
-    return rtn;
+    return true;
 }
 
 argument_t *Optlist::MakeArg(void) {
@@ -168,6 +161,7 @@ argument_t *Optlist::MakeArg(void) {
 option_t *Optlist::MakeOpt(const char option, char *const argument, const int index) {
     option_t *opt;
 
+    opt = NULL;
     opt = (option_t*) custom_malloc(opt, sizeof (option_t));
 
     if (opt != NULL) {
@@ -214,8 +208,20 @@ int Optlist::MatchOption(const char argument, const char * options) {
 
 char * Optlist::getArgumentFromOption(char option) {
 
+    std::list<Option*>::iterator it;
+
+    for (it = optionList.begin(); it != optionList.end(); it++)
+        if ((*it)->getOption() == option)
+            return (*it)->getArgument();
+    return NULL;
 }
 
 Optlist::~Optlist(void) {
+    std::list<Option*>::iterator it;
 
+    // Release memory space for each option
+    for (it = optionList.begin(); it != optionList.end(); it++)
+        (*it)->~Option();
+    optionList.clear();
+    optionList.~list();
 }

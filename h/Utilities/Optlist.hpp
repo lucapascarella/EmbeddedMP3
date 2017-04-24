@@ -52,7 +52,7 @@ private:
 
 public:
     Optlist(void);
-    return_t * createOptionList(int argc, char * argv[], const char *options);
+    bool createOptionList(int argc, char * argv[], const char *options);
     argument_t *MakeArg(void);
     option_t *MakeOpt(const char option, char *const argument, const int index);
     void FreeArgList(argument_t *list);

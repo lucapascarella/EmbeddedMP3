@@ -31,6 +31,8 @@ public:
     Option(void);
     Option(char option);
     Option(char option, char *argument, int index);
+    char getOption(void);
+    char * getArgument(void);
     ~Option(void);
 };
 

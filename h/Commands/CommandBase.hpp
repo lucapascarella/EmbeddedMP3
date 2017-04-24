@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "Utilities/Optlist.hpp"
 #include "Utilities/ArgsParser.hpp"
 
 class CommandBase {
@@ -30,6 +31,15 @@ private:
     long lastCommandArgsCounter;
     // Class property
     int commandNameLength;
+
+protected:
+    Optlist *opt;
+    
+    enum SM {
+        COMMAND_SM_CREATE_OPTLIST = 0,
+        COMMAND_SM_EXECUTE,
+        COMMAND_SM_DESTROY_OPTLIST,
+    } sm;
 
 public:
     CommandBase(void);

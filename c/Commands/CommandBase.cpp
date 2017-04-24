@@ -24,6 +24,8 @@
 CommandBase::CommandBase(void) {
     this->initializeStatistics();
     commandNameLength = 0;
+    sm = COMMAND_SM_CREATE_OPTLIST;
+    opt = NULL;
 }
 
 void CommandBase::calculateNameLength(void) {
