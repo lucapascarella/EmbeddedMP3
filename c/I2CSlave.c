@@ -150,7 +150,6 @@ void I2CHandler(void) {
 #define MAX_TOKEN 32
     int index, vol, length;
     char *argv[MAX_TOKEN];
-    ;
 
     if (I2COperation == I2C_OP_WRITE) {
         // Check if a Write operation is been asked
@@ -209,7 +208,7 @@ void I2CHandler(void) {
                     // Start the execution of a track
                     // Example: [0x40 0x0B "S" "r" "e" "b" "e" "l" "." "m" "p" "3"]
                     // Response: [0x41 r r]
-                    I2CData[length + 1] = '\0';
+                    I2CData[length] = '\0';
                     argv[1] = &I2CData[index + 1];
                     Play(2, argv);
                     // If user asks to receive the response, will send 1 byte with indication of operation completed successful
@@ -234,7 +233,7 @@ void I2CHandler(void) {
                     if (length == 2) {
                         Playlist(1, NULL);
                     } else {
-                        I2CData[length + 1] = '\0';
+                        I2CData[length] = '\0';
                         argv[1] = &I2CData[index + 1];
                         Playlist(2, argv);
                     }
@@ -249,7 +248,7 @@ void I2CHandler(void) {
                     if (length == 2) {
                         Record(1, NULL);
                     } else {
-                        I2CData[length + 1] = '\0';
+                        I2CData[length] = '\0';
                         argv[1] = &I2CData[index + 1];
                         Record(2, argv);
                     }
