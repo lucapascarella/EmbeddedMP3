@@ -79,7 +79,7 @@ static enum {
 
 } mp3PlaySM = MP3_PLAY_HOME;
 
-BOOL playIndicator, playlistIndicator, stopIndicator;
+BOOL playIndicator, playlistIndicator, stopIndicator, repeatIndicator;
 DWORD tick_delay, tick_max;
 // See ffconf.h for dimension of LFN
 extern TCHAR Lfname[];
@@ -101,7 +101,6 @@ int PlayTaskHandler(void) {
             // Do nothing, wait a play command
             Nop();
             break;
-
 
 
         case MP3_PLAY_OPEN_PLAYLIST:
@@ -132,19 +131,24 @@ int PlayTaskHandler(void) {
 
 
         case MP3_PLAY_PL_GET_NEXT_TRACK:
-
             if (playlistIndicator && f_gets(Lfname, _MAX_LFN, fplaylist) != NULL) {
                 playlistNumber++;
                 verbosePrintf(VER_DBG, "Playlist execute: %s", Lfname);
                 // Goto next stage
                 mp3PlaySM = MP3_PLAY_OPEN_FILE;
             } else {
-                playlistNumber = 0;
-                playlistIndicator = FALSE;
-                verbosePrintf(VER_DBG, "Playlist ended");
-                if (f_close(fplaylist) != FR_OK)
-                    FlashLight(100, 10, FALSE);
-                mp3PlaySM = MP3_PLAY_HOME;
+                if (repeatIndicator == TRUE && stopIndicator == FALSE) {
+                    fres = f_lseek(fplaylist, 0);
+                    playlistNumber = 0;
+                    mp3PlaySM = MP3_PLAY_PL_GET_NEXT_TRACK;
+                } else {
+                    playlistNumber = 0;
+                    playlistIndicator = FALSE;
+                    verbosePrintf(VER_DBG, "Playlist ended");
+                    if (f_close(fplaylist) != FR_OK)
+                        FlashLight(100, 10, FALSE);
+                    mp3PlaySM = MP3_PLAY_HOME;
+                }
             }
             break;
 
@@ -300,7 +304,8 @@ int PlayTaskHandler(void) {
             if (playlistNumber) {
                 // Goto the handler of next stage of playlist
                 mp3PlaySM = MP3_PLAY_PL_GET_NEXT_TRACK;
-            } else if (config.play.repeat == 1 && stopIndicator == FALSE) {
+            } else if (repeatIndicator == TRUE && stopIndicator == FALSE) {
+                playlistNumber = 0;
                 verbosePrintf(VER_DBG, "Repeat enabled");
                 mp3PlaySM = MP3_PLAY_OPEN_FILE;
             } else {
@@ -610,12 +615,20 @@ void EarSpeaker(int argc, char **argv) {
 
 void Playlist(int argc, char **argv) {
 
+    repeatIndicator = config.play.repeat == 1 ? TRUE : FALSE;
     if (argc == 1) {
         // Copy in Lfname gloabal variable the name of the default file
         strncpy(Lfname, config.play.playlist, _MAX_LFN);
         // Turn on the playlist
         mp3PlaySM = MP3_PLAY_OPEN_PLAYLIST;
     } else if (argc == 2) {
+        // Copy in Lfname gloabal variable the name of the passed file
+        strncpy(Lfname, argv[1], _MAX_LFN);
+        // Turn on the playlist
+        mp3PlaySM = MP3_PLAY_OPEN_PLAYLIST;
+    } else if (argc == 3) {
+        if (argv[2][1] == 'r')
+            repeatIndicator = TRUE;
         // Copy in Lfname gloabal variable the name of the passed file
         strncpy(Lfname, argv[1], _MAX_LFN);
         // Turn on the playlist

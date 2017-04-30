@@ -380,7 +380,7 @@ BOOL ConfigInit(void) {
     config.console.port = 0;
     config.console.verbose = 1;
     config.console.versionMajor = 0;
-    config.console.versionMinor = 1;
+    config.console.versionMinor = 2;
     config.console.bootInfo = 1;
     config.console.log = 0;
 
