@@ -49,11 +49,21 @@
 #define GPIO_O_MICRO_SD_OK                          38
 
 // Gpio Special functions:
+#define GPIO_S_DIRECT_ADDRESS                       50
 #define GPIO_S_I2C                                  60
 #define GPIO_S_ANALOG                               70
 #define GPIO_S_UART                                 80
 #define GPIO_S_USB                                  90
 
+// Direct address
+#define GPIO_S_DIRECT_ADDRESS_0                     50
+#define GPIO_S_DIRECT_ADDRESS_1                     51
+#define GPIO_S_DIRECT_ADDRESS_2                     52
+#define GPIO_S_DIRECT_ADDRESS_3                     53
+#define GPIO_S_DIRECT_ADDRESS_4                     54
+#define GPIO_S_DIRECT_ADDRESS_5                     55
+#define GPIO_S_DIRECT_ADDRESS_6                     56
+#define GPIO_S_DIRECT_ADDRESS_7                     57
 
 
 #define GPIO_BIT_STARTS_PLAY                        1

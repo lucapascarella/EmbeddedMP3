@@ -179,6 +179,7 @@ bass_freq = 2\r\n\
 # 38 = micro SD is correctly initialized;\r\n\
 #\r\n\
 # Special functions:\r\n\
+# 50 - 57 = Issue direct address\r\n\
 # 60 = enable I2C slave. Only for pin 4 (SCL) and 5 (SDA)\r\n\
 # 70 = enable analog input. Only for pin 6 AN0/IO2 and 7 AN1/IO3 (Analog not yet implemented);\r\n\
 # 80 = enable UART RxTx console. Only for pin 8 (RX) and 9 (TX)\r\n\
@@ -189,8 +190,8 @@ mode2 = 0\r\n\
 mode3 = 0\r\n\
 mode4 = 80\r\n\
 mode5 = 80\r\n\
-mode6 = 90\r\n\
-mode7 = 90\r\n\
+mode6 = 52\r\n\
+mode7 = 51\r\n\
 # Duration of changed state (Output mode). (10 ... 1000, 0 = toggle) (time in milliseconds).\r\n\
 duration0 = 100\r\n\
 duration1 = 100\r\n\
@@ -216,8 +217,8 @@ pull2 = 0\r\n\
 pull3 = 0\r\n\
 pull4 = 0\r\n\
 pull5 = 0\r\n\
-pull6 = 0\r\n\
-pull7 = 0";
+pull6 = 1\r\n\
+pull7 = 1";
 #else
 const char conf[] = "";
 #endif
@@ -410,8 +411,8 @@ BOOL ConfigInit(void) {
     config.gpio[GPIO_3_AN1].mode = 0; // GPIO
     config.gpio[GPIO_4_RX].mode = GPIO_S_UART; // UART
     config.gpio[GPIO_5_TX].mode = GPIO_S_UART; // UART
-    config.gpio[GPIO_6_USB_P].mode = GPIO_S_USB; // USB
-    config.gpio[GPIO_7_USB_N].mode = GPIO_S_USB; // USB
+    config.gpio[GPIO_6_USB_P].mode = 52; // USB
+    config.gpio[GPIO_7_USB_N].mode = 51; // USB
     // GPIO duration
     config.gpio[GPIO_0_SCL].durationInMilliSecs = 100;
     config.gpio[GPIO_1_SDA].durationInMilliSecs = 100;
@@ -437,8 +438,8 @@ BOOL ConfigInit(void) {
     config.gpio[GPIO_3_AN1].bits.pull = 0;
     config.gpio[GPIO_4_RX].bits.pull = 0;
     config.gpio[GPIO_5_TX].bits.pull = 0;
-    config.gpio[GPIO_6_USB_P].bits.pull = 0;
-    config.gpio[GPIO_7_USB_N].bits.pull = 0;
+    config.gpio[GPIO_6_USB_P].bits.pull = 1;
+    config.gpio[GPIO_7_USB_N].bits.pull = 1;
 
     // Initialize pointer to dump file name for backup operation
     pIni = (char*) file_ini;

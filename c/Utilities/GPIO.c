@@ -14,13 +14,14 @@
 
 BOOL signalNewOutputState, signalNewInputState;
 WORD state;
+DWORD directAddressTimeour;
 
 void GPIOInit() {
 
     int n;
 
     signalNewOutputState = signalNewInputState = FALSE;
-
+    directAddressTimeour = 0;
 
     // Disable the analog functionalities
     ANSELBbits.ANSB2 = 0; // RB2 --> GPIO 1
@@ -61,6 +62,16 @@ void GPIOInit() {
                 GpioSetOutputState(n, config.gpio[n].bits.idle);
                 // Disable change notice mapping
                 GpioSetChangeNoticeState(n, DISABLED);
+            } else if (config.gpio[n].mode >= GPIO_S_DIRECT_ADDRESS_0 && config.gpio[n].mode <= GPIO_S_DIRECT_ADDRESS_7) {
+                // Direct address mode
+                // Configure as digital input
+                GpioSetTris(n, INPUT);
+                // Enable the pull-up/down
+                if (config.gpio[n].bits.pull == 1)
+                    GpioSetPullUp(n, ENABLED);
+                else if (config.gpio[n].bits.pull == 2)
+                    GpioSetPullDown(n, ENABLED);
+                GpioSetChangeNoticeState(n, ENABLED);
             } else {
                 Nop();
             }
@@ -106,7 +117,8 @@ void __ISR(_CHANGE_NOTICE_VECTOR, ipl2) ChangeNotice_Handler(void) {
 void GPIOInputTaskHandler() {
 
     BOOL update;
-    int n;
+    int n, addr;
+    char str[16], *argv[2];
 
     if (signalNewInputState) {
 
@@ -167,6 +179,21 @@ void GPIOInputTaskHandler() {
                             Reboot(1, NULL);
                             break;
 
+                            // Direct address
+                        case GPIO_S_DIRECT_ADDRESS_0:
+                        case GPIO_S_DIRECT_ADDRESS_1:
+                        case GPIO_S_DIRECT_ADDRESS_2:
+                        case GPIO_S_DIRECT_ADDRESS_3:
+                        case GPIO_S_DIRECT_ADDRESS_4:
+                        case GPIO_S_DIRECT_ADDRESS_5:
+                        case GPIO_S_DIRECT_ADDRESS_6:
+                        case GPIO_S_DIRECT_ADDRESS_7:
+                            update = TRUE;
+                            if (directAddressTimeour == 0)
+                                directAddressTimeour = TickGet();
+                            break;
+
+
                         default:
                             break;
 
@@ -175,11 +202,26 @@ void GPIOInputTaskHandler() {
                     if (update && config.gpio[n].durationInMilliSecs) {
                         config.gpio[n].timeout = TickGet();
                         config.gpio[n].durationInTick = TICK_SECOND / 1000 * config.gpio[n].durationInMilliSecs;
+                        if (directAddressTimeour == 0)
+                            Stop(1, NULL);
                     }
                 }
             }
         }
         signalNewInputState = FALSE;
+    }
+
+    if (directAddressTimeour != 0 && TickGet() - directAddressTimeour >= TICK_SECOND * 3) {
+        addr = 0;
+        for (n = 0; n < GPIO_NUMBERS; n++)
+            if (config.gpio[n].mode == GPIO_S_DIRECT_ADDRESS_0 + n)
+                addr |= config.gpio[n].bits.state << n;
+
+        snprintf(str, sizeof (str), "%d.mp3", addr);
+        argv[1] = str;
+        Nop();
+        Play(2, argv);
+        Nop();
     }
 }
 
