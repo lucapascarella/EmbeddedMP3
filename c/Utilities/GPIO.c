@@ -90,7 +90,8 @@ void GPIOInit() {
     ConfigIntCNB(CHANGE_INT_PRI_2 | CHANGE_INT_ON);
 }
 
-void __ISR(_CHANGE_NOTICE_VECTOR, ipl2) ChangeNotice_Handler(void) {
+void __ISR(_CHANGE_NOTICE_VECTOR, IPL2AUTO) ChangeNotice_Handler(void) {
+    //    BYTE i;
     unsigned int tempA, tempB;
 
     // clear the mismatch condition
@@ -110,26 +111,31 @@ void __ISR(_CHANGE_NOTICE_VECTOR, ipl2) ChangeNotice_Handler(void) {
     config.gpio[6].bits.state = tempB >> 10;
     config.gpio[7].bits.state = tempB >> 11;
 
-    signalNewInputState = TRUE;
+    //    // Save state for direct address
+    //    for (i = 0; i < GPIO_NUMBERS; i++) {
+    //        if (config.gpio[i].bits.saved == FALSE) {
+    //            config.gpio[i].bits.savedState = config.gpio[i].bits.state;
+    //            config.gpio[i].bits.saved = TRUE;
+    //        }
+    //    }
 
+    signalNewInputState = TRUE;
 }
 
 void GPIOInputTaskHandler() {
 
     BOOL update;
-    int n, addr;
+    int i, j, n, addr;
+    unsigned int tempA, tempB;
+    BYTE gpio[8];
     char str[16], *argv[2];
 
     if (signalNewInputState) {
-
         for (n = 0; n < GPIO_NUMBERS; n++) {
-
             // Manage the Input event associated to each GPIO
             if (config.gpio[n].bits.idle != config.gpio[n].bits.state) {
-
                 //if (config.gpio[n].bits.timeOutEnabled && TickGet() - config.gpio[n].timeout >= config.gpio[n].durationInTick) {
                 if (TickGet() - config.gpio[n].timeout >= config.gpio[n].durationInTick) {
-
                     // Reset update condition for every cycle
                     update = FALSE;
                     switch (config.gpio[n].mode) {
@@ -196,9 +202,7 @@ void GPIOInputTaskHandler() {
 
                         default:
                             break;
-
                     }
-
                     if (update && config.gpio[n].durationInMilliSecs) {
                         config.gpio[n].timeout = TickGet();
                         config.gpio[n].durationInTick = TICK_SECOND / 1000 * config.gpio[n].durationInMilliSecs;
@@ -211,11 +215,27 @@ void GPIOInputTaskHandler() {
         signalNewInputState = FALSE;
     }
 
-    if (directAddressTimeour != 0 && TickGet() - directAddressTimeour >= TICK_SECOND * 3) {
+    if (directAddressTimeour != 0 && TickGet() - directAddressTimeour >= TICK_SECOND * 1) {
+        directAddressTimeour = 0;
+
+        tempA = mPORTARead();
+        tempB = mPORTBRead();
+
+        gpio[0] = (tempB >> 8) & 0x01;
+        gpio[1] = (tempB >> 9) & 0x01;
+        gpio[2] = (tempA >> 0) & 0x01;
+        gpio[3] = (tempA >> 1) & 0x01;
+        gpio[4] = (tempB >> 1) & 0x01;
+        gpio[5] = (tempB >> 0) & 0x01;
+        gpio[6] = (tempB >> 10) & 0x01;
+        gpio[7] = (tempB >> 11) & 0x01;
+
         addr = 0;
-        for (n = 0; n < GPIO_NUMBERS; n++)
-            if (config.gpio[n].mode == GPIO_S_DIRECT_ADDRESS_0 + n)
-                addr |= config.gpio[n].bits.state << n;
+        for (i = 0; i < GPIO_NUMBERS; i++)
+            for (j = 0; j < GPIO_NUMBERS; j++)
+                if (GPIO_S_DIRECT_ADDRESS_0 + i == config.gpio[j].mode)
+                    addr |= gpio[j] << i;
+
 
         snprintf(str, sizeof (str), "%d.mp3", addr);
         argv[1] = str;
