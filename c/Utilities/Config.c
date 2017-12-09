@@ -190,8 +190,8 @@ mode2 = 0\r\n\
 mode3 = 0\r\n\
 mode4 = 80\r\n\
 mode5 = 80\r\n\
-mode6 = 52\r\n\
-mode7 = 51\r\n\
+mode6 = 51\r\n\
+mode7 = 50\r\n\
 # Duration of changed state (Output mode). (10 ... 1000, 0 = toggle) (time in milliseconds).\r\n\
 duration0 = 100\r\n\
 duration1 = 100\r\n\
@@ -217,8 +217,8 @@ pull2 = 0\r\n\
 pull3 = 0\r\n\
 pull4 = 0\r\n\
 pull5 = 0\r\n\
-pull6 = 1\r\n\
-pull7 = 1";
+pull6 = 2\r\n\
+pull7 = 2";
 #else
 const char conf[] = "";
 #endif

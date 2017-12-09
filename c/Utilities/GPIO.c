@@ -111,14 +111,6 @@ void __ISR(_CHANGE_NOTICE_VECTOR, IPL2AUTO) ChangeNotice_Handler(void) {
     config.gpio[6].bits.state = tempB >> 10;
     config.gpio[7].bits.state = tempB >> 11;
 
-    //    // Save state for direct address
-    //    for (i = 0; i < GPIO_NUMBERS; i++) {
-    //        if (config.gpio[i].bits.saved == FALSE) {
-    //            config.gpio[i].bits.savedState = config.gpio[i].bits.state;
-    //            config.gpio[i].bits.saved = TRUE;
-    //        }
-    //    }
-
     signalNewInputState = TRUE;
 }
 
@@ -128,7 +120,7 @@ void GPIOInputTaskHandler() {
     int i, j, n, addr;
     unsigned int tempA, tempB;
     BYTE gpio[8];
-    char str[16], *argv[2];
+    char str1[16], str2[16], *argv[4];
 
     if (signalNewInputState) {
         for (n = 0; n < GPIO_NUMBERS; n++) {
@@ -206,8 +198,6 @@ void GPIOInputTaskHandler() {
                     if (update && config.gpio[n].durationInMilliSecs) {
                         config.gpio[n].timeout = TickGet();
                         config.gpio[n].durationInTick = TICK_SECOND / 1000 * config.gpio[n].durationInMilliSecs;
-                        if (directAddressTimeour == 0)
-                            Stop(1, NULL);
                     }
                 }
             }
@@ -215,9 +205,10 @@ void GPIOInputTaskHandler() {
         signalNewInputState = FALSE;
     }
 
-    if (directAddressTimeour != 0 && TickGet() - directAddressTimeour >= TICK_SECOND * 1) {
+    if (directAddressTimeour != 0 && TickGet() - directAddressTimeour >= TICK_SECOND / 20) {
         directAddressTimeour = 0;
 
+        // Read inputs status
         tempA = mPORTARead();
         tempB = mPORTBRead();
 
@@ -230,18 +221,29 @@ void GPIOInputTaskHandler() {
         gpio[6] = (tempB >> 10) & 0x01;
         gpio[7] = (tempB >> 11) & 0x01;
 
+        // Convert inputs in binary address
         addr = 0;
         for (i = 0; i < GPIO_NUMBERS; i++)
             for (j = 0; j < GPIO_NUMBERS; j++)
                 if (GPIO_S_DIRECT_ADDRESS_0 + i == config.gpio[j].mode)
                     addr |= gpio[j] << i;
 
-
-        snprintf(str, sizeof (str), "%d.mp3", addr);
-        argv[1] = str;
-        Nop();
-        Play(2, argv);
-        Nop();
+        if (addr == 0) {
+            // Issue Stop command if address is 0
+            strncpy(str2, "-all", sizeof(str2));
+            argv[1] = str2;
+            Stop(2, argv);
+        } else {
+            // Issue Playback command
+            Stop(1, NULL);
+            snprintf(str1, sizeof (str1), "%d.mp3", addr);
+            strncpy(str2, "-r", sizeof(str2));
+            argv[1] = str1;
+            argv[2] = str2;
+            Nop();
+            Play(3, argv);
+            Nop();
+        }
     }
 }
 

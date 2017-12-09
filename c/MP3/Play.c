@@ -79,7 +79,7 @@ static enum {
 
 } mp3PlaySM = MP3_PLAY_HOME;
 
-BOOL playIndicator, playlistIndicator, stopIndicator, repeatIndicator;
+BOOL playIndicator, playlistIndicator, stopIndicator, repeatIndicator, singleRepeat, startPlayback;
 DWORD tick_delay, tick_max;
 // See ffconf.h for dimension of LFN
 extern TCHAR Lfname[];
@@ -99,7 +99,10 @@ int PlayTaskHandler(void) {
 
         case MP3_PLAY_HOME:
             // Do nothing, wait a play command
-            Nop();
+            if (startPlayback) {
+                startPlayback = FALSE;
+                mp3PlaySM = MP3_PLAY_OPEN_FILE;
+            }
             break;
 
 
@@ -308,6 +311,9 @@ int PlayTaskHandler(void) {
                 playlistNumber = 0;
                 verbosePrintf(VER_DBG, "Repeat enabled");
                 mp3PlaySM = MP3_PLAY_OPEN_FILE;
+            } else if (singleRepeat == TRUE) {
+                // Goto idle state machine
+                mp3PlaySM = MP3_PLAY_OPEN_FILE;
             } else {
                 // Goto idle state machine
                 mp3PlaySM = MP3_PLAY_HOME;
@@ -364,10 +370,18 @@ void Play(int argc, char **argv) {
         // Too few arguments passed
         CliTooFewArgumnets(argv[0]);
     } else if (argc == 2) {
-        // Copy in fileName gloabal variable the name of the passed file
+        // Copy in fileName global variable the name of the passed file
         strncpy(Lfname, argv[1], _MAX_LFN);
-        // Turn on the player
-        mp3PlaySM = MP3_PLAY_OPEN_FILE;
+        startPlayback = TRUE;
+        //mp3PlaySM = MP3_PLAY_OPEN_FILE;
+    } else if (argc == 3) {
+        if (strcmp(argv[2], "-r") == 0) {
+            // Copy in fileName global variable the name of the passed file
+            strncpy(Lfname, argv[1], _MAX_LFN);
+            singleRepeat = TRUE;
+            startPlayback = TRUE;
+            //mp3PlaySM = MP3_PLAY_OPEN_FILE;
+        }
     } else {
         CliTooManyArgumnets(argv[0]);
     }
@@ -417,8 +431,6 @@ BOOL PausePlay(int argc, char **argv) {
 
 BOOL StopPlay(int argc, char **argv) {
 
-    // posso aggiungere un ritardo ricopiando la struttura di Pause
-    // anche kill
     if (argc == 1) {
         if (mp3PlaySM >= MP3_PLAY_OPEN_FILE && mp3PlaySM < MP3_PLAY_FINISH_PLAING) {
             if (mp3PlaySM == MP3_PLAY_PAUSE_WAIT)
@@ -435,6 +447,8 @@ BOOL StopPlay(int argc, char **argv) {
                 // Also, and playlist execution
                 playlistIndicator = FALSE;
                 stopIndicator = TRUE;
+                singleRepeat = FALSE;
+                startPlayback = FALSE;
                 return TRUE;
             }
         }
