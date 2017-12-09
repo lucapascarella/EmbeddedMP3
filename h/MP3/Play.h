@@ -103,7 +103,7 @@ extern "C" {
         FIL *fil; // File pointer
 
         PLAY_STATE_MACHINE sm; // Play state machine indicator
-        BYTE filename[_MAX_LFN + 1]; // USB Filename
+        BYTE filename[FF_MAX_LFN + 1]; // USB Filename
 
         union {
             DWORD allFlags; // 32 bits reserved for flags field

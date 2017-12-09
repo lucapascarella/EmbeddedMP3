@@ -28,7 +28,7 @@ typedef struct __PACKED {
 
 int DeleteDir(int argc, char **argv2) {
 
-    extern TCHAR Lfname[_MAX_LFN + 1];
+    extern TCHAR Lfname[FF_MAX_LFN + 1];
     int rtn = 0;
     static char* path;
     static DEL_DIR *dd;

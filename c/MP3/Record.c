@@ -750,7 +750,7 @@ int Record(int argc, char **argv) {
 
     if (argc == 1) {
         // Copy in rec.lfname gloabal variable the name of the default file
-        strncpy(rec.filename, config.record.r_name, _MAX_LFN);
+        strncpy(rec.filename, config.record.r_name, FF_MAX_LFN);
         // Struct recording information
         SetBitRate(config.record.samplerate, config.record.bitrate, config.record.gain, config.record.max_gain, INPUT_LINE, config.record.bitrate_mode, config.record.format, config.record.adcMode, BIT_RESERVOIR_ON);
         // Disable intervals recording
@@ -760,7 +760,7 @@ int Record(int argc, char **argv) {
         config.record.prog_over = 2;
     } else if (argc == 2) {
         // Extract the name of the recording file
-        strncpy(rec.filename, argv[1], _MAX_LFN);
+        strncpy(rec.filename, argv[1], FF_MAX_LFN);
         // Struct recording information
         SetBitRate(config.record.samplerate, config.record.bitrate, config.record.gain, config.record.max_gain, INPUT_LINE, config.record.bitrate_mode, config.record.format, config.record.adcMode, BIT_RESERVOIR_ON);
         // Disable intervals recording
@@ -769,7 +769,7 @@ int Record(int argc, char **argv) {
         rec.sm = SM_REC_OPEN_FILE;
     } else if (argc == 10) {
         // Extract the name of the recording file
-        strncpy(rec.filename, argv[1], _MAX_LFN);
+        strncpy(rec.filename, argv[1], FF_MAX_LFN);
         // Extract the samplerate
         samplerate = atoimm(argv[2], SAMPLERATE_8000, SAMPLERATE_48000, SAMPLERATE_44100);
         // Extract the bitrate

@@ -68,6 +68,8 @@
         <itemPath>h/Utilities/ArgsParser.hpp</itemPath>
         <itemPath>h/Utilities/Optlist.hpp</itemPath>
         <itemPath>h/Utilities/Option.hpp</itemPath>
+        <itemPath>h/Utilities/inirw.h</itemPath>
+        <itemPath>h/Utilities/inirwWrapper.h</itemPath>
       </logicalFolder>
       <itemPath>h/HardwareProfile.h</itemPath>
       <itemPath>h/usb_config.h</itemPath>
@@ -113,8 +115,8 @@
       <logicalFolder name="f5" displayName="FatFS" projectFiles="true">
         <itemPath>c/FatFS/diskio.c</itemPath>
         <itemPath>c/FatFS/ff.c</itemPath>
-        <itemPath>c/FatFS/ccsbcs.c</itemPath>
         <itemPath>c/FatFS/usbdevFatFs.c</itemPath>
+        <itemPath>c/FatFS/ffunicode.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="MP3" projectFiles="true">
         <itemPath>c/MP3/MP3.c</itemPath>
@@ -148,6 +150,7 @@
         <itemPath>c/Utilities/CustomFunctions.c</itemPath>
         <itemPath>c/Utilities/Optlist.cpp</itemPath>
         <itemPath>c/Utilities/Option.cpp</itemPath>
+        <itemPath>c/Utilities/inirw.c</itemPath>
       </logicalFolder>
       <itemPath>c/usb_descriptors.c</itemPath>
       <itemPath>c/Main.c</itemPath>
@@ -215,7 +218,7 @@
         <property key="enable-symbols" value="true"/>
         <property key="enable-unroll-loops" value="false"/>
         <property key="exclude-floating-point" value="false"/>
-        <property key="extra-include-directories" value="h"/>
+        <property key="extra-include-directories" value="h;h/Utilities"/>
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
         <property key="isolate-each-function" value="false"/>
@@ -229,6 +232,7 @@
         <property key="strict-ansi" value="false"/>
         <property key="support-ansi" value="false"/>
         <property key="toplevel-reordering" value=""/>
+        <property key="unaligned-access" value=""/>
         <property key="use-cci" value="false"/>
         <property key="use-iar" value="false"/>
         <property key="use-indirect-calls" value="false"/>
@@ -281,6 +285,7 @@
         <property key="kseg-origin" value=""/>
         <property key="linker-symbols" value=""/>
         <property key="map-file" value="${DISTDIR}/${PROJECTNAME}.${IMAGE_TYPE}.map"/>
+        <property key="no-device-startup-code" value="false"/>
         <property key="no-startup-files" value="false"/>
         <property key="oXC32ld-extra-opts" value=""/>
         <property key="optimization-level" value=""/>
@@ -319,6 +324,7 @@
         <property key="rtti" value="true"/>
         <property key="strict-ansi" value="false"/>
         <property key="toplevel-reordering" value=""/>
+        <property key="unaligned-access" value=""/>
         <property key="use-cci" value="false"/>
         <property key="use-iar" value="false"/>
         <property key="use-indirect-calls" value="false"/>
@@ -327,6 +333,9 @@
         <property key="common-include-directories" value=""/>
         <property key="gp-relative-option" value=""/>
         <property key="legacy-libc" value="false"/>
+        <property key="mdtcm" value=""/>
+        <property key="mitcm" value=""/>
+        <property key="mstacktcm" value="false"/>
         <property key="relaxed-math" value="false"/>
         <property key="save-temps" value="false"/>
         <property key="wpo-lto" value="false"/>
@@ -377,7 +386,6 @@
         <property key="UART2" value="true"/>
         <property key="USB" value="true"/>
         <property key="debugoptions.useswbreakpoints" value="false"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="hwtoolclock.instructionspeed" value="4"/>
         <property key="hwtoolclock.units" value="mips"/>

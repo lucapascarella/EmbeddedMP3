@@ -74,7 +74,7 @@ int CCPlay::playTaskHandler(void) {
 
         case MP3_CCPLAY_PL_GET_NEXT_TRACK:
             verbosePrintf(VER_DBG, "Try to open next file in playlist file: %s", playlistFilename);
-            if (flags.bits.playlistIndicator && f_gets(filename, _MAX_LFN, pfilPlaylist) != NULL) {
+            if (flags.bits.playlistIndicator && f_gets(filename, FF_MAX_LFN, pfilPlaylist) != NULL) {
                 playlistNumber++;
                 verbosePrintf(VER_DBG, "Playlist error %s", filename);
                 sm = MP3_CCPLAY_OPEN_FILE;
@@ -246,7 +246,7 @@ int CCPlay::playTaskHandler(void) {
 }
 
 void CCPlay::startPlayback(char *ptr) {
-    strncpy(filename, ptr, _MAX_LFN);
+    strncpy(filename, ptr, FF_MAX_LFN);
     // Turn on the player
     sm = MP3_CCPLAY_OPEN_FILE;
 }

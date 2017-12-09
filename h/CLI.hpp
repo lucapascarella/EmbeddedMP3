@@ -15,7 +15,7 @@
 #include <stdbool.h>
 #include <list>
 
-#define CLI_DIR_SIZE                _MAX_LFN
+#define CLI_DIR_SIZE                FF_MAX_LFN
 #define CLI_INPUT_LINE_SIZE         64////1024 * 4
 
 //#define CLI_MAX_LINE_INPUT_SIZE     1024

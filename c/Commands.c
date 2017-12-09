@@ -996,7 +996,7 @@ FRESULT scan_files(
     if (res == FR_OK) {
         i = strlen(path);
         while (((res = f_readdir(&dirs, &finfo)) == FR_OK) && finfo.fname[0]) {
-            if (_FS_RPATH && finfo.fname[0] == '.') continue;
+            if (FF_FS_RPATH && finfo.fname[0] == '.') continue;
 //#if _USE_LFN
 //            fn = *finfo.lfname ? finfo.lfname : finfo.fname;
 //#else

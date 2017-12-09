@@ -62,8 +62,8 @@ private:
     FIL *pfil; // File pointer
     FIL *pfilPlaylist; // Pointer for play-list file
 
-    char filename[_MAX_LFN + 1]; // File name
-    char playlistFilename[_MAX_LFN + 1]; // Play-list File name
+    char filename[FF_MAX_LFN + 1]; // File name
+    char playlistFilename[FF_MAX_LFN + 1]; // Play-list File name
 
     uint32_t tick_delay;
     uint32_t tick_max;

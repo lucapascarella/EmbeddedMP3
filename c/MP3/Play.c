@@ -85,7 +85,7 @@ int PlayTaskHandler(void) {
 
         case MP3_PLAY_PL_GET_NEXT_TRACK:
 
-            if (playlistIndicator && f_gets(play.filename, _MAX_LFN, fplaylist) != NULL) {
+            if (playlistIndicator && f_gets(play.filename, FF_MAX_LFN, fplaylist) != NULL) {
                 playlistNumber++;
                 verbosePrintf(VER_DBG, "Playlist execute: %s", play.filename);
                 // Goto next stage
@@ -275,7 +275,7 @@ int PlayTaskHandler(void) {
 }
 
 void startPlay(char *ptr) {
-    strncpy(play.filename, ptr, _MAX_LFN);
+    strncpy(play.filename, ptr, FF_MAX_LFN);
     // Turn on the player
     play.sm = MP3_PLAY_OPEN_FILE;
 }
@@ -543,12 +543,12 @@ int Playlist(int argc, char **argv) {
 
     if (argc == 1) {
         // Copy in play.filename gloabal variable the name of the default file
-        strncpy(play.filename, config.play.playlist, _MAX_LFN);
+        strncpy(play.filename, config.play.playlist, FF_MAX_LFN);
         // Turn on the playlist
         play.sm = MP3_PLAY_OPEN_PLAYLIST;
     } else if (argc == 2) {
         // Copy in play.filename gloabal variable the name of the passed file
-        strncpy(play.filename, argv[1], _MAX_LFN);
+        strncpy(play.filename, argv[1], FF_MAX_LFN);
         // Turn on the playlist
         play.sm = MP3_PLAY_OPEN_PLAYLIST;
     } else {
