@@ -16,17 +16,22 @@
 
 
 #include "Commands/CommandsList.hpp"
+#include "Commands/List.hpp"
 #include "Commands/Playback.hpp"
 #include "Commands/Stop.hpp"
 #include "Commands/Playlist.hpp"
 #include "Commands/RTCC.hpp"
 
 CommandsList::CommandsList(CLI *cli) {
+    // Initialize command class
+    List *list = new List();
     Playback *playback = new Playback();
     Stop *stop = new Stop();
     Playlist *playlist = new Playlist();
     RTCC *rtcc = new RTCC();
     
+    // Add commands to list
+    cli->registerCommand(list);
     cli->registerCommand(playback);
     cli->registerCommand(stop);
     cli->registerCommand(playlist);

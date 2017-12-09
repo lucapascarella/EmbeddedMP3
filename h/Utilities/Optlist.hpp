@@ -25,7 +25,10 @@
 /*
  * Option rules
  * a    -> no arguments
- * a:   -> One argument
+ * a:   -> one argument
+ * a;   -> multiple arguments
+ * &    -> free argument
+ * !    -> accidental arguments
  * 
  * Option examples
  * a:
@@ -37,6 +40,12 @@
  * cmd -a -b12
  * cmd -ab12
  * 
+ * &
+ * cmd file.txt
+ * 
+ * a&
+ * cmd -a file.txt
+ * cmd file.txt -a
  */
 
 #define    OL_NOINDEX    -1        /* this option has no arguement */
@@ -50,8 +59,9 @@ private:
     
 public:
     Optlist(void);
-    bool createOptionList(int argc, char * argv[], const char *options);
+    void createOptionList(int argc, char * argv[], const char *options);
     char * getFirstArgumentForOption(char option);
+    bool isOptionPresent(char option);
     int getNumberOfArgumentsForOption(char option);
     Option * getOptionNumber(uint16_t number);
     int getNumberOfOptions(void);

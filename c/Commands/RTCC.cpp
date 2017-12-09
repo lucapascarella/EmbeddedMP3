@@ -37,27 +37,34 @@ int RTCC::command(void) {
     uint8_t rtccMon, rtccMday, rtccHour, rtccMin, rtccSec;
     int rtn;
 
-    if (numOfOpt == 0) {
-        rtccGetDateAndTime(&rtccYear, &rtccMon, &rtccMday, &rtccHour, &rtccMin, &rtccSec);
-        printf("\r\n%d/%d/%d %02d:%02d:%02d", rtccMday, rtccMon, rtccYear, rtccHour, rtccMin, rtccSec);
-        rtn = 0;
-    } else if (numOfOpt == 6) {
-        if (this->checkRequiredOptions(requiredOptions)) {
-            rtccHour = this->atolmm(opt->getFirstArgumentForOption('h'), 0, 23, 1);
-            rtccMin = this->atolmm(opt->getFirstArgumentForOption('m'), 0, 59, 1);
-            rtccSec = this->atolmm(opt->getFirstArgumentForOption('s'), 0, 59, 1);
-            rtccMday = this->atolmm(opt->getFirstArgumentForOption('D'), 1, 31, 1);
-            rtccMon = this->atolmm(opt->getFirstArgumentForOption('M'), 1, 12, 1);
-            rtccYear = this->atolmm(opt->getFirstArgumentForOption('Y'), 2010, 2200, 2017);
-            rtccSetDateAndTime(rtccYear, rtccMon, rtccMday, rtccHour, rtccMin, rtccSec);
-            rtn = 0;
-        } else {
-            this->printUnexpectedOptions(requiredOptions);
-            rtn = -1;
-        }
-    } else {
-        this->printUnexpectedNumberOfOptions();
-        rtn = -1;
+    switch (numOfOpt) {
+        case 0:
+            rtccGetDateAndTime(&rtccYear, &rtccMon, &rtccMday, &rtccHour, &rtccMin, &rtccSec);
+            printf("\r\n%d/%d/%d %02d:%02d:%02d", rtccMday, rtccMon, rtccYear, rtccHour, rtccMin, rtccSec);
+            rtn = COMMAND_BASE_TERMINATED;
+            break;
+
+        case 6:
+            if (this->checkRequiredOptions(requiredOptions)) {
+                rtccHour = this->atolmm(opt->getFirstArgumentForOption('h'), 0, 23, 1);
+                rtccMin = this->atolmm(opt->getFirstArgumentForOption('m'), 0, 59, 1);
+                rtccSec = this->atolmm(opt->getFirstArgumentForOption('s'), 0, 59, 1);
+                rtccMday = this->atolmm(opt->getFirstArgumentForOption('D'), 1, 31, 1);
+                rtccMon = this->atolmm(opt->getFirstArgumentForOption('M'), 1, 12, 1);
+                rtccYear = this->atolmm(opt->getFirstArgumentForOption('Y'), 2010, 2200, 2017);
+                rtccSetDateAndTime(rtccYear, rtccMon, rtccMday, rtccHour, rtccMin, rtccSec);
+                rtn = COMMAND_BASE_TERMINATED;
+            } else {
+                this->printUnexpectedOptions(requiredOptions);
+                rtn = COMMAND_BASE_ERROR;
+            }
+            break;
+
+        default:
+            this->printUnexpectedNumberOfOptions();
+            rtn = COMMAND_BASE_ERROR;
+            break;
     }
+
     return rtn;
 }

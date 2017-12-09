@@ -43,7 +43,7 @@ const _command commands[] = {
     "gpio ", Gpio, // Returns the GPIO state
     "help ", Help, // Returns the help informations
     "info ", Info, // Print the information of the current track
-    "ls ", List, // Return the contents of the working directory
+    //"ls ", List, // Return the contents of the working directory
     "mkdir ", Mkdir, // Create a directory
     "mv ", Move, // Rename a file or directory
     "pause ", Pause, // Toggle pause

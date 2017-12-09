@@ -13,6 +13,8 @@
         <itemPath>h/Commands/CommandBase.hpp</itemPath>
         <itemPath>h/Commands/CommandsList.hpp</itemPath>
         <itemPath>h/Commands/Playlist.hpp</itemPath>
+        <itemPath>h/Commands/RTCC.hpp</itemPath>
+        <itemPath>h/Commands/List.hpp</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="Common" projectFiles="true">
         <itemPath>h/Compiler.h</itemPath>
@@ -102,6 +104,7 @@
         <itemPath>c/Commands/CommandsList.cpp</itemPath>
         <itemPath>c/Commands/Playlist.cpp</itemPath>
         <itemPath>c/Commands/RTCC.cpp</itemPath>
+        <itemPath>c/Commands/List.cpp</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="Delay" projectFiles="true">
         <itemPath>c/Delay/Delay.c</itemPath>
@@ -178,7 +181,7 @@
         <platformTool>RealICEPlatformTool</platformTool>
         <languageToolchain>XC32</languageToolchain>
         <languageToolchainVersion>1.43</languageToolchainVersion>
-        <platform>3</platform>
+        <platform>4</platform>
       </toolsSet>
       <compileType>
         <linkerTool>
@@ -810,6 +813,8 @@
           <property key="save-temps" value="false"/>
           <property key="wpo-lto" value="false"/>
         </C32Global>
+      </item>
+      <item path="c/Commands/List.c" ex="true" overriding="false">
       </item>
       <item path="c/Delay/Delay.c" ex="false" overriding="false">
         <C32>

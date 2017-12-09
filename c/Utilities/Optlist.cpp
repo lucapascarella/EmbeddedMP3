@@ -21,53 +21,63 @@ Optlist::Optlist(void) {
     //optionList = NULL;
 }
 
-bool Optlist::createOptionList(int argc, char * argv[], const char *options) {
+void Optlist::createOptionList(int argc, char * argv[], const char *options) {
 
     Option *option;
-    int nextArg, optIndex, argIndex;
+    int argcIndex, argIndex, optIndex, argLen;
+    char *ptr;
 
-    // Start with first argument and nothing found
-    nextArg = 1;
-    // Loop through all of the command line arguments
-    while (nextArg < argc) {
-        argIndex = 1;
-        while ((custom_strlen(argv[nextArg]) > argIndex) && ('-' == argv[nextArg][0])) {
-            optIndex = MatchOption(argv[nextArg][argIndex], options);
-            if (options[optIndex] == argv[nextArg][argIndex]) {
-                // We found the matching option
-                if (':' == options[optIndex + 1]) {
-                    // The option found should have a text argument
-                    argIndex++;
-                    if (custom_strlen(argv[nextArg]) > argIndex) {
-                        // No space between argument and option
-                        option = new Option(options[optIndex], argv[nextArg][argIndex - 1], &(argv[nextArg][argIndex]), nextArg, true);
-                        optionList.push_back(option);
-                    } else if (nextArg + 1 < argc) {
-                        // There must be space between the argument option
-                        nextArg++;
-                        option = new Option(options[optIndex], argv[nextArg - 1][argIndex - 1], argv[nextArg], nextArg, true);
-                        optionList.push_back(option);
+    for (argcIndex = 1; argcIndex < argc; argcIndex++) {
+        argLen = custom_strlen(argv[argcIndex]);
+        if ('-' == argv[argcIndex][0] && argLen > 1) {
+            // It may a true option because starts with dash '-'
+            for (argIndex = 1; argIndex < argLen; argIndex++) {
+                optIndex = MatchOption(argv[argcIndex][argIndex], options);
+                if (options[optIndex] == argv[argcIndex][argIndex]) {
+                    // We found the matching option
+                    if (':' == options[optIndex + 1]) {
+                        // The option found should have a text argument
+                        argIndex++;
+                        if (custom_strlen(argv[argcIndex]) > argIndex) {
+                            // No space between argument and option
+                            option = new Option(true, options[optIndex], argv[argcIndex][argIndex - 1], &(argv[argcIndex][argIndex]), argcIndex, true);
+                            optionList.push_back(option);
+                        } else if (argcIndex + 1 < argc) {
+                            // There must be space between the argument option
+                            argcIndex++;
+                            option = new Option(true, options[optIndex], argv[argcIndex - 1][argIndex - 1], argv[argcIndex], argcIndex, true);
+                            optionList.push_back(option);
+                        } else {
+                            // Some error here
+                            option = new Option(false, '\0', argv[argcIndex][argIndex - 1], NULL, argIndex - 1, true);
+                            optionList.push_back(option);
+                        }
+                    } else if (';' == options[optIndex + 1]) {
+                        // TODO
                     } else {
-                        // Some error here
-                        option = new Option('\0', argv[nextArg][argIndex - 1], NULL, argIndex - 1, true);
+                        // The found option does not require a text argument
+                        option = new Option(true, options[optIndex], argv[argcIndex][argIndex]);
                         optionList.push_back(option);
                     }
-                    break; /* done with argv[nextArg] */
                 } else {
-                    // the option found does not have a text argument
-                    option = new Option(options[optIndex], argv[nextArg][argIndex]);
+                    // Option not expected
+                    option = new Option(false, '\0', argv[argcIndex][argIndex], NULL, argIndex, false);
                     optionList.push_back(option);
                 }
+            }
+        } else {
+            // It may an error or a special option '&' that does not requires dash '-'
+            if ((ptr = (char*) custom_memchr((void*) options, '&', custom_strlen((char*) options))) != NULL) {
+                // It is a required special option '&'
+                option = new Option(true, (ptr - options), '&', argv[argcIndex], argcIndex, true);
+                optionList.push_back(option);
             } else {
-                // Option not expected
-                option = new Option('\0', argv[nextArg][argIndex], NULL, argIndex, false);
+                // It is unwanted argument, save it for debugging reason
+                option = new Option(false, '\0', '!', argv[argcIndex], argcIndex, false);
                 optionList.push_back(option);
             }
-            argIndex++;
         }
-        nextArg++;
     }
-    return true;
 }
 
 int Optlist::MatchOption(const char argument, const char * options) {
@@ -91,6 +101,16 @@ char * Optlist::getFirstArgumentForOption(char option) {
         if ((*it)->getGivenOption() == option)
             return (*it)->getArgument();
     return NULL;
+}
+
+bool Optlist::isOptionPresent(char option) {
+
+    std::list<Option*>::iterator it;
+
+    for (it = optionList.begin(); it != optionList.end(); it++)
+        if ((*it)->getGivenOption() == option)
+            return true;
+    return false;
 }
 
 int Optlist::getNumberOfArgumentsForOption(char option) {

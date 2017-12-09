@@ -225,6 +225,7 @@ bool CLI::addByteAndUpdateConsole(uint8_t *pbuf, uint16_t len) {
                 }
                 break;
 
+            case 0x08: // Backspace
             case 0x7F:
                 // Left remove 
                 if (inputLineIndex > 0) {
@@ -399,6 +400,7 @@ void CLI::printEscapeSequence(const char *p, int i) {
 
 void CLI::printBackspace(void) {
     uint8_t c = 0x7F;
+    //uint8_t c = 0x08; // ASCII Backspace
     consolePrint(&c, 1);
 }
 

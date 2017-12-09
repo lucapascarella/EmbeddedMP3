@@ -23,6 +23,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define COMMAND_BASE_EXECUTING              +1
+#define COMMAND_BASE_TERMINATED             0
+#define COMMAND_BASE_ERROR                  -1
+
 class CommandBase {
 protected:
     // Class property
@@ -31,7 +35,14 @@ protected:
     char **argv;
     Optlist *opt;
     int numOfOpt;
-    
+
+    enum SM_COMMAND {
+        COMMAND_STATE_HOME = 0,
+        COMMAND_STATE_PARSE_ARGS,
+        COMMAND_STATE_EXECUTE,
+        COMMAND_STATE_DONE,
+    } commandState;
+
     enum SM {
         COMMAND_SM_PARSE_ARGS = 0,
         COMMAND_SM_CREATE_OPTLIST,

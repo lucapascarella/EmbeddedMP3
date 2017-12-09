@@ -103,7 +103,7 @@ void CommandBase::printUnexpectedNumberOfOptions(void) {
     for (i = 0; i < numOfOpt; i++) {
         p = opt->getOptionNumber(i);
         if (p != NULL) {
-            if (p->getRequiredOption() && p->getArgument() != NULL)
+            if (p->isArgumentRequired() && p->getArgument() != NULL)
                 verbosePrintf(VER_ERR, "\r\n-%c %s", p->getFoundOption(), p->getArgument());
             else
                 verbosePrintf(VER_ERR, "\r\n-%c", p->getFoundOption());
@@ -125,17 +125,16 @@ void CommandBase::printUnexpectedOptions(const char *opts) {
 void CommandBase::printOptions(void) {
     int i;
     Option *p;
-    
-    verbosePrintf(VER_MIN, "\r\nFound options (%d)", numOfOpt);
+
+    verbosePrintf(VER_MIN, "\r\nFound option(s): %d", numOfOpt);
     verbosePrintf(VER_MIN, "\r\nRequired options: %s", this->getCommandOptions());
     for (i = 0; i < numOfOpt; i++) {
         p = opt->getOptionNumber(i);
         if (p != NULL) {
-            // TODO test this
-            if (p->getRequiredOption() && p->getArgument() != NULL)
-                verbosePrintf(VER_ERR, "\r\n-%c %s", p->getFoundOption(), p->getArgument());
+            if (p->isArgumentRequired() && p->getArgument() != NULL)
+                verbosePrintf(VER_ERR, "\r\nExpected %s -%c %s", p->isOptionExpected() ? "Yes" : "No", p->getFoundOption(), p->getArgument());
             else
-                verbosePrintf(VER_ERR, "\r\n-%c", p->getFoundOption());
+                verbosePrintf(VER_ERR, "\r\nExpected %s -%c", p->isOptionExpected() ? "Yes" : "No", p->getFoundOption());
         }
     }
 }
@@ -144,32 +143,28 @@ int CommandBase::taskCommand(ArgsParser *args) {
 
     int rtn;
 
-    rtn = 0;
+    rtn = COMMAND_BASE_TERMINATED;
     switch (sm) {
         case COMMAND_SM_PARSE_ARGS:
             argc = args->getArgc();
             argv = args->getArgv();
             numOfOpt = 0;
-            rtn = 1;
+            rtn = COMMAND_BASE_EXECUTING;
             sm = COMMAND_SM_CREATE_OPTLIST;
             // break; // no break needed
 
         case COMMAND_SM_CREATE_OPTLIST:
             // Create a list of options
             opt = new Optlist();
-            if (opt->createOptionList(argc, argv, this->getCommandOptions()) == true) {
-                numOfOpt = opt->getNumberOfOptions();
-                printOptions();
-                rtn = 1;
-                sm = COMMAND_SM_EXECUTE;
-            } else {
-                rtn = 0;
-                sm = COMMAND_SM_DESTROY_OPTLIST;
-            }
+            opt->createOptionList(argc, argv, this->getCommandOptions());
+            numOfOpt = opt->getNumberOfOptions();
+            printOptions();
+            rtn = COMMAND_BASE_EXECUTING;
+            sm = COMMAND_SM_EXECUTE;
             break;
 
         case COMMAND_SM_EXECUTE:
-            if ((rtn = this->command()) > 0)
+            if ((rtn = this->command()) > COMMAND_BASE_TERMINATED)
                 break;
             sm = COMMAND_SM_DESTROY_OPTLIST;
             // break; // No break here
@@ -181,13 +176,15 @@ int CommandBase::taskCommand(ArgsParser *args) {
 
         case COMMAND_SM_DONE:
             sm = COMMAND_SM_PARSE_ARGS;
+
             break;
     }
     return rtn;
 }
 
 int CommandBase::command(void) {
-    return 0;
+
+    return COMMAND_BASE_TERMINATED;
 }
 
 CommandBase::~CommandBase(void) {

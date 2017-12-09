@@ -100,7 +100,7 @@ baudrate = 115200\r\n\
 # 2 = SCC with Echo.\r\n\
 console = 0\r\n\
 # Console echo: 0 = off and <1> = on\r\n\
-echo = 0\r\n\
+echo = 1\r\n\
 # Console port: <0> = UART, 1 = USB serial emulator and 2 = I2C\r\n\
 port = 0\r\n\
 # Verbose: 0 = none, <1> = minimal, 2 = error, and 3 = debug\r\n\
@@ -389,7 +389,7 @@ BOOL ConfigInit(void) {
 
     config.console.baudrate = 115200;
     config.console.console = 0;
-    config.console.echo = 0;        // Console echo: 0 = off and 1 = on
+    config.console.echo = 1;        // Console echo: 0 = off and 1 = on
     config.console.port = 0;
     config.console.verbose = 2;
     config.console.versionMajor = 0;
