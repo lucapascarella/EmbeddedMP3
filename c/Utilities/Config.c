@@ -54,7 +54,8 @@ const char conf[] = "# Embedded MP3 Player and Recorder\r\n\
 # Contact: luca.pascarella@gmail.com\r\n\
 # Web site author: www.lucapascarella.it\r\n\
 # Web site producer: www.futuragroupsrl.it\r\n\
-# Software version: v0.1\r\n\
+# Custom version: Luca Lenti\r\n\
+# Software version: v0.2\r\n\
 #\r\n\
 # +--+------------+------------------------------+\r\n\
 # |  |  \\______/  |                    *****     |\r\n\
