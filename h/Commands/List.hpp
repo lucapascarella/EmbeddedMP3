@@ -29,6 +29,7 @@ private:
 
     enum LIST_SM {
         SM_LIST_HOME = 0,
+        SM_LIST_INITIALIZE,
         SM_LIST_OPEN_DIR,
         SM_LIST_READ_DIR,
         SM_LIST_CLOSE_DIR,
@@ -63,7 +64,6 @@ public:
     int command(void); // pure specifier
 
 private:
-    int executeCommandBody(void);
     const char * byteToFatAttributes(uint8_t att);
 };
 

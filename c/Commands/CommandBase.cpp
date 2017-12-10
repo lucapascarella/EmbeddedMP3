@@ -18,6 +18,8 @@
 #include "Utilities/CustomFunctions.h"
 #include "Utilities/ArgsParser.hpp"
 #include "Utilities/CustomFunctions.h"
+
+#include "Utilities/Config.h"
 #include <string.h>
 #include <cctype>
 
@@ -183,8 +185,25 @@ int CommandBase::taskCommand(ArgsParser *args) {
 }
 
 int CommandBase::command(void) {
-
     return COMMAND_BASE_TERMINATED;
+}
+
+// This method does not work
+// reprintConsoleNew should be called but it is a private method of CLI (the caller of this class))
+
+int CommandBase::verbosePrintfWrapper(int level, bool reprint, const char * fmt, ...) {
+    va_list ap;
+    int sent = 0;
+
+    if (level <= config.console.verbose) {
+        //sent = consolePrint((uint8_t*) "\r\n", 2);
+        va_start(ap, fmt);
+        sent += verbosePrintfVaList(level, fmt, ap);
+        va_end(ap);
+        //if (reprint)
+        //    this->reprintConsoleNew();
+    }
+    return sent;
 }
 
 CommandBase::~CommandBase(void) {

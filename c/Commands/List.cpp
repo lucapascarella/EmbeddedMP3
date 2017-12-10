@@ -22,7 +22,7 @@
 
 List::List(void) : CommandBase() {
     calculateNameLength();
-    commandState = COMMAND_STATE_HOME;
+    //commandState = COMMAND_STATE_HOME;
 }
 
 const char * List::getCommandOptions(void) {
@@ -36,13 +36,14 @@ const char * List::getCommandName(void) {
 int List::command(void) {
 
     int rtn;
+    long size, integer, decimal;
+    double sized;
+    char units;
+    FAT_TIME fat_time;
 
-    switch (commandState) {
-        case COMMAND_STATE_HOME:
-            commandState = COMMAND_STATE_PARSE_ARGS;
-            //break: // no break needed
-
-        case COMMAND_STATE_PARSE_ARGS:
+    rtn = COMMAND_BASE_EXECUTING;
+    switch (sm) {
+        case SM_LIST_HOME:
             // Check flag options
             path = NULL;
             flags.human = flags.list = flags.hidden = false;
@@ -56,34 +57,13 @@ int List::command(void) {
                 path = opt->getFirstArgumentForOption('&');
             // Continue with command
             rtn = COMMAND_BASE_EXECUTING;
-            commandState = COMMAND_STATE_EXECUTE;
+            sm = SM_LIST_INITIALIZE;
             //break; // no break required
 
-        case COMMAND_STATE_EXECUTE:
-            if ((rtn = executeCommandBody()) != COMMAND_BASE_EXECUTING)
-                commandState = COMMAND_STATE_DONE;
-            break;
-
-        case COMMAND_STATE_DONE:
-            commandState = COMMAND_STATE_HOME;
-            break;
-    }
-
-    return rtn;
-}
-
-int List::executeCommandBody(void) {
-
-    long size, integer, decimal;
-    double sized;
-    char units;
-    int rtn;
-    FAT_TIME fat_time;
-
-    rtn = COMMAND_BASE_EXECUTING;
-    switch (sm) {
-        case SM_LIST_HOME:
+        case SM_LIST_INITIALIZE:
+// Reset file counter
             fres = FR_OK;
+            countFile = countDir = countTotObj = totalSize = 0;
 
             //            size = strlen(argv[argc - 1]);
             //            // Delete the very last '/' to avoid the FatFS FR_INVALID_NAME error
@@ -114,10 +94,16 @@ int List::executeCommandBody(void) {
 
         case SM_LIST_OPEN_DIR:
             // Open the given directory by name
-            fres = f_opendir(dir, buf);
-            // Reset file counter
-            countFile = countDir = countTotObj = totalSize = 0;
-            sm = (fres == FR_OK) ? SM_LIST_READ_DIR : (fres == FR_NO_PATH) ? SM_LIST_NO_PATH : SM_LIST_ERROR;
+            if ((fres = f_opendir(dir, buf))== FR_NO_PATH){
+                ////verbosePrintfWrapper(VER_ERR, true, "\r\nPath not found: %s", buf);
+                ////verbosePrintfWrapper(VER_ERR, true, "\r\nFatFs error: %s", string_rc(fres));
+                sm = SM_LIST_ERROR;
+            } else if  (fres == FR_OK)  {
+                sm =SM_LIST_READ_DIR;
+            } else {
+                ////verbosePrintfWrapper(VER_ERR, true, "\r\nFatFs error: %s", string_rc(fres));
+                sm = SM_LIST_ERROR;
+            }
             break;
 
         case SM_LIST_READ_DIR:
@@ -129,7 +115,7 @@ int List::executeCommandBody(void) {
                     // Current directory is empty
                     sm = SM_LIST_CLOSE_DIR;
                 } else if (flags.list) {
-                    if (flags.hidden == TRUE || !(finfo->fattrib & AM_HID)) {
+                    if (flags.hidden == true || !(finfo->fattrib & AM_HID)) {
                         size = finfo->fsize;
                         if (size < 1024) {
                             sized = size;
@@ -164,7 +150,7 @@ int List::executeCommandBody(void) {
                     // Skip dot entry
                     if ((!(finfo->fattrib & AM_HID) || flags.hidden) && finfo->fname[0] != '.') {
                         // It is a file or directory
-                       printf("%s\r\n", finfo->fname);
+                        printf("%s\r\n", finfo->fname);
                     }
                 }
             } else {
@@ -195,11 +181,13 @@ int List::executeCommandBody(void) {
             break;
 
         case SM_LIST_ERROR:
+            fres = f_closedir(dir);
             ////put_rc(fres);
             sm = SM_LIST_END;
             break;
 
         case SM_LIST_END:
+            // Release allocated memory
             if (finfo != NULL)
                 custom_free((void**) &finfo);
             if (dir != NULL)
@@ -207,7 +195,7 @@ int List::executeCommandBody(void) {
             if (buf != NULL)
                 custom_free((void**) &buf);
             sm = SM_LIST_HOME;
-            rtn = 0;
+            rtn = COMMAND_BASE_TERMINATED;
             break;
     }
 
