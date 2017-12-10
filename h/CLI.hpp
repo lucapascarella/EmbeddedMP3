@@ -77,6 +77,7 @@ public:
     void registerCommand(CommandBase *cb);
     bool createFileListOfCommands(void);
     void cliTaskHadler(void);
+    int verbosePrintfWrapper(int level, bool reprint, const char * fmt, ...);
     virtual ~CLI(void);
 
 private:
@@ -92,13 +93,11 @@ private:
     void CliAddStringAndUpdateConsole(char *str);
     void printEscapeSequence(const char *p, int i);
     void printBackspace(void);
-    bool searchExecutableCommand(char *name);
+    bool setExecutableCommand(char *name);
     bool createFileListOfFilesEntry(void);
     int completeCommandSearchingInFile(const char *fileName, uint8_t *p, int *index);
     bool getLastCommandFromFile(int pos);
     void putLastCommandInFile(void);
-
-    int verbosePrintfWrapper(int level, bool reprint, const char * fmt, ...);
 };
 
 #endif	/* CLI_HPP */

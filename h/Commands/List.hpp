@@ -17,6 +17,7 @@
 #ifndef LIST_HPP
 #define	LIST_HPP
 
+#include "../CLI.hpp"
 #include "CommandBase.hpp"
 #include "FatFS/ff.h"
 
@@ -27,6 +28,8 @@ private:
     static constexpr const char* name = "ls";
     static constexpr const char* options = "alh&";
 
+    CLI *cli;
+    
     enum LIST_SM {
         SM_LIST_HOME = 0,
         SM_LIST_INITIALIZE,
@@ -51,14 +54,14 @@ private:
     DWORD totalSize;
 
     struct {
-        BYTE hidden : 1;
-        BYTE list : 1;
-        BYTE human : 1;
-        BYTE relative : 1;
+        uint8_t hidden : 1;
+        uint8_t list : 1;
+        uint8_t human : 1;
+        uint8_t relative : 1;
     } flags;
 
 public:
-    List(void);
+    List(CLI *cli);
     const char * getCommandOptions(void);
     const char * getCommandName(void);
     int command(void); // pure specifier

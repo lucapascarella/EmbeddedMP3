@@ -119,7 +119,7 @@ void CLI::cliTaskHadler(void) {
         case CLI_SM_FIND_COMMAND:
             // Find a command matching first argument (the name of the program)
             name = args->getArgPointer(0);
-            if (this->searchExecutableCommand(name)) {
+            if (this->setExecutableCommand(name)) {
                 // It is a command, add to history list
                 this->putLastCommandInFile();
                 GpioUpdateOutputState(GPIO_BIT_CMD_OK);
@@ -404,7 +404,7 @@ void CLI::printBackspace(void) {
     consolePrint(&c, 1);
 }
 
-bool CLI::searchExecutableCommand(char *name) {
+bool CLI::setExecutableCommand(char *name) {
 
     int len;
     std::list<CommandBase*>::iterator it;

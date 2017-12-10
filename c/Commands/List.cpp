@@ -19,10 +19,11 @@
 #include "Utilities/CustomFunctions.h"
 #include "Utilities/RTCC.h"
 #include "Utilities/printer.h"
+#include "Utilities/Utilities.h"
 
-List::List(void) : CommandBase() {
+List::List(CLI *cli) : CommandBase() {
+    this->cli = cli;
     calculateNameLength();
-    //commandState = COMMAND_STATE_HOME;
 }
 
 const char * List::getCommandOptions(void) {
@@ -95,13 +96,13 @@ int List::command(void) {
         case SM_LIST_OPEN_DIR:
             // Open the given directory by name
             if ((fres = f_opendir(dir, buf))== FR_NO_PATH){
-                ////verbosePrintfWrapper(VER_ERR, true, "\r\nPath not found: %s", buf);
-                ////verbosePrintfWrapper(VER_ERR, true, "\r\nFatFs error: %s", string_rc(fres));
+                cli->verbosePrintfWrapper(VER_ERR, true, "\r\nPath not found: %s", buf);
+                cli->verbosePrintfWrapper(VER_ERR, true, "\r\nFatFs error: %s", string_rc(fres));
                 sm = SM_LIST_ERROR;
             } else if  (fres == FR_OK)  {
                 sm =SM_LIST_READ_DIR;
             } else {
-                ////verbosePrintfWrapper(VER_ERR, true, "\r\nFatFs error: %s", string_rc(fres));
+                cli->verbosePrintfWrapper(VER_ERR, true, "\r\nFatFs error: %s", string_rc(fres));
                 sm = SM_LIST_ERROR;
             }
             break;

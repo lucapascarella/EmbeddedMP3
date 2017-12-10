@@ -24,7 +24,7 @@
 
 CommandsList::CommandsList(CLI *cli) {
     // Initialize command class
-    List *list = new List();
+    List *list = new List(cli);
     Playback *playback = new Playback();
     Stop *stop = new Stop();
     Playlist *playlist = new Playlist();
@@ -36,5 +36,8 @@ CommandsList::CommandsList(CLI *cli) {
     cli->registerCommand(stop);
     cli->registerCommand(playlist);
     cli->registerCommand(rtcc);
+    
+    // Create file list of commands
+    cli->createFileListOfCommands();
 }
 

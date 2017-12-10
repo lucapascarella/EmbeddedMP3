@@ -236,7 +236,6 @@ int main(int argc, char** argv) {
     cli = new CLI();
     // Instantiate commands
     cmds = new CommandsList(cli);
-    cli->createFileListOfCommands();
     //delete cmds;
 
     if (config.console.console == CLI_MODE) {
