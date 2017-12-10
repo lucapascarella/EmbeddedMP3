@@ -18,6 +18,7 @@
 #include "Utilities/ArgsParser.hpp"
 #include "Utilities/CustomFunctions.h"
 #include "Utilities/RTCC.h"
+#include "Utilities/printer.h"
 
 List::List(void) : CommandBase() {
     calculateNameLength();
@@ -82,14 +83,8 @@ int List::executeCommandBody(void) {
     rtn = COMMAND_BASE_EXECUTING;
     switch (sm) {
         case SM_LIST_HOME:
-            if (path != NULL)
-                strncpy(buf, path, LIST_BUFFER_SIZE);
-            else
-                fres = f_getcwd(buf, LIST_BUFFER_SIZE);
+            fres = FR_OK;
 
-
-
-            //            fres = FR_OK;
             //            size = strlen(argv[argc - 1]);
             //            // Delete the very last '/' to avoid the FatFS FR_INVALID_NAME error
             //            if (size != 1 && argv[argc - 1][size - 1] == '/')
@@ -100,17 +95,25 @@ int List::executeCommandBody(void) {
             //                fres = f_getcwd(buf, LIST_BUFFER_SIZE);
             //            dir = &dir;
             //            finfo = &finfo;
-            // Allocate enough space for DIR and FINFO structures
+
+            // Allocate enough space for buf, DIR, and FINFO structures
+            buf = NULL;
+            buf = (char*) custom_malloc((void*) buf, LIST_BUFFER_SIZE);
             dir = NULL;
             dir = (DIR*) custom_malloc((void*) dir, sizeof (DIR));
             finfo = NULL;
             finfo = (FILINFO*) custom_malloc((void*) finfo, sizeof (FILINFO));
+            // Copy the name of the selected working directory 
+            if (path != NULL)
+                strncpy(buf, path, LIST_BUFFER_SIZE);
+            else
+                fres = f_getcwd(buf, LIST_BUFFER_SIZE);
 
             sm = (fres == FR_OK) ? SM_LIST_OPEN_DIR : SM_LIST_ERROR;
             break;
 
         case SM_LIST_OPEN_DIR:
-            // Open the given directory name
+            // Open the given directory by name
             fres = f_opendir(dir, buf);
             // Reset file counter
             countFile = countDir = countTotObj = totalSize = 0;
@@ -147,7 +150,7 @@ int List::executeCommandBody(void) {
                         fat_time.word.data = finfo->fdate;
                         fat_time.word.time = finfo->ftime;
 
-                        ////printf("%s %4d.%-2d %cByte  %d/%d/%d\t%02d:%02d:%02d\t%s\r\n", ByteToFatAttributes(finfo->fattrib), integer, decimal, units, (fat_time.fields.year + 1980), fat_time.fields.month, fat_time.fields.day, fat_time.fields.hour, fat_time.fields.min, (fat_time.fields.sec * 2), GetFileNamePointer(finfo));
+                        printf("%s %4d.%-2d %cByte  %d/%d/%d\t%02d:%02d:%02d\t%s\r\n", byteToFatAttributes(finfo->fattrib), integer, decimal, units, (fat_time.fields.year + 1980), fat_time.fields.month, fat_time.fields.day, fat_time.fields.hour, fat_time.fields.min, (fat_time.fields.sec * 2), finfo->fname);
 
                         countTotObj++;
                         if (finfo->fattrib & AM_DIR) {
@@ -161,7 +164,7 @@ int List::executeCommandBody(void) {
                     // Skip dot entry
                     if ((!(finfo->fattrib & AM_HID) || flags.hidden) && finfo->fname[0] != '.') {
                         // It is a file or directory
-                        ////printf("%s\r\n", GetFileNamePointer(finfo));
+                       printf("%s\r\n", finfo->fname);
                     }
                 }
             } else {
@@ -177,7 +180,7 @@ int List::executeCommandBody(void) {
                 if (countTotObj == 0)
                     printf("The directory is empty\r\n");
                 else
-                    printf("Total itme(s): %d\r\n", countTotObj);
+                    printf("Total item(s): %d\r\n", countTotObj);
 
                 printf("%4u File(s)%8lu kBytes\r\n%4u Dir(s)\r\n", countFile, totalSize / 1024, countDir);
                 //                if (f_getfree("0", (DWORD*) & totalSize, &fs) == FR_OK)
@@ -197,10 +200,41 @@ int List::executeCommandBody(void) {
             break;
 
         case SM_LIST_END:
+            if (finfo != NULL)
+                custom_free((void**) &finfo);
+            if (dir != NULL)
+                custom_free((void**) &dir);
+            if (buf != NULL)
+                custom_free((void**) &buf);
             sm = SM_LIST_HOME;
             rtn = 0;
             break;
     }
 
     return rtn;
+}
+
+const char * List::byteToFatAttributes(uint8_t att) {
+
+    static char str[10];
+    str[0] = '\0';
+
+    //#define	AM_RDO	0x01	/* Read only */
+    //#define	AM_HID	0x02	/* Hidden */
+    //#define	AM_SYS	0x04	/* System */
+    //#define	AM_VOL	0x08	/* Volume label */
+    //#define   AM_LFN	0x0F	/* LFN entry */
+    //#define   AM_DIR	0x10	/* Directory */
+    //#define   AM_ARC	0x20	/* Archive */
+    //#define   AM_MASK	0x3F	/* Mask of defined bits */
+
+    strcat(str, ((att & AM_HID) == AM_HID) ? "h" : "-");
+    //    strcat(str, ((att & AM_SYS) == AM_SYS) ? "s" : "-");
+    //    strcat(str, ((att & AM_VOL) == AM_VOL) ? "v" : "-");
+    //    strcat(str, ((att & AM_LFN) == AM_LFN) ? "l" : "-");
+    strcat(str, ((att & AM_DIR) == AM_DIR) ? "d" : "-");
+    //    strcat(str, ((att & AM_ARC) == AM_ARC) ? "a" : "-");
+    strcat(str, ((att & AM_RDO) == AM_RDO) ? "r-" : "rw");
+
+    return str;
 }

@@ -38,7 +38,7 @@ private:
     } sm;
 
     char *path;
-    char buf[LIST_BUFFER_SIZE];
+    char *buf;
     
     FRESULT fres;
     DIR *dir;
@@ -64,6 +64,7 @@ public:
 
 private:
     int executeCommandBody(void);
+    const char * byteToFatAttributes(uint8_t att);
 };
 
 
