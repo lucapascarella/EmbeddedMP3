@@ -145,7 +145,7 @@ int main(int argc, char** argv) {
 
     CCPlay *ccp;
     CLI *cli;
-    CommandsList *cmds;
+    //CommandsList *cmds;
 
     //    CommandBase *pb;
     //    pb = new Playback();
@@ -231,11 +231,11 @@ int main(int argc, char** argv) {
     GPIOInit();
 
 
-
-    // Initialize command line interpreter
+    // Create command line interpreter object
     cli = new CLI();
+    
     // Instantiate commands
-    cmds = new CommandsList(cli);
+    //cmds = new CommandsList(cli);
     //delete cmds;
 
     if (config.console.console == CLI_MODE) {

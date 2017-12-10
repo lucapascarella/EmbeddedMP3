@@ -17,8 +17,8 @@
 #ifndef LIST_HPP
 #define	LIST_HPP
 
-#include "../CLI.hpp"
 #include "CommandBase.hpp"
+#include "../CLI.hpp"
 #include "FatFS/ff.h"
 
 #define LIST_BUFFER_SIZE            128

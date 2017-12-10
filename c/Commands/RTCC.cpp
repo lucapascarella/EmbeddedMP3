@@ -18,7 +18,8 @@
 #include "Utilities/RTCC.h"
 #include "Utilities/ArgsParser.hpp"
 
-RTCC::RTCC(void) : CommandBase() {
+RTCC::RTCC(CLI *cli) : CommandBase() {
+    this->cli = cli;
     calculateNameLength();
 }
 

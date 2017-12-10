@@ -6,6 +6,8 @@
  */
 
 #include "CLI.hpp"
+#include "Commands/List.hpp"
+#include "Commands/RTCC.hpp"
 #include "Utilities/printer.h"
 #include "Utilities/Utilities.h"
 #include "Utilities/CustomFunctions.h"
@@ -42,22 +44,24 @@ CLI::CLI(void) {
     FRESULT fres;
 
     // Initialize global variables
-    cmd = NULL;
+    cmd = args = NULL;
     sm = CLI_SM_HOME;
-    // Reset the last command indicator
+    // Reset last command indicator
     numberOfCommands = lastCommand = 0;
-
     custom_memset(inputLine, '\0', sizeof (inputLine));
     inputLineLength = inputLineIndex = 0;
 
-    args = NULL;
-
-    // Create escape sequence counter
+    // Create escape key sequence counter
     custom_memset(escapeSequence, '0', escapeCount);
     escapeCount = 0;
+    
+    // Initialize and register commands
+    this->registerCommand(new List(this));
+    this->registerCommand(new RTCC(this));
+    
 
     // Create two hidden files with the list of commands and entry list of current directory
-    //this->createFileListOfCommands();
+    this->createFileListOfCommands();
     this->createFileListOfFilesEntry();
 
     // Creates a temporary file where put a list of latter commands

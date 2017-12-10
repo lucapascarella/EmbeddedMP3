@@ -35,13 +35,6 @@ protected:
     char **argv;
     Optlist *opt;
     int numOfOpt;
-//
-//    enum SM_COMMAND {
-//        COMMAND_STATE_HOME = 0,
-//        COMMAND_STATE_PARSE_ARGS,
-//        COMMAND_STATE_EXECUTE,
-//        COMMAND_STATE_DONE,
-//    } commandState;
 
     enum SM {
         COMMAND_SM_PARSE_ARGS = 0,
