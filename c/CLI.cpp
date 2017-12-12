@@ -43,8 +43,12 @@ CLI::CLI(void) {
 
     FRESULT fres;
 
+    // Allocate predefined space for vector (if the requested size is correct this saves a big amount of time)
+    commandVector = std::vector<CommandBase*> (10);
+
     // Initialize global variables
-    cmd = args = NULL;
+    cmd = NULL;
+    args = NULL;
     sm = CLI_SM_HOME;
     // Reset last command indicator
     numberOfCommands = lastCommand = 0;
@@ -54,11 +58,11 @@ CLI::CLI(void) {
     // Create escape key sequence counter
     custom_memset(escapeSequence, '0', escapeCount);
     escapeCount = 0;
-    
+
     // Initialize and register commands
     this->registerCommand(new List(this));
     this->registerCommand(new RTCC(this));
-    
+
 
     // Create two hidden files with the list of commands and entry list of current directory
     this->createFileListOfCommands();
@@ -87,6 +91,7 @@ CLI::CLI(void) {
 
 void CLI::registerCommand(CommandBase *cb) {
     commandList.push_back(cb);
+    commandVector.push_back(cb);
 }
 
 void CLI::cliTaskHadler(void) {
@@ -411,11 +416,13 @@ void CLI::printBackspace(void) {
 bool CLI::setExecutableCommand(char *name) {
 
     int len;
-    std::list<CommandBase*>::iterator it;
+    //std::list<CommandBase*>::iterator it;
+    std::vector<CommandBase*>::iterator it;
 
     if ((len = custom_strlen(name)) == 0)
         return false;
-    for (it = commandList.begin(); it != commandList.end(); it++)
+    //for (it = commandList.begin(); it != commandList.end(); it++)
+    for (it = commandVector.begin(); it != commandVector.end(); it++)
         if (len == (*it)->getCommandNameLength() && memcmp(name, (*it)->getCommandName(), len) == 0) {
             cmd = *it;
             return true;

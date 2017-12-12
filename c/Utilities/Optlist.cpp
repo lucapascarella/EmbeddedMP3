@@ -26,6 +26,7 @@ void Optlist::createOptionList(int argc, char * argv[], const char *options) {
     Option *option;
     int argcIndex, argIndex, optIndex, argLen;
     char *ptr;
+    optionList = std::list<Option*>(argc);
 
     for (argcIndex = 1; argcIndex < argc; argcIndex++) {
         argLen = custom_strlen(argv[argcIndex]);

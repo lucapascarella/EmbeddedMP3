@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <list>
+#include <vector>
 
 #define CLI_DIR_SIZE                FF_MAX_LFN
 #define CLI_INPUT_LINE_SIZE         64////1024 * 4
@@ -56,6 +57,7 @@ private:
 
     // Commands
     std::list<CommandBase*> commandList;
+    std::vector<CommandBase*> commandVector;
     CommandBase *cmd;
 
     // Global file pointer for latter commands
