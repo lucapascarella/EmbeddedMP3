@@ -132,7 +132,7 @@ void GPIOInputTaskHandler() {
                         case GPIO_I_STOP:
                             // Send Stop command and hold the input handler for duration time
                             update = TRUE;
-                            Stop(1, NULL);
+                            //Stop(1, NULL);
                             break;
 
                             // 3

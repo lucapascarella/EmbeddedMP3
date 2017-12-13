@@ -24,7 +24,7 @@ class RTCC : public CommandBase {
 private:
     static constexpr const char* name = "rtcc";
     static constexpr const char* options = "h:m:s:D:M:Y:";
-    
+
     CLI *cli;
 
 public:
@@ -33,6 +33,9 @@ public:
     const char * getCommandName(void);
     int command(void); // pure specifier
     int helper(void); // pure specifier (Abstract implementation)
+
+private:
+    int verbosePrintf(int level, bool reprint, const char * fmt, ...); // pure specifier (Abstract implementation)
 };
 
 

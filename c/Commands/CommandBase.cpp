@@ -18,7 +18,7 @@
 #include "Utilities/CustomFunctions.h"
 #include "Utilities/ArgsParser.hpp"
 #include "Utilities/CustomFunctions.h"
-
+#include "Utilities/printer.h"
 #include "Utilities/Config.h"
 #include <string.h>
 #include <cctype>
@@ -101,14 +101,14 @@ bool CommandBase::checkRequiredOptions(const char * opts) {
 void CommandBase::printUnexpectedNumberOfOptions(void) {
     int i;
     Option *p;
-    verbosePrintf(VER_MIN, "\r\nUnexpected number of options (%d)", numOfOpt);
+    verbosePrintf(VER_MIN, false, "\r\nUnexpected number of options (%d)", numOfOpt);
     for (i = 0; i < numOfOpt; i++) {
         p = opt->getOptionNumber(i);
         if (p != NULL) {
             if (p->isArgumentRequired() && p->getArgument() != NULL)
-                verbosePrintf(VER_ERR, "\r\n-%c %s", p->getFoundOption(), p->getArgument());
+                verbosePrintf(VER_ERR, false, "\r\n-%c %s", p->getFoundOption(), p->getArgument());
             else
-                verbosePrintf(VER_ERR, "\r\n-%c", p->getFoundOption());
+                verbosePrintf(VER_ERR, false, "\r\n-%c", p->getFoundOption());
         }
     }
 }
@@ -116,11 +116,11 @@ void CommandBase::printUnexpectedNumberOfOptions(void) {
 void CommandBase::printUnexpectedOptions(const char *opts) {
     int i;
     Option *p;
-    verbosePrintf(VER_MIN, "\r\nUnexpected option(s):");
+    verbosePrintf(VER_MIN, false, "\r\nUnexpected option(s):");
     for (i = 0; i < numOfOpt; i++) {
         p = opt->getOptionNumber(i);
         if (p != NULL && p->getGivenOption() == '\0')
-            verbosePrintf(VER_ERR, "\r\n-%c", p->getFoundOption());
+            verbosePrintf(VER_ERR, false, "\r\n-%c", p->getFoundOption());
     }
 }
 
@@ -128,15 +128,15 @@ void CommandBase::printOptions(void) {
     int i;
     Option *p;
 
-    verbosePrintf(VER_MIN, "\r\nFound option(s): %d", numOfOpt);
-    verbosePrintf(VER_MIN, "\r\nRequired options: %s", this->getCommandOptions());
+    verbosePrintf(VER_MIN, false, "\r\nFound option(s): %d", numOfOpt);
+    verbosePrintf(VER_MIN, false, "\r\nRequired option(s): %s", this->getCommandOptions());
     for (i = 0; i < numOfOpt; i++) {
         p = opt->getOptionNumber(i);
         if (p != NULL) {
             if (p->isArgumentRequired() && p->getArgument() != NULL)
-                verbosePrintf(VER_ERR, "\r\nExpected %s -%c %s", p->isOptionExpected() ? "Yes" : "No", p->getFoundOption(), p->getArgument());
+                verbosePrintf(VER_ERR, false, "\r\nExpected %s -%c %s", p->isOptionExpected() ? "Yes" : "No", p->getFoundOption(), p->getArgument());
             else
-                verbosePrintf(VER_ERR, "\r\nExpected %s -%c", p->isOptionExpected() ? "Yes" : "No", p->getFoundOption());
+                verbosePrintf(VER_ERR, false, "\r\nExpected %s -%c", p->isOptionExpected() ? "Yes" : "No", p->getFoundOption());
         }
     }
 }
@@ -192,22 +192,13 @@ int CommandBase::taskCommand(ArgsParser *args) {
 //    return COMMAND_BASE_TERMINATED;
 //}
 
-// This method does not work
-// reprintConsoleNew should be called but it is a private method of CLI (the caller of this class))
 
-int CommandBase::verbosePrintfWrapper(int level, bool reprint, const char * fmt, ...) {
-    va_list ap;
-    int sent = 0;
+void CommandBase::usageExample(const char *str) {
+    //cli->verbosePrintfWrapper(VER_NONE, false, "\r\nExample: %s\r\n", str);
+}
 
-    if (level <= config.console.verbose) {
-        //sent = consolePrint((uint8_t*) "\r\n", 2);
-        va_start(ap, fmt);
-        sent += verbosePrintfVaList(level, fmt, ap);
-        va_end(ap);
-        //if (reprint)
-        //    this->reprintConsoleNew();
-    }
-    return sent;
+void CommandBase::usageCommand(const char *str) {
+    //cli->verbosePrintfWrapper(VER_NONE, false, "\r\nUsage: %s\r\n", str);
 }
 
 CommandBase::~CommandBase(void) {

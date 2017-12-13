@@ -131,6 +131,24 @@ int Cat::command(void) {
     return rtn;
 }
 
-int Cat::helper(void){
+
+
+int Cat::verbosePrintf(int level, bool reprint, const char * fmt, ...) {
+    int rtn;
+    va_list ap;
+    va_start(ap, fmt);
+    rtn = cli->verbosePrintfWrapper(level, reprint, fmt, ap);
+    va_end(ap);
+
+    return rtn;
+}
+
+int Cat::helper(void) {
+    // Command cat
+    printf("Print the contents of a textual file.\r\n");
+    this->usageCommand("cat file [-bin]");
+    printf("file\tName of textual file (.txt, .ini or .pls)\r\n");
+    printf("-bin\tforce binary transfer\r\n");
+    this->usageExample("cat conf.ini");
     return COMMAND_BASE_TERMINATED;
 }

@@ -15,23 +15,16 @@
  */
 
 #include "Commands/Stop.hpp"
-#include "MP3/Play.h"
 #include "Utilities/ArgsParser.hpp"
 
-Stop::Stop(CLI *cli) : CommandBase() {
+Stop::Stop(CLI *cli) {
     this->cli = cli;
     calculateNameLength();
 }
 
 int Stop::command(void) {
 
-//    if (checkParameters(argc, argv, 2, 2)) {
-//        startPlay(argv[1]);
-//        return 0;
-//    } else {
-//        return -1;
-//    }
-    return 0;
+    return COMMAND_BASE_TERMINATED;
 }
 
 const char * Stop::getCommandOptions(void) {
@@ -40,6 +33,16 @@ const char * Stop::getCommandOptions(void) {
 
 const char * Stop::getCommandName(void) {
     return name;
+}
+
+int Stop::verbosePrintf(int level, bool reprint, const char * fmt, ...) {
+    int rtn;
+    va_list ap;
+    va_start(ap, fmt);
+    rtn = cli->verbosePrintfWrapper(level, reprint, fmt, ap);
+    va_end(ap);
+
+    return rtn;
 }
 
 int Stop::helper(void){

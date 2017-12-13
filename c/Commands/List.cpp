@@ -62,7 +62,7 @@ int List::command(void) {
             //break; // no break required
 
         case SM_LIST_INITIALIZE:
-// Reset file counter
+            // Reset file counter
             fres = FR_OK;
             countFile = countDir = countTotObj = totalSize = 0;
 
@@ -95,12 +95,12 @@ int List::command(void) {
 
         case SM_LIST_OPEN_DIR:
             // Open the given directory by name
-            if ((fres = f_opendir(dir, buf))== FR_NO_PATH){
+            if ((fres = f_opendir(dir, buf)) == FR_NO_PATH) {
                 cli->verbosePrintfWrapper(VER_ERR, true, "\r\nPath not found: %s", buf);
                 cli->verbosePrintfWrapper(VER_ERR, true, "\r\nFatFs error: %s", string_rc(fres));
                 sm = SM_LIST_ERROR;
-            } else if  (fres == FR_OK)  {
-                sm =SM_LIST_READ_DIR;
+            } else if (fres == FR_OK) {
+                sm = SM_LIST_READ_DIR;
             } else {
                 cli->verbosePrintfWrapper(VER_ERR, true, "\r\nFatFs error: %s", string_rc(fres));
                 sm = SM_LIST_ERROR;
@@ -228,6 +228,22 @@ const char * List::byteToFatAttributes(uint8_t att) {
     return str;
 }
 
-int List::helper(void){
+int List::verbosePrintf(int level, bool reprint, const char * fmt, ...) {
+    int rtn;
+    va_list ap;
+    va_start(ap, fmt);
+    rtn = cli->verbosePrintfWrapper(level, reprint, fmt, ap);
+    va_end(ap);
+
+    return rtn;
+}
+
+int List::helper(void) {
+    cli->verbosePrintfWrapper(VER_NONE, false, "List the working directory.\r\n");
+    this->usageCommand("ls [-la] [dir]");
+    cli->verbosePrintfWrapper(VER_NONE, false, "l\tlong format\r\n");
+    cli->verbosePrintfWrapper(VER_NONE, false, "a\tinclude hidden files\r\n");
+    cli->verbosePrintfWrapper(VER_NONE, false, "dir\trelative path\r\n");
+    this->usageExample("ls -la");
     return COMMAND_BASE_TERMINATED;
 }

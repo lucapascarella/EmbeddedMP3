@@ -659,11 +659,11 @@ int Help(int argc, char **argv) {
                 break;
 
             case help_HELP:
-                // Command Returns the help informations
-                printf("Returns the help informations.\r\n");
-                CliUsageCommand("help [cmd]");
-                printf("cmd\thelp of 'cmd' commnad\r\n");
-                CliUsageExample("help play");
+//                // Command Returns the help informations
+//                printf("Returns the help informations.\r\n");
+//                CliUsageCommand("help [cmd]");
+//                printf("cmd\thelp of 'cmd' commnad\r\n");
+//                CliUsageExample("help play");
                 break;
 
             case info_INFO:

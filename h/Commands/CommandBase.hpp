@@ -19,13 +19,13 @@
 
 #include "Utilities/ArgsParser.hpp"
 #include "Utilities/Optlist.hpp"
-#include "Utilities/printer.h"
 #include <stdint.h>
 #include <stdbool.h>
 
 #define COMMAND_BASE_EXECUTING              +1
 #define COMMAND_BASE_TERMINATED             0
 #define COMMAND_BASE_ERROR                  -1
+#define COMMAND_BASE_PRINT_HELP             -10
 
 class CommandBase {
 protected:
@@ -62,11 +62,11 @@ protected:
     void printUnexpectedNumberOfOptions(void);
     void printUnexpectedOptions(const char *opts);
     void printOptions(void);
+    void usageExample(const char *str);
+    void usageCommand(const char *str);
+    virtual int verbosePrintf(int level, bool reprint, const char * fmt, ...) = 0; // pure specifier
     virtual int command(void) = 0; // pure specifier
-
-    int verbosePrintfWrapper(int level, bool reprint, const char * fmt, ...);
 };
-
 
 #endif	/* COMMAND_ABSTRACT_HPP */
 

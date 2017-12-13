@@ -10,6 +10,7 @@
 
 
 #include "Commands/CommandBase.hpp"
+#include "Utilities/printer.h"
 #include "FatFS/ff.h"
 #include <stdint.h>
 #include <stdbool.h>

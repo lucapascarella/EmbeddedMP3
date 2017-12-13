@@ -90,7 +90,7 @@ void SCCHandler() {
             case 'k':
             case 'K':
                 // Kill
-                Stop(1, NULL);
+                //Stop(1, NULL);
                 break;
 
             case 's':

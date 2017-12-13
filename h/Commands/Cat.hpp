@@ -59,6 +59,9 @@ public:
     const char * getCommandName(void);
     int command(void); // pure specifier (Abstract implementation)
     int helper(void); // pure specifier (Abstract implementation)
+
+private:
+    int verbosePrintf(int level, bool reprint, const char * fmt, ...); // pure specifier (Abstract implementation)
 };
 
 

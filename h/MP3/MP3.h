@@ -56,7 +56,7 @@ int Play(int argc, char **argv);
 int Record(int argc, char **argv);
 
 int Pause(int argc, char **argv);
-int Stop(int argc, char **argv);
+int StopOld(int argc, char **argv);
 int Info(int argc, char **argv);
 int FPlay(int argc, char **argv);
 int SpeedShifter(int argc, char **argv);
@@ -68,7 +68,7 @@ int Volume(int argc, char **argv);
 int Treble(int argc, char **argv);
 int Bass(int argc, char **argv);
 
-int Playlist(int argc, char **argv);
+int Playlistold(int argc, char **argv);
 int Bookmark(int argc, char **argv);
 
 BOOL IsConvertible(char *);

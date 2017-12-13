@@ -12,7 +12,6 @@
 #include "Commands/Playback.hpp"
 #include "Commands/Stop.hpp"
 #include "Commands/Playlist.hpp"
-#include "Utilities/printer.h"
 #include "Utilities/Utilities.h"
 #include "Utilities/CustomFunctions.h"
 #include "Commands/CommandBase.hpp"
@@ -68,8 +67,8 @@ CLI::CLI(void) {
     this->registerCommand(new List(this));
     this->registerCommand(new RTCC(this));
     this->registerCommand(new Playback(this));
-    //this->registerCommand(new Stop(this));
-    //this->registerCommand(new Playlist(this));
+    this->registerCommand(new Stop(this));
+    this->registerCommand(new Playlist(this));
 
 
     // Create two hidden files with the list of commands and entry list of current directory
@@ -153,6 +152,10 @@ void CLI::cliTaskHadler(void) {
             // Execute the command until 0 is returned
             rtn = cmd->taskCommand(args);
             if (rtn < 0) {
+                if (rtn == COMMAND_BASE_PRINT_HELP) {
+                    this->setExecutableCommand(args->getArgPointer(1)); // Second parameter contains the name of the program
+                    rtn = cmd->taskCommand(NULL);
+                }
                 // Some error happened
                 this->verbosePrintfWrapper(VER_MIN, false, "\r\nCommand '%s' terminated with error code: %d", cmd->getCommandName(), rtn);
                 sm = CLI_SM_DONE;
@@ -721,7 +724,6 @@ int CLI::verbosePrintfWrapper(int level, bool reprint, const char * fmt, ...) {
     int sent = 0;
 
     if (level <= config.console.verbose) {
-        //sent = consolePrint((uint8_t*) "\r\n", 2);
         va_start(ap, fmt);
         sent += verbosePrintfVaList(level, fmt, ap);
         va_end(ap);

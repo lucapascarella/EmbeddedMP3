@@ -70,6 +70,16 @@ int RTCC::command(void) {
     return rtn;
 }
 
+int RTCC::verbosePrintf(int level, bool reprint, const char * fmt, ...) {
+    int rtn;
+    va_list ap;
+    va_start(ap, fmt);
+    rtn = cli->verbosePrintfWrapper(level, reprint, fmt, ap);
+    va_end(ap);
+
+    return rtn;
+}
+
 int RTCC::helper(void){
     return COMMAND_BASE_TERMINATED;
 }

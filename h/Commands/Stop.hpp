@@ -23,19 +23,20 @@
 class Stop : public CommandBase {
 private:
     static constexpr const char* name = "stop";
-    static constexpr const char* options = "";
+    static constexpr const char* options = "a";
 
     CLI *cli;
 
 public:
     Stop(CLI *cli);
-    int stop(int argc, char **argv);
-    virtual const char * getCommandOptions(void);
-    virtual const char * getCommandName(void);
-    virtual int command(void); // pure specifier (Abstract implementation)
+    const char * getCommandOptions(void);
+    const char * getCommandName(void);
+    int command(void); // pure specifier (Abstract implementation)
     int helper(void); // pure specifier (Abstract implementation)
-};
 
+private:
+    int verbosePrintf(int level, bool reprint, const char * fmt, ...); // pure specifier (Abstract implementation)
+};
 
 #endif	/* STOP_HPP */
 

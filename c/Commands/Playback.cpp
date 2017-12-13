@@ -15,7 +15,6 @@
  */
 
 #include "Commands/Playback.hpp"
-#include "MP3/Play.h"
 #include "Utilities/ArgsParser.hpp"
 
 Playback::Playback(CLI *cli) {
@@ -36,7 +35,7 @@ int Playback::command(void) {
 //    } else {
 //        return -1;
 //    }
-    return 0;
+    return COMMAND_BASE_TERMINATED;
 }
 
 const char * Playback::getCommandOptions(void) {
@@ -45,6 +44,16 @@ const char * Playback::getCommandOptions(void) {
 
 const char * Playback::getCommandName(void) {
     return name;
+}
+
+int Playback::verbosePrintf(int level, bool reprint, const char * fmt, ...) {
+    int rtn;
+    va_list ap;
+    va_start(ap, fmt);
+    rtn = cli->verbosePrintfWrapper(level, reprint, fmt, ap);
+    va_end(ap);
+
+    return rtn;
 }
 
 int Playback::helper(void){

@@ -47,6 +47,16 @@ const char * Playlist::getCommandName(void) {
     return name;
 }
 
+int Playlist::verbosePrintf(int level, bool reprint, const char * fmt, ...) {
+    int rtn;
+    va_list ap;
+    va_start(ap, fmt);
+    rtn = cli->verbosePrintfWrapper(level, reprint, fmt, ap);
+    va_end(ap);
+
+    return rtn;
+}
+
 int Playlist::helper(void){
     return COMMAND_BASE_TERMINATED;
 }

@@ -48,7 +48,7 @@ const _command commands[] = {
     "mv ", Move, // Rename a file or directory
     "pause ", Pause, // Toggle pause
     "play ", Play, // Put a track in execution
-    "playlist ", Playlist, // Playlist
+    //"playlist ", Playlist, // Playlist
     "rate ", RateTune, // Gets or sets the rate finetune        // get or set samplerate finetune in +-1ppm steps
     "reboot ", Reboot, // Reboot
     "rec ", Record, // Start recording
@@ -57,7 +57,7 @@ const _command commands[] = {
     "rmdir ", DeleteDir, // Remove a directory
     "speed ", SpeedShifter, // Sets or returns the speed shift  // 11.11.7 Speed Shifter 0x1e1d
     "stone ", Semitone, // Gets and stes semitone value         // Combination of 'speed' and 'rate'
-    "stop ", Stop, // Stop
+    //"stop ", Stop, // Stop
     "treble ", Treble, // Sets or returns the value of the high tones
     "verbose ", Verbose, // Sets or returns the verbose level
     "version ", Version, // Returns the version information

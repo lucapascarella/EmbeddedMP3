@@ -56,7 +56,7 @@ int Pause(int argc, char **argv) {
     return 0;
 }
 
-int Stop(int argc, char **argv) {
+int StopOld(int argc, char **argv) {
 
     BOOL play, rec;
 

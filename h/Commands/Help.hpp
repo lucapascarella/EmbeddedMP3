@@ -14,23 +14,36 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#ifndef PLAYLIST_HPP
-#define	PLAYLIST_HPP
+#ifndef HELP_HPP
+#define	HELP_HPP
 
 #include "CommandBase.hpp"
 #include "../CLI.hpp"
 
-class Playlist : public CommandBase {
+class Help : public CommandBase {
 private:
-    static constexpr const char* name = "playlist";
-    static constexpr const char* options = "";
+    static constexpr const char* name = "help";
+    static constexpr const char* options = "&";
 
+    enum HELP_SM {
+        SM_HELP_HOME = 0,
+        SM_CHECK,
+        SM_PRINT_HELP,
+        SM_HELP_ERROR,
+        SM_HELP_END,
+    } sm;
+
+    struct {
+        uint8_t binary : 1;
+    } flags;
+
+    char *path;
     CLI *cli;
 
 public:
-    Playlist(CLI *cli);
-    virtual const char * getCommandOptions(void);
-    virtual const char * getCommandName(void);
+    Help(CLI *cli);
+    const char * getCommandOptions(void);
+    const char * getCommandName(void);
     int command(void); // pure specifier (Abstract implementation)
     int helper(void); // pure specifier (Abstract implementation)
 
@@ -38,6 +51,5 @@ private:
     int verbosePrintf(int level, bool reprint, const char * fmt, ...); // pure specifier (Abstract implementation)
 };
 
-
-#endif	/* PLAYLIST_HPP */
+#endif	/* HELP_HPP */
 
