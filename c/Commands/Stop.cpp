@@ -18,11 +18,12 @@
 #include "MP3/Play.h"
 #include "Utilities/ArgsParser.hpp"
 
-Stop::Stop(void) : CommandBase() {
+Stop::Stop(CLI *cli) : CommandBase() {
+    this->cli = cli;
     calculateNameLength();
 }
 
-int Stop::command(int argc, char **argv) {
+int Stop::command(void) {
 
 //    if (checkParameters(argc, argv, 2, 2)) {
 //        startPlay(argv[1]);
@@ -39,4 +40,8 @@ const char * Stop::getCommandOptions(void) {
 
 const char * Stop::getCommandName(void) {
     return name;
+}
+
+int Stop::helper(void){
+    return COMMAND_BASE_TERMINATED;
 }

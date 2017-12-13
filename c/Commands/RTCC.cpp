@@ -69,3 +69,7 @@ int RTCC::command(void) {
 
     return rtn;
 }
+
+int RTCC::helper(void){
+    return COMMAND_BASE_TERMINATED;
+}

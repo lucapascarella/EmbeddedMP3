@@ -227,3 +227,7 @@ const char * List::byteToFatAttributes(uint8_t att) {
 
     return str;
 }
+
+int List::helper(void){
+    return COMMAND_BASE_TERMINATED;
+}

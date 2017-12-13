@@ -37,13 +37,13 @@ void CommandBase::calculateNameLength(void) {
         commandNameLength = strlen(p);
 }
 
-const char* CommandBase::getCommandOptions(void) {
-    return NULL;
-}
+//const char* CommandBase::getCommandOptions(void) {
+//    return NULL;
+//}
 
-const char * CommandBase::getCommandName(void) {
-    return NULL;
-}
+//const char * CommandBase::getCommandName(void) {
+//    return NULL;
+//}
 
 int CommandBase::getCommandNameLength(void) {
     return commandNameLength;
@@ -184,9 +184,13 @@ int CommandBase::taskCommand(ArgsParser *args) {
     return rtn;
 }
 
-int CommandBase::command(void) {
-    return COMMAND_BASE_TERMINATED;
-}
+//int CommandBase::command(void) {
+//    return COMMAND_BASE_TERMINATED;
+//}
+
+//int CommandBase::helper(void) {
+//    return COMMAND_BASE_TERMINATED;
+//}
 
 // This method does not work
 // reprintConsoleNew should be called but it is a private method of CLI (the caller of this class))

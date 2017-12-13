@@ -18,17 +18,21 @@
 #define	PLAYLIST_HPP
 
 #include "CommandBase.hpp"
+#include "../CLI.hpp"
 
 class Playlist : public CommandBase {
 private:
     static constexpr const char* name = "playlist";
     static constexpr const char* options = "";
 
+    CLI *cli;
+
 public:
-    Playlist(void);
+    Playlist(CLI *cli);
     virtual const char * getCommandOptions(void);
     virtual const char * getCommandName(void);
-    virtual int command(int argc, char **argv); // pure specifier
+    int command(void); // pure specifier (Abstract implementation)
+    int helper(void); // pure specifier (Abstract implementation)
 };
 
 

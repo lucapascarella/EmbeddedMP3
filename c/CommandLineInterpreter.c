@@ -30,7 +30,7 @@ const _command commands[] = {
     "adc ", Adc, // Do a ADC conversion
     "bass ", Bass, // Sets or returns the value of the low tones
     "bookmark ", Bookmark, // Manages bookmarks
-    "cat ", Cat, // Print the contents of a textual file
+    //"cat ", Cat, // Print the contents of a textual file
     "cd ", ChangeDir, // Change the working directory
     "cfg ", Config, // Change the configuration values
     "clear ", Clear, // Clear the screen

@@ -18,11 +18,12 @@
 #include "MP3/Play.h"
 #include "Utilities/ArgsParser.hpp"
 
-Playback::Playback(void) {
+Playback::Playback(CLI *cli) {
+    this->cli = cli;
     calculateNameLength();
 }
 
-int Playback::command(int argc, char **argv) {
+int Playback::command(void) {
 
 ////    return_t *opt;
 //
@@ -44,4 +45,8 @@ const char * Playback::getCommandOptions(void) {
 
 const char * Playback::getCommandName(void) {
     return name;
+}
+
+int Playback::helper(void){
+    return COMMAND_BASE_TERMINATED;
 }

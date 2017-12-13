@@ -14,63 +14,53 @@
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
-#ifndef LIST_HPP
-#define	LIST_HPP
+#ifndef CAT_HPP
+#define	CAT_HPP
 
 #include "CommandBase.hpp"
 #include "../CLI.hpp"
 #include "FatFS/ff.h"
 
-#define LIST_BUFFER_SIZE            128
+#define CAT_BUFFER_SIZE            1024
 
-class List : public CommandBase {
+class Cat : public CommandBase {
 private:
-    static constexpr const char* name = "ls";
-    static constexpr const char* options = "alh&";
+    static constexpr const char* name = "cat";
+    static constexpr const char* options = "b&";
 
     CLI *cli;
-    
-    enum LIST_SM {
-        SM_LIST_HOME = 0,
-        SM_LIST_INITIALIZE,
-        SM_LIST_OPEN_DIR,
-        SM_LIST_READ_DIR,
-        SM_LIST_CLOSE_DIR,
-        SM_LIST_NO_PATH,
-        SM_LIST_ERROR,
-        SM_LIST_END,
+
+    enum CAT_SM {
+        SM_CAT_HOME = 0,
+        SM_CAT_INITIALIZE,
+        SM_CAT_CHECK_FILE,
+        SM_CAT_OPEN_FILE,
+        SM_CAT_READ_FILE,
+        SM_CAT_PRINT,
+        SM_CAT_CLOSE_FILE,
+        SM_CAT_ERROR,
+        SM_CAT_END,
     } sm;
 
     char *path;
     char *buf;
-    
+
     FRESULT fres;
-    DIR *dir;
+    FIL *fil;
     FILINFO *finfo;
-    
-    WORD countTotObj;
-    WORD countFile;
-    WORD countDir;
-    DWORD totalSize;
 
     struct {
-        uint8_t hidden : 1;
-        uint8_t list : 1;
-        uint8_t human : 1;
-        uint8_t relative : 1;
+        uint8_t binary : 1;
     } flags;
 
 public:
-    List(CLI *cli);
+    Cat(CLI *cli);
     const char * getCommandOptions(void);
     const char * getCommandName(void);
-    int command(void); // pure specifier
+    int command(void); // pure specifier (Abstract implementation)
     int helper(void); // pure specifier (Abstract implementation)
-
-private:
-    const char * byteToFatAttributes(uint8_t att);
 };
 
 
-#endif	/* LIST_HPP */
+#endif	/* CAT_HPP */
 

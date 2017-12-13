@@ -30,6 +30,7 @@
 class CommandBase {
 protected:
     // Class property
+    //CLI *cli2;
     int commandNameLength;
     int argc;
     char **argv;
@@ -50,6 +51,7 @@ public:
     int getCommandNameLength(void);
     virtual const char* getCommandOptions(void) = 0; // pure specifier
     virtual const char* getCommandName(void) = 0; // pure specifier
+    virtual int helper(void) = 0; // pure specifier
     ~CommandBase(void);
 
 protected:
@@ -60,8 +62,8 @@ protected:
     void printUnexpectedNumberOfOptions(void);
     void printUnexpectedOptions(const char *opts);
     void printOptions(void);
-    virtual int command(void); // pure specifier
-    
+    virtual int command(void) = 0; // pure specifier
+
     int verbosePrintfWrapper(int level, bool reprint, const char * fmt, ...);
 };
 

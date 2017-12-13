@@ -6,8 +6,12 @@
  */
 
 #include "CLI.hpp"
+#include "Commands/Cat.hpp"
 #include "Commands/List.hpp"
 #include "Commands/RTCC.hpp"
+#include "Commands/Playback.hpp"
+#include "Commands/Stop.hpp"
+#include "Commands/Playlist.hpp"
 #include "Utilities/printer.h"
 #include "Utilities/Utilities.h"
 #include "Utilities/CustomFunctions.h"
@@ -59,9 +63,13 @@ CLI::CLI(void) {
     custom_memset(escapeSequence, '0', escapeCount);
     escapeCount = 0;
 
-    // Initialize and register commands
+    // Initialize and register all commands
+    this->registerCommand(new Cat(this));
     this->registerCommand(new List(this));
     this->registerCommand(new RTCC(this));
+    this->registerCommand(new Playback(this));
+    //this->registerCommand(new Stop(this));
+    //this->registerCommand(new Playlist(this));
 
 
     // Create two hidden files with the list of commands and entry list of current directory

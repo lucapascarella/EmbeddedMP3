@@ -25,19 +25,19 @@
 CommandsList::CommandsList(CLI *cli) {
     // Initialize command class
     //List *list = new List(cli);
-    Playback *playback = new Playback();
-    Stop *stop = new Stop();
-    Playlist *playlist = new Playlist();
+    //Playback *playback = new Playback();
+    //Stop *stop = new Stop();
+    //Playlist *playlist = new Playlist();
     //RTCC *rtcc = new RTCC();
     
     // Add commands to list
     //cli->registerCommand(list);
-    cli->registerCommand(playback);
-    cli->registerCommand(stop);
-    cli->registerCommand(playlist);
+    //cli->registerCommand(playback);
+    //cli->registerCommand(stop);
+    //cli->registerCommand(playlist);
     //cli->registerCommand(rtcc);
     
     // Create file list of commands
-    cli->createFileListOfCommands();
+    //cli->createFileListOfCommands();
 }
 

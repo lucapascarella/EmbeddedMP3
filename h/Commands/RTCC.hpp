@@ -32,6 +32,7 @@ public:
     const char * getCommandOptions(void);
     const char * getCommandName(void);
     int command(void); // pure specifier
+    int helper(void); // pure specifier (Abstract implementation)
 };
 
 
