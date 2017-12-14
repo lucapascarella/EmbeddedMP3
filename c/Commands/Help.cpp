@@ -18,7 +18,7 @@
 #include "Utilities/ArgsParser.hpp"
 #include "Utilities/CustomFunctions.h"
 
-Help::Help(CLI *cli) {
+Help::Help(CLI *cli) : CommandBase(cli) {
     this->cli = cli;
     calculateNameLength();
 }

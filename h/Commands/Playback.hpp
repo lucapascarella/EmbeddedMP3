@@ -18,14 +18,11 @@
 #define	PLAYBACK_HPP
 
 #include "CommandBase.hpp"
-#include "../CLI.hpp"
 
 class Playback : public CommandBase {
 private:
     static constexpr const char* name = "play";
     static constexpr const char* options = "";
-
-    CLI *cli;
 
 public:
     Playback(CLI *cli);
@@ -34,8 +31,6 @@ public:
     virtual int command(void); // pure specifier (Abstract implementation)
     int helper(void); // pure specifier (Abstract implementation)
 
-private:
-    int verbosePrintf(int level, bool reprint, const char * fmt, ...); // pure specifier (Abstract implementation)
 };
 
 

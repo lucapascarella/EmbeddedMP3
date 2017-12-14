@@ -18,7 +18,6 @@
 #define	CAT_HPP
 
 #include "CommandBase.hpp"
-#include "../CLI.hpp"
 #include "FatFS/ff.h"
 
 #define CAT_BUFFER_SIZE            1024
@@ -27,8 +26,6 @@ class Cat : public CommandBase {
 private:
     static constexpr const char* name = "cat";
     static constexpr const char* options = "b&";
-
-    CLI *cli;
 
     enum CAT_SM {
         SM_CAT_HOME = 0,
@@ -60,8 +57,6 @@ public:
     int command(void); // pure specifier (Abstract implementation)
     int helper(void); // pure specifier (Abstract implementation)
 
-private:
-    int verbosePrintf(int level, bool reprint, const char * fmt, ...); // pure specifier (Abstract implementation)
 };
 
 

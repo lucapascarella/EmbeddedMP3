@@ -18,14 +18,11 @@
 #define	RTCC_HPP
 
 #include "CommandBase.hpp"
-#include "../CLI.hpp"
 
 class RTCC : public CommandBase {
 private:
     static constexpr const char* name = "rtcc";
     static constexpr const char* options = "h:m:s:D:M:Y:";
-
-    CLI *cli;
 
 public:
     RTCC(CLI *cli);
@@ -34,8 +31,6 @@ public:
     int command(void); // pure specifier
     int helper(void); // pure specifier (Abstract implementation)
 
-private:
-    int verbosePrintf(int level, bool reprint, const char * fmt, ...); // pure specifier (Abstract implementation)
 };
 
 

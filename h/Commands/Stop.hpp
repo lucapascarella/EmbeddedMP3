@@ -18,14 +18,11 @@
 #define	STOP_HPP
 
 #include "CommandBase.hpp"
-#include "../CLI.hpp"
 
 class Stop : public CommandBase {
 private:
     static constexpr const char* name = "stop";
     static constexpr const char* options = "a";
-
-    CLI *cli;
 
 public:
     Stop(CLI *cli);
@@ -34,8 +31,6 @@ public:
     int command(void); // pure specifier (Abstract implementation)
     int helper(void); // pure specifier (Abstract implementation)
 
-private:
-    int verbosePrintf(int level, bool reprint, const char * fmt, ...); // pure specifier (Abstract implementation)
 };
 
 #endif	/* STOP_HPP */

@@ -17,9 +17,9 @@
 #include "Commands/RTCC.hpp"
 #include "Utilities/RTCC.h"
 #include "Utilities/ArgsParser.hpp"
+#include "CLI.hpp"
 
-RTCC::RTCC(CLI *cli) : CommandBase() {
-    this->cli = cli;
+RTCC::RTCC(CLI *cli) : CommandBase(cli) {
     calculateNameLength();
 }
 
@@ -66,16 +66,6 @@ int RTCC::command(void) {
             rtn = COMMAND_BASE_ERROR;
             break;
     }
-
-    return rtn;
-}
-
-int RTCC::verbosePrintf(int level, bool reprint, const char * fmt, ...) {
-    int rtn;
-    va_list ap;
-    va_start(ap, fmt);
-    rtn = cli->verbosePrintfWrapper(level, reprint, fmt, ap);
-    va_end(ap);
 
     return rtn;
 }

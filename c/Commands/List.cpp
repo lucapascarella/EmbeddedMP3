@@ -20,9 +20,9 @@
 #include "Utilities/RTCC.h"
 #include "Utilities/printer.h"
 #include "Utilities/Utilities.h"
+#include "CLI.hpp"
 
-List::List(CLI *cli) : CommandBase() {
-    this->cli = cli;
+List::List(CLI *cli) : CommandBase(cli) {
     calculateNameLength();
 }
 
@@ -226,16 +226,6 @@ const char * List::byteToFatAttributes(uint8_t att) {
     strcat(str, ((att & AM_RDO) == AM_RDO) ? "r-" : "rw");
 
     return str;
-}
-
-int List::verbosePrintf(int level, bool reprint, const char * fmt, ...) {
-    int rtn;
-    va_list ap;
-    va_start(ap, fmt);
-    rtn = cli->verbosePrintfWrapper(level, reprint, fmt, ap);
-    va_end(ap);
-
-    return rtn;
 }
 
 int List::helper(void) {

@@ -10,7 +10,7 @@
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
- * 
+ *
  * Author: Luca Pascarella www.lucapascarella.it
  */
 
@@ -18,7 +18,6 @@
 #define	LIST_HPP
 
 #include "CommandBase.hpp"
-#include "../CLI.hpp"
 #include "FatFS/ff.h"
 
 #define LIST_BUFFER_SIZE            128
@@ -28,8 +27,6 @@ private:
     static constexpr const char* name = "ls";
     static constexpr const char* options = "alh&";
 
-    CLI *cli;
-    
     enum LIST_SM {
         SM_LIST_HOME = 0,
         SM_LIST_INITIALIZE,
@@ -43,11 +40,11 @@ private:
 
     char *path;
     char *buf;
-    
+
     FRESULT fres;
     DIR *dir;
     FILINFO *finfo;
-    
+
     WORD countTotObj;
     WORD countFile;
     WORD countDir;
@@ -68,7 +65,6 @@ public:
     int helper(void); // pure specifier (Abstract implementation)
 
 private:
-    int verbosePrintf(int level, bool reprint, const char * fmt, ...); // pure specifier (Abstract implementation)
     const char * byteToFatAttributes(uint8_t att);
 };
 

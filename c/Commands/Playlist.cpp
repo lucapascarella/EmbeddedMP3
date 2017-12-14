@@ -17,25 +17,25 @@
 #include "Commands/Playlist.hpp"
 #include "MP3/Play.h"
 #include "Utilities/ArgsParser.hpp"
+#include "CLI.hpp"
 
-Playlist::Playlist(CLI *cli) {
-    this->cli = cli;
+Playlist::Playlist(CLI *cli) : CommandBase(cli) {
     calculateNameLength();
 }
 
 int Playlist::command(void) {
 
-//    //    return_t *opt;
-//
-//    if (checkParameters(argc, argv, 2, 2)) {
-//        //        opt = GetOptList(argc, argv, "C");
-//        startPlay(argv[1]);
-//        //      FreeRtnList(opt);
-//
-//        return 0;
-//    } else {
-//        return -1;
-//    }
+    //    //    return_t *opt;
+    //
+    //    if (checkParameters(argc, argv, 2, 2)) {
+    //        //        opt = GetOptList(argc, argv, "C");
+    //        startPlay(argv[1]);
+    //        //      FreeRtnList(opt);
+    //
+    //        return 0;
+    //    } else {
+    //        return -1;
+    //    }
     return 0;
 }
 
@@ -47,16 +47,6 @@ const char * Playlist::getCommandName(void) {
     return name;
 }
 
-int Playlist::verbosePrintf(int level, bool reprint, const char * fmt, ...) {
-    int rtn;
-    va_list ap;
-    va_start(ap, fmt);
-    rtn = cli->verbosePrintfWrapper(level, reprint, fmt, ap);
-    va_end(ap);
-
-    return rtn;
-}
-
-int Playlist::helper(void){
+int Playlist::helper(void) {
     return COMMAND_BASE_TERMINATED;
 }

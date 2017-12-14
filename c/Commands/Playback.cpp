@@ -16,9 +16,9 @@
 
 #include "Commands/Playback.hpp"
 #include "Utilities/ArgsParser.hpp"
+#include "CLI.hpp"
 
-Playback::Playback(CLI *cli) {
-    this->cli = cli;
+Playback::Playback(CLI *cli) : CommandBase(cli) {
     calculateNameLength();
 }
 
@@ -44,16 +44,6 @@ const char * Playback::getCommandOptions(void) {
 
 const char * Playback::getCommandName(void) {
     return name;
-}
-
-int Playback::verbosePrintf(int level, bool reprint, const char * fmt, ...) {
-    int rtn;
-    va_list ap;
-    va_start(ap, fmt);
-    rtn = cli->verbosePrintfWrapper(level, reprint, fmt, ap);
-    va_end(ap);
-
-    return rtn;
 }
 
 int Playback::helper(void){

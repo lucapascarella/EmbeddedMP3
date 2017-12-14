@@ -16,9 +16,9 @@
 
 #include "Commands/Stop.hpp"
 #include "Utilities/ArgsParser.hpp"
+#include "CLI.hpp"
 
-Stop::Stop(CLI *cli) {
-    this->cli = cli;
+Stop::Stop(CLI *cli) : CommandBase(cli) {
     calculateNameLength();
 }
 
@@ -33,16 +33,6 @@ const char * Stop::getCommandOptions(void) {
 
 const char * Stop::getCommandName(void) {
     return name;
-}
-
-int Stop::verbosePrintf(int level, bool reprint, const char * fmt, ...) {
-    int rtn;
-    va_list ap;
-    va_start(ap, fmt);
-    rtn = cli->verbosePrintfWrapper(level, reprint, fmt, ap);
-    va_end(ap);
-
-    return rtn;
 }
 
 int Stop::helper(void){

@@ -20,14 +20,16 @@
 #include "Utilities/CustomFunctions.h"
 #include "Utilities/printer.h"
 #include "Utilities/Config.h"
+#include "CLI.hpp"
 #include <string.h>
 #include <cctype>
 
-CommandBase::CommandBase(void) {
+CommandBase::CommandBase(CLI *cli) {
     commandNameLength = 0;
     argc = 0;
     argv = NULL;
     opt = NULL;
+    this->cli = cli;
     sm = COMMAND_SM_PARSE_ARGS;
 }
 
@@ -36,14 +38,6 @@ void CommandBase::calculateNameLength(void) {
     if ((p = (char*) getCommandName()) != NULL)
         commandNameLength = strlen(p);
 }
-
-//const char* CommandBase::getCommandOptions(void) {
-//    return NULL;
-//}
-
-//const char * CommandBase::getCommandName(void) {
-//    return NULL;
-//}
 
 int CommandBase::getCommandNameLength(void) {
     return commandNameLength;
@@ -101,14 +95,14 @@ bool CommandBase::checkRequiredOptions(const char * opts) {
 void CommandBase::printUnexpectedNumberOfOptions(void) {
     int i;
     Option *p;
-    verbosePrintf(VER_MIN, false, "\r\nUnexpected number of options (%d)", numOfOpt);
+    cli->verbosePrintfWrapper(VER_MIN, false, "\r\nUnexpected number of options (%d)", numOfOpt);
     for (i = 0; i < numOfOpt; i++) {
         p = opt->getOptionNumber(i);
         if (p != NULL) {
             if (p->isArgumentRequired() && p->getArgument() != NULL)
-                verbosePrintf(VER_ERR, false, "\r\n-%c %s", p->getFoundOption(), p->getArgument());
+                cli->verbosePrintfWrapper(VER_ERR, false, "\r\n-%c %s", p->getFoundOption(), p->getArgument());
             else
-                verbosePrintf(VER_ERR, false, "\r\n-%c", p->getFoundOption());
+                cli->verbosePrintfWrapper(VER_ERR, false, "\r\n-%c", p->getFoundOption());
         }
     }
 }
@@ -116,11 +110,11 @@ void CommandBase::printUnexpectedNumberOfOptions(void) {
 void CommandBase::printUnexpectedOptions(const char *opts) {
     int i;
     Option *p;
-    verbosePrintf(VER_MIN, false, "\r\nUnexpected option(s):");
+    cli->verbosePrintfWrapper(VER_MIN, false, "\r\nUnexpected option(s):");
     for (i = 0; i < numOfOpt; i++) {
         p = opt->getOptionNumber(i);
         if (p != NULL && p->getGivenOption() == '\0')
-            verbosePrintf(VER_ERR, false, "\r\n-%c", p->getFoundOption());
+            cli->verbosePrintfWrapper(VER_ERR, false, "\r\n-%c", p->getFoundOption());
     }
 }
 
@@ -128,15 +122,15 @@ void CommandBase::printOptions(void) {
     int i;
     Option *p;
 
-    verbosePrintf(VER_MIN, false, "\r\nFound option(s): %d", numOfOpt);
-    verbosePrintf(VER_MIN, false, "\r\nRequired option(s): %s", this->getCommandOptions());
+    cli->verbosePrintfWrapper(VER_MIN, false, "\r\nFound option(s): %d", numOfOpt);
+    cli->verbosePrintfWrapper(VER_MIN, false, "\r\nRequired option(s): %s", this->getCommandOptions());
     for (i = 0; i < numOfOpt; i++) {
         p = opt->getOptionNumber(i);
         if (p != NULL) {
             if (p->isArgumentRequired() && p->getArgument() != NULL)
-                verbosePrintf(VER_ERR, false, "\r\nExpected %s -%c %s", p->isOptionExpected() ? "Yes" : "No", p->getFoundOption(), p->getArgument());
+                cli->verbosePrintfWrapper(VER_ERR, false, "\r\nExpected %s -%c %s", p->isOptionExpected() ? "Yes" : "No", p->getFoundOption(), p->getArgument());
             else
-                verbosePrintf(VER_ERR, false, "\r\nExpected %s -%c", p->isOptionExpected() ? "Yes" : "No", p->getFoundOption());
+                cli->verbosePrintfWrapper(VER_ERR, false, "\r\nExpected %s -%c", p->isOptionExpected() ? "Yes" : "No", p->getFoundOption());
         }
     }
 }
@@ -178,27 +172,17 @@ int CommandBase::taskCommand(ArgsParser *args) {
 
         case COMMAND_SM_DONE:
             sm = COMMAND_SM_PARSE_ARGS;
-
             break;
     }
     return rtn;
 }
 
-//int CommandBase::command(void) {
-//    return COMMAND_BASE_TERMINATED;
-//}
-
-//int CommandBase::helper(void) {
-//    return COMMAND_BASE_TERMINATED;
-//}
-
-
 void CommandBase::usageExample(const char *str) {
-    //cli->verbosePrintfWrapper(VER_NONE, false, "\r\nExample: %s\r\n", str);
+    cli->verbosePrintfWrapper(VER_NONE, false, "\r\nExample: %s\r\n", str);
 }
 
 void CommandBase::usageCommand(const char *str) {
-    //cli->verbosePrintfWrapper(VER_NONE, false, "\r\nUsage: %s\r\n", str);
+    cli->verbosePrintfWrapper(VER_NONE, false, "\r\nUsage: %s\r\n", str);
 }
 
 CommandBase::~CommandBase(void) {

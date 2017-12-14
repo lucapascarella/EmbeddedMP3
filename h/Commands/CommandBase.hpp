@@ -27,15 +27,17 @@
 #define COMMAND_BASE_ERROR                  -1
 #define COMMAND_BASE_PRINT_HELP             -10
 
+class CLI; // Forward declaration
+
 class CommandBase {
+
 protected:
-    // Class property
-    //CLI *cli2;
     int commandNameLength;
     int argc;
     char **argv;
     Optlist *opt;
     int numOfOpt;
+    CLI *cli;
 
     enum SM {
         COMMAND_SM_PARSE_ARGS = 0,
@@ -46,12 +48,11 @@ protected:
     } sm;
 
 public:
-    CommandBase(void);
+    CommandBase(CLI *cli);
     int taskCommand(ArgsParser *args);
     int getCommandNameLength(void);
-    virtual const char* getCommandOptions(void) = 0; // pure specifier
-    virtual const char* getCommandName(void) = 0; // pure specifier
-    virtual int helper(void) = 0; // pure specifier
+    virtual const char* getCommandOptions(void) = 0; // pure specifier requires concrete implementation
+    virtual const char* getCommandName(void) = 0; // pure specifier requires concrete implementation
     ~CommandBase(void);
 
 protected:
@@ -64,8 +65,8 @@ protected:
     void printOptions(void);
     void usageExample(const char *str);
     void usageCommand(const char *str);
-    virtual int verbosePrintf(int level, bool reprint, const char * fmt, ...) = 0; // pure specifier
-    virtual int command(void) = 0; // pure specifier
+    virtual int command(void) = 0; // pure specifier requires concrete implementation
+    virtual int helper(void) = 0; // pure specifier requires concrete implementation
 };
 
 #endif	/* COMMAND_ABSTRACT_HPP */

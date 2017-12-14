@@ -20,10 +20,10 @@
 //#include "Utilities/RTCC.h"
 #include "Utilities/printer.h"
 #include "Utilities/Utilities.h"
+#include "CLI.hpp"
 #include <ctype.h>
 
-Cat::Cat(CLI *cli) : CommandBase() {
-    this->cli = cli;
+Cat::Cat(CLI *cli) : CommandBase(cli) {
     calculateNameLength();
 }
 
@@ -128,18 +128,6 @@ int Cat::command(void) {
             rtn = COMMAND_BASE_TERMINATED;
             break;
     }
-    return rtn;
-}
-
-
-
-int Cat::verbosePrintf(int level, bool reprint, const char * fmt, ...) {
-    int rtn;
-    va_list ap;
-    va_start(ap, fmt);
-    rtn = cli->verbosePrintfWrapper(level, reprint, fmt, ap);
-    va_end(ap);
-
     return rtn;
 }
 
