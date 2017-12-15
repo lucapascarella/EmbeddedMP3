@@ -30,6 +30,7 @@ CommandBase::CommandBase(CLI *cli) {
     argv = NULL;
     opt = NULL;
     this->cli = cli;
+    this->calculateNameLength();
     sm = COMMAND_SM_PARSE_ARGS;
 }
 

@@ -24,7 +24,7 @@
 #include <ctype.h>
 
 Cat::Cat(CLI *cli) : CommandBase(cli) {
-    calculateNameLength();
+    //calculateNameLength();
 }
 
 const char * Cat::getCommandOptions(void) {

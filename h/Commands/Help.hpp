@@ -18,7 +18,6 @@
 #define	HELP_HPP
 
 #include "CommandBase.hpp"
-#include "../CLI.hpp"
 
 class Help : public CommandBase {
 private:
@@ -38,7 +37,6 @@ private:
     } flags;
 
     char *path;
-    CLI *cli;
 
 public:
     Help(CLI *cli);

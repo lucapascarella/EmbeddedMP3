@@ -19,7 +19,7 @@
 #include "CLI.hpp"
 
 Stop::Stop(CLI *cli) : CommandBase(cli) {
-    calculateNameLength();
+    //calculateNameLength();
 }
 
 int Stop::command(void) {

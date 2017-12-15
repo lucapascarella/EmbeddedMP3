@@ -19,8 +19,7 @@
 #include "Utilities/CustomFunctions.h"
 
 Help::Help(CLI *cli) : CommandBase(cli) {
-    this->cli = cli;
-    calculateNameLength();
+    //calculateNameLength();
 }
 
 int Help::command(void) {

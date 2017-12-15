@@ -19,7 +19,7 @@
 #include "CLI.hpp"
 
 Playback::Playback(CLI *cli) : CommandBase(cli) {
-    calculateNameLength();
+    //calculateNameLength();
 }
 
 int Playback::command(void) {

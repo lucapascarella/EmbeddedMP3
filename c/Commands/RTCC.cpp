@@ -20,7 +20,7 @@
 #include "CLI.hpp"
 
 RTCC::RTCC(CLI *cli) : CommandBase(cli) {
-    calculateNameLength();
+    //calculateNameLength();
 }
 
 const char * RTCC::getCommandOptions(void) {

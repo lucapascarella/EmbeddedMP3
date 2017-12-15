@@ -20,7 +20,7 @@
 #include "CLI.hpp"
 
 Playlist::Playlist(CLI *cli) : CommandBase(cli) {
-    calculateNameLength();
+    //calculateNameLength();
 }
 
 int Playlist::command(void) {

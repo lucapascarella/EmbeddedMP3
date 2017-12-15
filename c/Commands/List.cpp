@@ -23,7 +23,7 @@
 #include "CLI.hpp"
 
 List::List(CLI *cli) : CommandBase(cli) {
-    calculateNameLength();
+    //calculateNameLength();
 }
 
 const char * List::getCommandOptions(void) {
